@@ -36,12 +36,10 @@ Target languages for this API are the following:
   * NodeJS
   * Go
   * C# / .NET
-
-TODO 
-----
   * Python
+  * Ruby
   * Java
   * Perl
-  * Ruby
+
 
 --pancake
