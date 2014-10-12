@@ -38,6 +38,8 @@ function httpCmd(uri, cmd, cb) {
   });
 }
 
+
+
 function pipeCmd(proc, cmd, cb) {
   pipeQueue.push({cmd: cmd, cb: cb, result: ''});
   if (pipeQueue.length === 1)
@@ -46,6 +48,11 @@ function pipeCmd(proc, cmd, cb) {
 
 function pipeCmdOutput(proc, data) {
   var len = data.length;
+
+  if (pipeQueue.length < 1) {
+    console.error("r2pipe error: No pending commands for incomming data");
+    return;
+  }
 
   if (data[len-1] !== 0x00) {
     pipeQueue[0].result += data.toString();
@@ -60,12 +67,15 @@ function pipeCmdOutput(proc, data) {
     proc.stdin.write(pipeQueue[0].cmd + "\n");
 }
 
+
+
 function r2bind(file, cb, r2cmd) {
   var port = (file.indexOf("http") != -1)? file
     : (4000+(Math.random()*4000))|0; // TODO must be random
     var params = (r2cmd !== null)? "-qc.:"+port : "-q0";
   var ls = process.spawn('r2', [params, file]);
   var running = false;
+
   var r2 = {
     cmd : function (s, cb2) {
       if (r2cmd === null)
@@ -79,12 +89,9 @@ function r2bind(file, cb, r2cmd) {
     }
   };
 
+
   ls.stderr.on('data', function (data) {
-    if (!running) {
-      running = true;
-      cb (r2);
-    }
-    //console.log('stdout: ' + data);
+    //TODO: Handle stderr messages?
   });
 
   ls.stdout.on('data', function (data) {
@@ -93,8 +100,7 @@ function r2bind(file, cb, r2cmd) {
       cb (r2);
     } else if (running && (r2cmd === null)) {
       pipeCmdOutput (ls, data);
-    } else console.log ("wtf");
-    //console.log('stderr: ' + data);
+    } else console.log ("r2pipe: wtf");
   });
 
   ls.on('error', function (code) {
@@ -105,9 +111,10 @@ function r2bind(file, cb, r2cmd) {
   ls.on('close', function (code) {
     running = false;
     if (code != 0)
-      console.log('child process exited with code ' + code);
+      console.log('r2pipe: child process exited with code ' + code);
   });
 }
+
 
 var r2node = {
   // TODO
