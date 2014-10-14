@@ -92,6 +92,10 @@ function r2bind(file, cb, r2cmd) {
 
   ls.stderr.on('data', function (data) {
     //TODO: Handle stderr messages?
+    if (!running && r2cmd) {
+       running = true;
+       cb(r2);
+    }
   });
 
   ls.stdout.on('data', function (data) {
