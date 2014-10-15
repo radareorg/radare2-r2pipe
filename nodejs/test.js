@@ -10,16 +10,19 @@ var r2jsapi = "./r2.js";
 var r2node = require ("./");
 
 function doSomeStuff(r) {
-	var r2 = require (r2jsapi)(r);
-	r2.analOp ("entry0", function(op) {
-		console.log (op.size, op.opcode, op.esil);
-	});
-	r2.cmd ('af @ entry0', function (o) {
-		r2.cmd ("pdf @ entry0", function (o) {
-			console.log (o);
-			r.quit ()
-		});
-	});
+  var r2 = require (r2jsapi)(r);
+  r2.analOp ("entry0", function(op) {
+    console.log (op.size, op.opcode, op.esil);
+  });
+  r2.cmd ('af @ entry0', function(o) {
+    r2.cmd ("pdf @ entry0", function(o) {
+      console.log (o);
+      r.quit ()
+    });
+  });
+  r2.cmdj ("aij entry0+2", function(o) {
+    console.log (o);
+  });
 }
 
 r2node.pipe ("/bin/ls", doSomeStuff);
