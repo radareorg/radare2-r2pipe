@@ -1,6 +1,6 @@
 var net = require('net');
 var http = require('http');
-var process = require('child_process');
+var proc = require('child_process');
 
 var pipeQueue = [];
 
@@ -44,15 +44,9 @@ function httpCmd(uri, cmd, cb) {
 function pipeCmd(proc, cmd, cb) {
   pipeQueue.push({
     cmd: cmd,
-    cmdj: function(x) {
-      try {
-        cb (JSON.parse(x));
-      } catch ( e ) {
-        cb (null);
-      }
-    },
     cb: cb,
-    result: ''
+    result: '',
+    error: false
   });
   if (pipeQueue.length === 1) {
     proc.stdin.write(cmd + "\n");
@@ -61,6 +55,7 @@ function pipeCmd(proc, cmd, cb) {
 
 function pipeCmdOutput(proc, data) {
   var len = data.length;
+  var response;
 
   if (pipeQueue.length < 1) {
     console.error("r2pipe error: No pending commands for incomming data");
@@ -73,7 +68,10 @@ function pipeCmdOutput(proc, data) {
   }
 
   pipeQueue[0].result += data.toString().substr(0, len - 1);
-  pipeQueue[0].cb(pipeQueue[0].result);
+
+  response = (pipeQueue[0].error) ? null : pipeQueue[0].result;
+
+  pipeQueue[0].cb(response);
   pipeQueue.splice(0, 1);
 
   if (pipeQueue.length > 0) {
@@ -89,15 +87,16 @@ function r2bind(file, cb, r2cmd) {
   if (r2cmd !== null) {
     /* TODO :implement local http API 
     	// Http
-      var ls = process.spawn('r2', ["-qe","http.port="+port, "-c=h", file]);
+      var ls = proc.spawn('r2', ["-qe","http.port="+port, "-c=h", file]);
     */
-    var ls = process.spawn('r2', ["-qc.:" + port, file]);
+    var ls = proc.spawn('r2', ["-qc.:" + port, file]);
   } else {
-    var ls = process.spawn('r2', ["-q0", file]);
+    var ls = proc.spawn('r2', ["-q0", file]);
   }
   var running = false;
 
   var r2 = {
+    /* Run cmd and return plaintext output */
     cmd: function(s, cb2) {
       if (r2cmd === null) {
         pipeCmd(ls, s, cb2);
@@ -105,29 +104,24 @@ function r2bind(file, cb, r2cmd) {
         r2cmd (port, s, cb2);
       }
     },
-    cmdj: function(s, cb2) {
-      /* TODO
-       callback gets err, obj ? maybe obj,err to keep compat
-        use try { catch to handle err thing } or just using null is enough
-      */
-      if (r2cmd === null) {
-        pipeCmd (ls, s, function(x) {
-          try {
-            cb2(JSON.parse(x));
-          } catch ( e ) {
-            cb2(null);
-          }
-        });
-      } else {
-        r2cmd (port, s, function(x) {
-          try {
-            cb2(JSON.parse(x));
-          } catch ( e ) {
-            cb2(null);
-          }
-        });
-      }
+
+    /* Run cmd and return JSON output */
+    cmdj: function (s, cb2) {
+      r2.cmd(s, function (res) {
+        if (res === null) {
+          cb2(null);
+          return;
+        }
+
+        try {
+          cb2(JSON.parse(res));
+        } catch (e) {
+          cb2(null);
+        }
+      });
     },
+
+    /* Quit CMD */
     quit: function() {
       ls.stdin.end();
       ls.kill ('SIGINT');
@@ -135,19 +129,24 @@ function r2bind(file, cb, r2cmd) {
   };
 
 
+  /* SDTERR message */
   ls.stderr.on('data', function(data) {
-    //TODO: Handle stderr messages?
+    // TODO find a good way to handle stderr messages
+
+    //console.log('stderr: ' + data);
     if (!running && r2cmd) {
       running = true;
       cb(r2);
     }
   });
 
+  /* STDOUT nessages */
   ls.stdout.on('data', function(data) {
+    //console.log('stdout: ' + data);
     if (!running) {
       running = true;
       cb (r2);
-    } else if (running && (r2cmd === null)) {
+    } else if (running && !r2cmd) {
       pipeCmdOutput (ls, data);
     } else {
       console.log ("r2pipe: wtf");
