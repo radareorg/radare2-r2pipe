@@ -1,6 +1,8 @@
 r2pipe
 ======
 
+![r2pipe logo](http://lolcathost.org/b/r2pipe.png)
+
 The r2pipe APIs are based on a single r2 primitive found behind `r_core_cmd_str()`
 which is a function that accepts a string parameter describing the r2 command to
 run and returns a string with the result.
