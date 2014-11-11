@@ -9,3 +9,13 @@ indent: node_modules/jsfmt
 node_modules/jsfmt:
 	mkdir -p node_modules
 	npm install jsfmt
+
+MODVER=$(shell node -e 'console.log(JSON.parse(require("fs").readFileSync("package.json"))["version"])')
+
+npm publish:
+	${MAKE}
+	npm publish
+
+unpublish:
+	${MAKE}
+	npm unpublish @${MODVER}

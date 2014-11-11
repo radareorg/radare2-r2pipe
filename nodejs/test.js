@@ -1,4 +1,5 @@
 /*  Small tests for r2pipe */
+// return true;
 
 var r2pipe = require ("./");
 
