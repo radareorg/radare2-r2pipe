@@ -1,19 +1,24 @@
+using r2pipe;
 using System;
-using System.IO;
-using System.Net;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class MainClass {
 	public static int Main(string[] args) {
-		string uri = "http://cloud.rada.re/cmd/";
-		string cmd = "pd 10";
-		WebRequest request = WebRequest.Create(uri+cmd);
-		WebResponse response = request.GetResponse();
-		Stream dataStream = response.GetResponseStream ();
-		StreamReader reader = new StreamReader (dataStream);
-		string responseFromServer = reader.ReadToEnd ();
-		Console.WriteLine (responseFromServer);
-		response.Close ();
+		var web = new R2PipeHttp("http://cloud.rada.re/cmd/");
+		Console.WriteLine ("--> "+web.CmdSync ("p8 32"));
+
+		web.Cmd("?V", (version) => {
+			Console.WriteLine ("Version: {0}", version);
+		});
+		web.Cmd("pdf @ entry0", (code) => {
+			Console.WriteLine ("Entrypoint:\n{0}", code);
+		});
+		/*
+		string str = await web.CmdAsync("x");
+		//Thread.Sleep (10000);
+		//Task.WaitAll();
+		*/
 		return 0;
 	}
 }
