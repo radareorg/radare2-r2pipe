@@ -38,6 +38,8 @@ class open:
 		out = ""
 		while True:
 			out += self.process.stdout.read(1) # 1? ORLY?
+			if len(out)<1:
+				return None
 			if out[-1] == '\x00':
 				break
 		return out[:-1]

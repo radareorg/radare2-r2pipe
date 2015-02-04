@@ -10,6 +10,7 @@ if __name__ == "__main__":
     system ("r2 -qc.:9080 /bin/ls &")
     system ("r2 -qc=h /bin/ls &")
     time.sleep(1)
+
     # Test r2pipe with local process
     print "[+] Testing python r2pipe local"
     rlocal = r2pipe.open("/bin/ls")
