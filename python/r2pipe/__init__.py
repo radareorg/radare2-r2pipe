@@ -70,7 +70,8 @@ class open:
 	def cmd_json(self, cmd):
 		try:
 			data = json.loads(self.cmd(cmd))
-		except:
+		except (ValueError, KeyError, TypeError) as e:
+			print ("r2pipe.cmd_json.Error",e)
 			data = None
 		return data
 
