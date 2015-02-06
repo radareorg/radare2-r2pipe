@@ -12,7 +12,7 @@ class r2pipeException(Exception):
 	pass
 
 class open:
-	def __init__(self, filename, writeable=False):
+	def __init__(self, filename, writeable=False, bininfo=True):
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
 			self.uri = filename + "/cmd"
@@ -28,6 +28,8 @@ class open:
 			cmd = ["r2", "-q0", filename]
 			if writeable:
 				cmd = cmd[:1] + ["-w"] + cmd[1:]
+			if not bininfo:
+				cmd = cmd[:1] + ["-n"] + cmd[1:]
 			self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
 			self.process.stdout.read(1) # Reads initial \x00
 
