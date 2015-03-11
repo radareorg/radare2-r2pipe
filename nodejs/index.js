@@ -39,8 +39,6 @@ function httpCmd(uri, cmd, cb) {
   });
 }
 
-
-
 function pipeCmd(proc, cmd, cb) {
   pipeQueue.push({
     cmd: cmd,
