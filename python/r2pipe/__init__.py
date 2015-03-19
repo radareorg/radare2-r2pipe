@@ -11,6 +11,9 @@ from subprocess import Popen, PIPE
 class r2pipeException(Exception):
 	pass
 
+def version():
+	return "0.2"
+
 class open:
 	def __init__(self, filename, writeable=False, bininfo=True):
 		try:
