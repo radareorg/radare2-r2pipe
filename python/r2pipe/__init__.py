@@ -5,7 +5,7 @@ import json
 import time
 import socket
 import urllib2
-from os import system
+import os
 from subprocess import Popen, PIPE
 
 class r2pipeException(Exception):
@@ -13,6 +13,16 @@ class r2pipeException(Exception):
 
 class open:
 	def __init__(self, filename, writeable=False, bininfo=True):
+		try:
+			self.pipe = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
+			self._cmd = self._cmd_pipe
+			self.url = "#!pipe"
+			return
+		except:
+			pass
+		if filename.startswith("#!pipe"):
+			print "ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env"
+			return
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
 			self.uri = filename + "/cmd"
@@ -53,6 +63,16 @@ class open:
 		while data:
 			res += data
 			data = self.conn.recv(512)
+		return res
+
+	def _cmd_pipe(self, cmd):
+		res = ""
+		os.write (self.pipe[1], cmd)
+		data = os.read (self.pipe[0], 1024)
+		return data
+		while data:
+			res += data
+			data = os.read (self.pipe[0], 1024)
 		return res
 
 	def _cmd_http(self, cmd):
