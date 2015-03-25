@@ -1,8 +1,15 @@
+var fs = require('fs');
 var net = require('net');
 var http = require('http');
 var proc = require('child_process');
 
 var pipeQueue = [];
+
+
+
+/*
+ * CMD handlers for different connection methods
+ */
 
 function remoteCmd(port, cmd, cb) {
   var msg = "";
@@ -39,6 +46,7 @@ function httpCmd(uri, cmd, cb) {
   });
 }
 
+
 function pipeCmd(proc, cmd, cb) {
   pipeQueue.push({
     cmd: cmd,
@@ -50,6 +58,7 @@ function pipeCmd(proc, cmd, cb) {
     proc.stdin.write(cmd + "\n");
   }
 }
+
 
 function pipeCmdOutput(proc, data) {
   var len = data.length;
@@ -78,34 +87,60 @@ function pipeCmdOutput(proc, data) {
 }
 
 
+function syscmd(cmd, callback) {
 
-function r2bind(file, cb, r2cmd) {
-  var port = (file.indexOf("http") != -1) ? file
-  : (4000 + (Math.random() * 4000)) | 0; // TODO must be random
-  if (r2cmd !== null) {
-    /* TODO :implement local http API 
-    	// Http
-      var ls = proc.spawn('r2', ["-qe","http.port="+port, "-c=h", file]);
-    */
-    var ls = proc.spawn('r2', ["-qc.:" + port, file]);
-  } else {
-    var ls = proc.spawn('r2', ["-q0", file]);
-  }
+}
+
+
+
+
+/*
+ * r2pipe main
+ */
+
+function r2bind(ls, cb, r2cmd) {
   var running = false;
 
   var r2 = {
+
     /* Run cmd and return plaintext output */
     cmd: function(s, cb2) {
-      if (r2cmd === null) {
+      if (typeof r2cmd === 'string') {
         pipeCmd(ls, s, cb2);
-      } else {
-        r2cmd (port, s, cb2);
+      } else if (typeof r2cmd === 'function') {
+        r2cmd (ls.cmdparm, s, cb2);
       }
     },
 
     /* Run cmd and return JSON output */
     cmdj: function (s, cb2) {
       r2.cmd(s, function (res) {
+        if (res === null) {
+          cb2(null);
+          return;
+        }
+
+        try {
+          cb2(JSON.parse(res));
+        } catch (e) {
+          cb2(null);
+        }
+      });
+    },
+
+    /* Run system cmd */
+    syscmd: function (command, cb2) {
+      var child = proc.exec(command, function(err, stdout, stderr) {
+        if (err)
+          cb2 (null);
+        else
+          cb2 (stdout);
+      });
+    },
+
+    /* Run system cmd and return JSON output */
+    syscmdj: function (command, cb2) {
+      r2.syscmd(command, function (res) {
         if (res === null) {
           cb2(null);
           return;
@@ -127,60 +162,96 @@ function r2bind(file, cb, r2cmd) {
   };
 
 
-  /* SDTERR message */
-  ls.stderr.on('data', function(data) {
-    // TODO find a good way to handle stderr messages
+  /* handle SDTERR message */
+  if (ls.stderr !== null) {
+    ls.stderr.on('data', function(data) {
 
-    //console.log('stderr: ' + data);
-    if (!running && r2cmd) {
-      running = true;
-      cb(r2);
-    }
-  });
+      /* Set as running for connect & launch methods */
+      if (!running && (typeof r2cmd !== 'string')) {
+        running = true;
+        cb(r2);
+      }
+    });
+  }
 
-  /* STDOUT nessages */
+
+  /* handle STDOUT nessages */
   ls.stdout.on('data', function(data) {
-    //console.log('stdout: ' + data);
+
+    /* Set as running for pipe method */
     if (!running) {
       running = true;
       cb (r2);
-    } else if (running && !r2cmd) {
+    } else if (running && (typeof r2cmd === 'string')) {
       pipeCmdOutput (ls, data);
-    } else {
-      console.log ("r2pipe: wtf");
     }
   });
 
-  ls.on('error', function(code) {
-    running = false;
-    console.log('ERROR');
-  });
 
-  ls.on('close', function(code) {
-    running = false;
-    if (code != 0) {
-      console.log('r2pipe: child process exited with code ' + code);
-    }
-  });
+  /* Proccess event handling only for methods using childs */
+  if (typeof ls.on === 'function') {
+    ls.on('error', function(code) {
+      running = false;
+      console.log('ERROR');
+    });
+
+    ls.on('close', function(code) {
+      running = false;
+      if (code != 0) {
+        console.log('r2pipe: child process exited with code ' + code);
+      }
+    });
+  }
+
+  /* rlangpipe is ready from the start and does not
+   * require to wait for any input from stdin or stdout */
+  if (!running && (r2cmd === 'rlangpipe')) {
+    running = true;
+    cb(r2);
+  }
 }
 
 
 var r2node = {
-  // TODO
-  // - listen()
-  // - rap()
+
   connect: function(uri, cb) {
-    r2bind (uri, cb, httpCmd);
+    var ls = proc.spawn('r2', ["-qc.:" + uri]);
+    ls.cmdparm = uri;
+    r2bind (ls, cb, httpCmd);
   },
+
   launch: function(file, cb) {
-    r2bind (file, cb, remoteCmd);
+    var port = (4000 + (Math.random() * 4000)) | 0;
+    var ls = proc.spawn('r2', ["-qc.:" + port, file]);
+    ls.cmdparm = port;
+    r2bind (ls, cb, remoteCmd);
   },
+
   pipe: function(file, cb) {
-    r2bind (file, cb, null);
+    var ls = proc.spawn('r2', ["-q0", file]);
+    r2bind (ls, cb, 'pipe');
   },
+
+  rlangpipe: function(cb) {
+    var IN = +process.env.R2PIPE_IN;
+    var OUT = +process.env.R2PIPE_OUT;
+
+    var ls = {
+      stdin: fs.createWriteStream (null, {fd: OUT}),
+      stdout: fs.createReadStream (null, {fd: IN}),
+      stderr: null,
+      kill: function () {
+        process.exit(0);
+        process.kill(process.pid, 'SIGKILL');
+      }
+    };
+
+    r2bind (ls, cb, 'rlangpipe');
+  },
+
   listen: function(file, cb) {
     // TODO
   }
-}
+};
 
 module.exports = r2node;
