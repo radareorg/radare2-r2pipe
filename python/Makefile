@@ -14,3 +14,6 @@ symstall: uninstall
 
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
+
+pub publish:
+	python setup.py sdist upload
