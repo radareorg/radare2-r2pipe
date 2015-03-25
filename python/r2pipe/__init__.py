@@ -1,18 +1,19 @@
 #/usr/bin/env python
 
+import os
 import re
-import json
+import sys
 import time
+import json
 import socket
 import urllib2
-import os
 from subprocess import Popen, PIPE
 
 class r2pipeException(Exception):
 	pass
 
 def version():
-	return "0.2"
+	return "0.3"
 
 class open:
 	def __init__(self, filename, writeable=False, bininfo=True):
@@ -69,14 +70,13 @@ class open:
 		return res
 
 	def _cmd_pipe(self, cmd):
-		res = ""
+		out = ""
 		os.write (self.pipe[1], cmd)
-		data = os.read (self.pipe[0], 1024)
-		return data
-		while data:
-			res += data
-			data = os.read (self.pipe[0], 1024)
-		return res
+		while True:
+			out += os.read (self.pipe[0], 1024)
+			if out[-1] == '\x00':
+				break
+		return out[:-1]
 
 	def _cmd_http(self, cmd):
 		try:
@@ -86,6 +86,7 @@ class open:
 			pass
 		return None
 
+	# r2 commands
 	def cmd(self, cmd):
 		return self._cmd(cmd)
 
@@ -96,7 +97,24 @@ class open:
 		try:
 			data = json.loads(self.cmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			print ("r2pipe.cmd_json.Error",e)
+			sys.stderr.write ("r2pipe.cmd_json.Error: %s\n"%(e))
+			data = None
+		return data
+
+	# system commands
+	def syscmd(self, cmd):
+		p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
+		out, err = p.communicate()
+		return out
+
+	def syscmdj(self, cmd):
+		return self.syscmd_json(cmd)
+
+	def syscmd_json(self, cmd):
+		try:
+			data = json.loads(self.syscmd(cmd))
+		except (ValueError, KeyError, TypeError) as e:
+			sys.stderr.write ("r2pipe.syscmd_json.Error %s\n"%(e))
 			data = None
 		return data
 
