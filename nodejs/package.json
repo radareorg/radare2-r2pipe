@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "pipe bindings for radare2",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
       "email": "jpenalbae@gmail.com"
     }
   ],
-  "license": "LGPLv3",
+  "license": "LGPL-3.0",
   "bugs": {
     "url": "https://github.com/radare/radare2-bindings/issues"
   },

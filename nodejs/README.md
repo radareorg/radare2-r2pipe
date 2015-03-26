@@ -14,7 +14,7 @@ Also, memory management results into a much simpler thing because you only have 
 Getting Started
 ===============
 
-This plugin requires radare >= `0.9.8`
+This plugin requires radare >= `0.9.8` (some features such as rlangpipe require git version)
 
 Once radare2 is installed, you may install this plugin using this command:
 
@@ -45,6 +45,38 @@ function doSomeStuff(r2) {
 }
 
 r2pipe.pipe ("/bin/ls", doSomeStuff);
+```
+
+### rlangpipe
+
+This method is intended to be used while running scripts from the r2 console
+
+```js
+var r2pipe = require('r2pipe');
+
+function doSomeStuff(r2) {
+   ...
+}
+
+r2pipe.rlangpipe (doSomeStuff);
+```
+
+Execute the script from r2 command prompt
+```
+$ r2 binfile.elf
+[0x080480a0]> #!pipe node /tmp/yourscript.js
+Analizing file
+Analysis finished
+Searching for syscalls
+ - found Syscall: write
+ - found Syscall: close
+ - found Syscall: read
+ - found Syscall: write
+ - found Syscall: exit
+ - found Syscall: write
+ - found Syscall: munmap
+ - found Syscall: mmap
+[0x080480a0]>
 ```
 
 ### launch
@@ -88,7 +120,7 @@ r2pipe.connect ("http://localhost:8182/cmd/", doSomeStuff);
 API
 ===
 
-r2pipes provides three basic commands
+r2pipes provides five basic commands
 
 
 ### cmd
@@ -110,7 +142,7 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 
 ### cmdj
 
-Runs a radare2 command and try to convert the output into an object.
+Runs a radare2 command and tries to convert the output into an object.
 
 Note that this will only work with commands producing JSON output.
 
@@ -131,6 +163,44 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 
 In case of error "null" will be passed as argument to the callback instead of an valid object
 
+### syscmd
+
+Runs a system command, used mainly to access radare companion tools such as rabin2, raddif2, etc...
+
+```js
+var r2pipe = require('r2pipe');
+
+function doSomeStuff(r2) {
+   r2.syscmd ("rabin2 -S /bin/true", function(output) {
+    console.log (output);
+  });
+}
+
+r2pipe.launch ("/bin/ls", doSomeStuff);
+```
+
+
+### syscmdj
+
+Runs a system command and tries to convert the output into an object.
+
+Note that this will only work with commands producing JSON output.
+
+```js
+var r2pipe = require('r2pipe');
+
+function doSomeStuff(r2) {
+   r2.syscmdj ("rabin2 -j -S /bin/true", function(output) {
+    console.log (output);
+  });
+}
+t
+r2pipe.launch ("/bin/ls", doSomeStuff);
+```
+
+In case of error "null" will be passed as argument to the callback instead of an valid object
+
+
 ### quit
 
 Close the connection or kill the radare spawned process
@@ -149,8 +219,10 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 Example
 =======
 
+This is a small example using the pipe connection method for standalone scripts.
+
 ```js
-var r2pipe = require ("./");
+var r2pipe = require ("r2pipe");
 
 
 function doSomeStuff(r2) {
