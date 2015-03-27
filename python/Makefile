@@ -16,4 +16,4 @@ uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
 
 pub publish:
-	python setup.py sdist upload
+	LC_CTYPE=C python setup.py sdist upload
