@@ -6,14 +6,23 @@ import sys
 import time
 import json
 import socket
-import urllib2
 from subprocess import Popen, PIPE
+
+if sys.version_info >= (3,0):
+	import urllib.request
+	urlopen = urllib.request.urlopen
+	import urllib.error
+	URLError = urllib.error.URLError
+else:
+	import urllib2
+	urlopen = urllib2.urlopen
+	URLError = urllib2.URLError
 
 class r2pipeException(Exception):
 	pass
 
 def version():
-	return "0.3"
+	return "0.4"
 
 class open:
 	def __init__(self, filename, writeable=False, bininfo=True):
@@ -25,7 +34,7 @@ class open:
 		except:
 			pass
 		if filename.startswith("#!pipe"):
-			print "ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env"
+			print("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
 			return
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
@@ -48,41 +57,47 @@ class open:
 			self.process.stdout.read(1) # Reads initial \x00
 
 	def _cmd_process(self, cmd):
-		self.process.stdin.write(cmd)
-		self.process.stdin.write('\n')
+		if sys.version_info >= (3,0):
+			self.process.stdin.write(bytes(cmd+'\n','utf-8'))
+		else:
+			self.process.stdin.write(cmd+'\n')
 		self.process.stdin.flush()
-		out = ""
+		out = b''
 		while True:
-			out += self.process.stdout.read(1) # 1? ORLY?
-			if len(out)<1:
-				return None
-			if out[-1] == '\x00':
+			foo = self.process.stdout.read(1)
+			if foo == b'\x00':
 				break
-		return out[:-1]
+			if len(foo)<1:
+				return None
+			out += foo
+		return out[:-1].decode('utf-8')
 
 	def _cmd_tcp(self, cmd):
-		res = ""
-		self.conn.sendall(cmd)
+		res = b''
+		self.conn.sendall(str.encode(cmd, 'utf-8'))
 		data = self.conn.recv(512)
 		while data:
 			res += data
 			data = self.conn.recv(512)
-		return res
+		return res.decode('utf-8')
 
 	def _cmd_pipe(self, cmd):
-		out = ""
+		out = ''
 		os.write (self.pipe[1], cmd)
 		while True:
-			out += os.read (self.pipe[0], 1024)
-			if out[-1] == '\x00':
+			res = os.read (self.pipe[0], 1024)
+			if (len(res)<1):
 				break
-		return out[:-1]
+			out += res
+			if res[-1] == b'\x00':
+				break
+		return out[:-1].decode('utf-8')
 
 	def _cmd_http(self, cmd):
 		try:
-			response = urllib2.urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=cmd))
-			return response.read()
-		except urllib2.URLError:
+			response = urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=cmd))
+			return response.read().decode('utf-8')
+		except URLError:
 			pass
 		return None
 
@@ -120,34 +135,34 @@ class open:
 
 # Hello World
 if __name__ == "__main__":
-	print "[+] Spawning r2 tcp and http servers"
+	print("[+] Spawning r2 tcp and http servers")
 	system ("pkill r2")
 	system ("r2 -qc.:9080 /bin/ls &")
 	system ("r2 -qc=h /bin/ls &")
 	time.sleep(1)
 	# Test r2pipe with local process
-	print "[+] Testing python r2pipe local"
+	print("[+] Testing python r2pipe local")
 	rlocal = open("/bin/ls")
-	print rlocal.cmd("pi 5")
+	print(rlocal.cmd("pi 5"))
 	#print rlocal.cmd("pn")
 	info = rlocal.cmd_json("ij")
 	print ("Architecture: " + info['bin']['machine'])
 
 	# Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")
-	print "[+] Testing python r2pipe tcp://"
+	print("[+] Testing python r2pipe tcp://")
 	rremote = open("tcp://127.0.0.1:9080")
 	disas = rremote.cmd("pi 5")
 	if not disas:
-		print "Error with remote tcp conection"
+		print("Error with remote tcp conection")
 	else:
-		print disas
+		print(disas)
 
 	# Test r2pipe with remote http process (launch it with "r2 -qc=H myfile")
-	print "[+] Testing python r2pipe http://"
+	print("[+] Testing python r2pipe http://")
 	rremote = open("http://127.0.0.1:9090")
 	disas = rremote.cmd("pi 5")
 	if not disas:
-		print "Error with remote http conection"
+		print("Error with remote http conection")
 	else:
-		print disas
+		print(disas)
 	system ("pkill -INT r2")

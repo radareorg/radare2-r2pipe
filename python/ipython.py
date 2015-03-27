@@ -6,6 +6,7 @@
 #
 
 import os
+import sys
 import r2pipe
 import IPython
 
@@ -14,7 +15,9 @@ try:
 	pipes = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
 	r2 = r2pipe.open("#!pipe")
 except:
-	pass
+	print ("This script must be run from inside r2:")
+	print (" $ r2 -qi ipython.py /bin/ls")
+	sys.exit(1)
 
 
 class RadareBin:
@@ -22,7 +25,7 @@ class RadareBin:
 	def __init__(self, r2):
 		self.r2 = r2
 		self.baddr = 0
-		self.filename = r2.cmd(u'i~file:0[1]').strip()
+		self.filename = r2.cmd('i~file:0[1]').strip()
 	def imports(self):
 		if self.baddr != 0:
 			return self.r2.syscmdj("rabin2 -B %d -ij '%s'"%(self.baddr, self.filename))['imports']
