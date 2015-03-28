@@ -240,10 +240,7 @@ var r2node = {
       stdin: fs.createWriteStream (null, {fd: OUT}),
       stdout: fs.createReadStream (null, {fd: IN}),
       stderr: null,
-      kill: function () {
-        process.exit(0);
-        process.kill(process.pid, 'SIGKILL');
-      }
+      kill: function () { process.exit(0); }
     };
 
     r2bind (ls, cb, 'rlangpipe');
