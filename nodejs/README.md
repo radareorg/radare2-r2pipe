@@ -33,7 +33,7 @@ Access methods
 
 There are multiple ways to interact with a radare2 session
 
-### pipe
+### pipe (binfile, callback)
 
 Spawns a new process and comunicate with it through standard stdin, stdout, stderr file descriptors
 
@@ -47,7 +47,7 @@ function doSomeStuff(r2) {
 r2pipe.pipe ("/bin/ls", doSomeStuff);
 ```
 
-### lpipe / rlangpipe
+### lpipe (callback) / rlangpipe (callback)
 
 This method is intended to be used while running scripts from the r2 console
 
@@ -79,7 +79,7 @@ Searching for syscalls
 [0x080480a0]>
 ```
 
-### launch
+### launch (binfile, callback)
 
 Launch radare2 and listen for cmds through a tcp port
 
@@ -94,7 +94,7 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 ```
 
 
-### connect
+### connect (url, callback)
 
 Connect to an already running radare2 instance running an http listener
 
@@ -123,7 +123,7 @@ API
 r2pipes provides five basic commands
 
 
-### cmd
+### cmd (r2cmd, [callback])
 
 Runs a radare2 command
 
@@ -140,7 +140,7 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 ```
 
 
-### cmdj
+### cmdj (r2cmd, [callback])
 
 Runs a radare2 command and tries to convert the output into an object.
 
@@ -163,7 +163,7 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 
 In case of error "null" will be passed as argument to the callback instead of an valid object
 
-### syscmd
+### syscmd (oscmd, [callback])
 
 Runs a system command, used mainly to access radare companion tools such as rabin2, raddif2, etc...
 
@@ -180,7 +180,7 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 ```
 
 
-### syscmdj
+### syscmdj (oscmd, [callback])
 
 Runs a system command and tries to convert the output into an object.
 
@@ -201,9 +201,9 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 In case of error "null" will be passed as argument to the callback instead of an valid object
 
 
-### quit
+### quit ()
 
-Close the connection or kill the radare spawned process
+Close the connection, kill the radare spawned process or terminate the rlangpipe script execution
 
 ```js
 var r2pipe = require('r2pipe');
