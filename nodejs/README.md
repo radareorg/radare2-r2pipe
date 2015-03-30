@@ -47,7 +47,7 @@ function doSomeStuff(r2) {
 r2pipe.pipe ("/bin/ls", doSomeStuff);
 ```
 
-### rlangpipe
+### lpipe / rlangpipe
 
 This method is intended to be used while running scripts from the r2 console
 
@@ -58,7 +58,7 @@ function doSomeStuff(r2) {
    ...
 }
 
-r2pipe.rlangpipe (doSomeStuff);
+r2pipe.lpipe (doSomeStuff);
 ```
 
 Execute the script from r2 command prompt

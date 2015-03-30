@@ -105,6 +105,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run cmd and return plaintext output */
     cmd: function(s, cb2) {
+      if (typeof cb2 !== 'function') cb2 = function () {};
       if (typeof r2cmd === 'string') {
         pipeCmd(ls, s, cb2);
       } else if (typeof r2cmd === 'function') {
@@ -114,6 +115,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run cmd and return JSON output */
     cmdj: function (s, cb2) {
+      if (typeof cb2 !== 'function') cb2 = function () {};
       r2.cmd(s, function (res) {
         if (res === null) {
           cb2(null);
@@ -130,6 +132,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run system cmd */
     syscmd: function (command, cb2) {
+      if (typeof cb2 !== 'function') cb2 = function () {};
       var child = proc.exec(command, function(err, stdout, stderr) {
         if (err)
           cb2 (null);
@@ -140,6 +143,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run system cmd and return JSON output */
     syscmdj: function (command, cb2) {
+      if (typeof cb2 !== 'function') cb2 = function () {};
       r2.syscmd(command, function (res) {
         if (res === null) {
           cb2(null);
@@ -244,6 +248,10 @@ var r2node = {
     };
 
     r2bind (ls, cb, 'rlangpipe');
+  },
+
+  lpipe: function(cb) {
+    this.rlangpipe(cb);
   },
 
   listen: function(file, cb) {
