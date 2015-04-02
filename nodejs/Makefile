@@ -12,7 +12,7 @@ node_modules/jsfmt:
 
 MODVER=$(shell node -e 'console.log(JSON.parse(require("fs").readFileSync("package.json"))["version"])')
 
-npm publish:
+npm publish pub:
 	${MAKE}
 	npm publish
 
