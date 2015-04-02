@@ -13,7 +13,7 @@
    "files": [
     "README.md",
     "index.js",
-    "promise.js"
+    "promise.js",
     "test.js"
   ],
   "keywords": [
