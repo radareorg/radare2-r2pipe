@@ -2,6 +2,7 @@ var fs = require('fs');
 var net = require('net');
 var http = require('http');
 var proc = require('child_process');
+var promise = require('./promise.js')
 
 var pipeQueue = [];
 
@@ -162,6 +163,11 @@ function r2bind(ls, cb, r2cmd) {
     quit: function() {
       ls.stdin.end();
       ls.kill ('SIGINT');
+    },
+
+    /* Custom promises */
+    promise: function (func, cmd, callback) {
+      return new promise.Promise(func, cmd, callback);
     }
   };
 

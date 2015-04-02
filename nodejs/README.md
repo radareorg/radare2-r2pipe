@@ -120,7 +120,7 @@ r2pipe.connect ("http://localhost:8182/cmd/", doSomeStuff);
 API
 ===
 
-r2pipes provides five basic commands
+r2pipes provides six basic commands
 
 
 ### cmd (r2cmd, [callback])
@@ -215,6 +215,12 @@ function doSomeStuff(r2) {
 r2pipe.launch ("/bin/ls", doSomeStuff);
 ```
 
+### promise (r2_function, cmd, [callback])
+
+It will execute the given r2pipe function with the given cmd as argument.
+
+Please see below for detailed promises documentation.
+
 
 Example
 =======
@@ -244,5 +250,58 @@ function doSomeStuff(r2) {
 r2pipe.pipe ("/bin/ls", doSomeStuff);
 r2pipe.launch ("/bin/ls", doSomeStuff);
 r2pipe.connect ("http://cloud.rada.re/cmd/", doSomeStuff);
+```
+
+Promises API
+============
+
+In order to avoid the callback tree problem, and to be able to execute r2 cmds in a secuential manner, we included a custom promises implementation.
+
+Whenever you call the promise() method it will allocate and return a new Promise object. All the methods require a r2pipe function to be executed, a cmd which will be passed as argument to the function, and an optional callback to be executed once the current promise is done.
+
+Once a promise is finished the next promise defined using then() method will be executed, and so on in a sequential manner. There is also a done() method avaiable which can be used to define a callback to be executed once all the promises have been executed.
+
+**For now there is no way to cancel the promises sequence if an error happens.**
+
+
+### promise (r2_function, cmd, [callback])
+
+This is the class constructor. Its used to start building the promises chain and it defines the first r2pipe function which will be execute.
+
+It returns a new Promise instance.
+
+### then (r2_function, cmd, [callback])
+
+This method is used to define the next function to be executed in the promises chain.
+
+### done (callback)
+
+Used to define a callback to be executed once the full promises chain is finished.
+
+
+### Usage example
+
+```js
+var r2pipe = require ("r2pipe");
+
+
+function doSomeStuff(r2) {
+  r2.promise(r2.cmd, 'aei', null)
+    .then(r2.cmd, 'aeim', null)
+    .then(r2.cmd, 'e io.cache=true', null)
+    .then(r2.cmd, 'aer esp=0x001f0000', null)
+    .then(r2.cmd, 'aer eip=sym.decrypt_remotestr', null)
+    .then(r2.cmd, 'aecu 0x08049164', null)
+    .then(r2.cmd, '.dr*', null)
+    .then(r2.cmd, 'ps @ ebx', function (res) {
+      console.log("The decrypted result is: " + res);
+    })
+    .done(function () {
+      console.log('[+] Exiting');
+      r2.quit();
+    });
+}
+
+r2pipe.pipe ("/tmp/mlwre/sample", doSomeStuff);
 ```
 
