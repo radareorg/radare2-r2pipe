@@ -17,7 +17,21 @@ else:
 	import urllib2
 	urlopen = urllib2.urlopen
 	URLError = urllib2.URLError
-
+if os.name=="nt":
+	from ctypes import *
+	import msvcrt
+	GENERIC_READ = 0x80000000
+	GENERIC_WRITE = 0x40000000
+	OPEN_EXISTING = 0x3
+	INVALID_HANDLE_VALUE = -1
+	PIPE_READMODE_MESSAGE = 0x2
+	ERROR_PIPE_BUSY = 231
+	ERROR_MORE_DATA = 234
+	BUFSIZE = 4096
+	szPipename = "\\\\.\\pipe\\R2PIPE_IN"
+	chBuf = create_string_buffer(BUFSIZE)
+	cbRead=    c_ulong(0)
+	cbWritten = c_ulong(0)
 class r2pipeException(Exception):
 	pass
 
@@ -27,10 +41,30 @@ def version():
 class open:
 	def __init__(self, filename, writeable=False, bininfo=True):
 		try:
-			self.pipe = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
-			self._cmd = self._cmd_pipe
-			self.url = "#!pipe"
-			return
+			if os.name=="nt":
+				while 1:
+					hPipe = windll.kernel32.CreateFileA(szPipename, GENERIC_READ |GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
+					if (hPipe != INVALID_HANDLE_VALUE):
+						break
+					else:
+						print "Invalid Handle Value"
+					if (windll.kernel32.GetLastError() != ERROR_PIPE_BUSY):
+						print "Could not open pipe"
+						return
+					elif ((windll.kernel32.WaitNamedPipeA(szPipename, 20000)) ==0):
+						print "Could not open pipe\n"
+						return
+				windll.kernel32.WriteFile(hPipe, "e scr.color=false\n",18, byref(cbWritten), None)
+				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE,byref(cbRead), None)
+				self.pipe=[hPipe,hPipe]
+				self._cmd = self._cmd_pipe
+				self.url = "#!pipe"
+				return
+			else:
+				self.pipe = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
+				self._cmd = self._cmd_pipe
+				self.url = "#!pipe"
+				return
 		except:
 			pass
 		if filename.startswith("#!pipe"):
@@ -82,16 +116,22 @@ class open:
 		return res.decode('utf-8')
 
 	def _cmd_pipe(self, cmd):
-		out = ''
-		os.write (self.pipe[1], cmd)
-		while True:
-			res = os.read (self.pipe[0], 1024)
-			if (len(res)<1):
-				break
-			out += res
-			if res[-1] == b'\x00':
-				break
-		return out[:-1].decode('utf-8')
+		if os.name=="nt":
+			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None)
+			fSuccess = windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE,byref(cbRead), None)
+			out=chBuf.value
+			return out[:-1].decode('utf-8')
+		else:
+			out = ''
+			os.write (self.pipe[1], cmd)
+			while True:
+				res = os.read (self.pipe[0], 1024)
+				if (len(res)<1):
+					break
+				out += res
+				if res[-1] == b'\x00':
+					break
+			return out[:-1].decode('utf-8')
 
 	def _cmd_http(self, cmd):
 		try:
