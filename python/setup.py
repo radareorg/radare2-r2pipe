@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup (
 	name='r2pipe',
-	version='0.4.1',
+	version='0.5.0',
 	license='MIT',
 	description='Pipe interface for radare2',
 	author='pancake',
