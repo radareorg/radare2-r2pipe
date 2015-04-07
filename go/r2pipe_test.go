@@ -5,7 +5,7 @@ package r2pipe
 import "testing"
 
 func TestRun(t *testing.T) {
-	r2p, err := Open("malloc://256")
+	r2p, err := NewPipe("malloc://256")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestSetVar(t *testing.T) {
-	r2p, err := Open("malloc://256")
+	r2p, err := NewPipe("malloc://256")
 	if err != nil {
 		t.Fatal(err)
 	}
