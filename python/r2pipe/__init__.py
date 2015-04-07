@@ -116,13 +116,12 @@ class open:
 		return res.decode('utf-8')
 
 	def _cmd_pipe(self, cmd):
+		out = ''
 		if os.name=="nt":
 			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None)
 			fSuccess = windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE,byref(cbRead), None)
-			out=chBuf.value
-			return out[:-1].decode('utf-8')
+			out = chBuf.value
 		else:
-			out = ''
 			os.write (self.pipe[1], cmd)
 			while True:
 				res = os.read (self.pipe[0], 1024)
@@ -131,7 +130,7 @@ class open:
 				out += res
 				if res[-1] == b'\x00':
 					break
-			return out[:-1].decode('utf-8')
+		return out[:-1].decode('utf-8')
 
 	def _cmd_http(self, cmd):
 		try:
