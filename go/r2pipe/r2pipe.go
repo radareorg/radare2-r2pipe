@@ -19,11 +19,11 @@ look like the following snippet:
 		}
 		defer r2p.Close()
 
-		_, err = r2p.Run("w Hello World")
+		_, err = r2p.Cmd("w Hello World")
 		if err != nil {
 			panic(err)
 		}
-		buf, err := r2p.Run("ps")
+		buf, err := r2p.Cmd("ps")
 		if err != nil {
 			panic(err)
 		}
@@ -34,6 +34,8 @@ package r2pipe
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -47,7 +49,7 @@ import (
 // execute commands and obtain their results.
 type Pipe struct {
 	File   string
-	cmd    *exec.Cmd
+	r2cmd  *exec.Cmd
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 }
@@ -82,7 +84,7 @@ func newPipeFd() (*Pipe, error) {
 
 	r2p := &Pipe{
 		File:   "",
-		cmd:    nil,
+		r2cmd:  nil,
 		stdin:  stdin,
 		stdout: stdout,
 	}
@@ -90,16 +92,16 @@ func newPipeFd() (*Pipe, error) {
 }
 
 func newPipeCmd(file string) (*Pipe, error) {
-	cmd := exec.Command("r2", "-q0", file)
-	stdin, err := cmd.StdinPipe()
+	r2cmd := exec.Command("r2", "-q0", file)
+	stdin, err := r2cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
-	stdout, err := cmd.StdoutPipe()
+	stdout, err := r2cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
-	if err = cmd.Start(); err != nil {
+	if err := r2cmd.Start(); err != nil {
 		return nil, err
 	}
 	// Read initial data
@@ -109,7 +111,7 @@ func newPipeCmd(file string) (*Pipe, error) {
 
 	r2p := &Pipe{
 		File:   file,
-		cmd:    cmd,
+		r2cmd:  r2cmd,
 		stdin:  stdin,
 		stdout: stdout,
 	}
@@ -128,8 +130,8 @@ func (r2p *Pipe) Read(p []byte) (n int, err error) {
 	return r2p.stdout.Read(p)
 }
 
-// Run is a helper that allows to run r2 commands and receive their output.
-func (r2p *Pipe) Run(cmd string) (output string, err error) {
+// Cmd is a helper that allows to run r2 commands and receive their output.
+func (r2p *Pipe) Cmd(cmd string) (string, error) {
 	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
 		return "", err
 	}
@@ -140,15 +142,22 @@ func (r2p *Pipe) Run(cmd string) (output string, err error) {
 	return strings.TrimRight(buf, "\n\x00"), nil
 }
 
-// SetVar sets the value of an r2 variable.
-func (r2p *Pipe) SetVar(name, value string) error {
-	_, err := r2p.Run("e " + name + "=" + value)
-	return err
-}
-
-// Var returns the value of an r2 variable.
-func (r2p *Pipe) Var(name string) (value string, err error) {
-	return r2p.Run("e " + name)
+// Cmdj acts like Cmd but interprets the output of the command as json. It
+// returns the parsed json keys and values.
+func (r2p *Pipe) Cmdj(cmd string) (interface{}, error) {
+	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
+		return nil, err
+	}
+	buf, err := bufio.NewReader(r2p).ReadBytes('\x00')
+	if err != nil {
+		return nil, err
+	}
+	buf = bytes.TrimRight(buf, "\n\x00")
+	var output interface{}
+	if err := json.Unmarshal(buf, &output); err != nil {
+		return nil, err
+	}
+	return output, nil
 }
 
 // Close shuts down r2, closing the created pipe.
@@ -156,8 +165,8 @@ func (r2p *Pipe) Close() error {
 	if r2p.File == "" {
 		return nil
 	}
-	if _, err := r2p.Run("q!"); err != nil {
+	if _, err := r2p.Cmd("q!"); err != nil {
 		return err
 	}
-	return r2p.cmd.Wait()
+	return r2p.r2cmd.Wait()
 }
