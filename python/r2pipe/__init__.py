@@ -47,12 +47,12 @@ class open:
 					if (hPipe != INVALID_HANDLE_VALUE):
 						break
 					else:
-						print "Invalid Handle Value"
+						print ("Invalid Handle Value")
 					if (windll.kernel32.GetLastError() != ERROR_PIPE_BUSY):
-						print "Could not open pipe"
+						print ("Could not open pipe")
 						return
 					elif ((windll.kernel32.WaitNamedPipeA(szPipename, 20000)) ==0):
-						print "Could not open pipe\n"
+						print ("Could not open pipe\n")
 						return
 				windll.kernel32.WriteFile(hPipe, "e scr.color=false\n",18, byref(cbWritten), None)
 				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE,byref(cbRead), None)
