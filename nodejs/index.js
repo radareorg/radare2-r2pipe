@@ -123,10 +123,13 @@ function r2bind(ls, cb, r2cmd) {
           return;
         }
 
+        var result;
         try {
-          cb2(JSON.parse(res));
+          result = JSON.parse(res);
         } catch (e) {
-          cb2(null);
+          result = null;
+        } finally {
+          cb2(result);
         }
       });
     },
@@ -151,10 +154,13 @@ function r2bind(ls, cb, r2cmd) {
           return;
         }
 
+        var result;
         try {
-          cb2(JSON.parse(res));
+          result = JSON.parse(res);
         } catch (e) {
-          cb2(null);
+          result = null;
+        } finally {
+          cb2(result);
         }
       });
     },
