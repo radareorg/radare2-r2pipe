@@ -1,8 +1,9 @@
 from distutils.core import setup
+import r2pipe
 
 setup (
 	name='r2pipe',
-	version='0.5.1',
+	version=r2pipe.version(),
 	license='MIT',
 	description='Pipe interface for radare2',
 	author='pancake',

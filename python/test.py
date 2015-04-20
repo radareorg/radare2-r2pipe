@@ -16,7 +16,7 @@ if __name__ == "__main__":
     rlocal = r2pipe.open("/bin/ls")
     print(rlocal.cmd("pi 5"))
     #print rlocal.cmd("pn")
-    info = rlocal.cmd_json("ij")
+    info = rlocal.cmdj("ij")
     print ("Architecture: " + info['bin']['machine'])
 
     # Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")

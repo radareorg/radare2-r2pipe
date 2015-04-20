@@ -1,4 +1,27 @@
 #/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""r2pipe
+
+This module provides an API to interact with the radare2
+commandline interface from Python using a pipe.
+
+The pipe can be connected to the parent process to run
+Python scripts from the radare2 shell itself, or it can
+spawn a new process, connect via HTTP to a remote r2 http
+server, etc.
+
+Some r2 commands display the information in JSON, that's
+why r2pipe provides `-j` methods to directly parse it
+and return a native Python object.
+
+Example:
+  $ python
+  > import r2pipe
+  > r = r2pipe.open("/bin/ls")
+  > print(r.cmd("pd 10"))
+  > print(r.cmdj("aoj")[0]['size'])
+"""
 
 import os
 import re
@@ -7,6 +30,8 @@ import time
 import json
 import socket
 from subprocess import Popen, PIPE
+
+VERSION="0.6.0"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -30,16 +55,33 @@ if os.name=="nt":
 	BUFSIZE = 4096
 	szPipename = "\\\\.\\pipe\\R2PIPE_IN"
 	chBuf = create_string_buffer(BUFSIZE)
-	cbRead=    c_ulong(0)
+	cbRead = c_ulong(0)
 	cbWritten = c_ulong(0)
-class r2pipeException(Exception):
-	pass
 
 def version():
-	return "0.4"
+	"""Return string with the version of the r2pipe library
+	"""
+	return VERSION
 
 class open:
+	"""Class representing an r2pipe connection with a running radare2 instance
+	"""
 	def __init__(self, filename, writeable=False, bininfo=True):
+		"""Open a new r2 pipe
+		The 'filename' can be one of the following:
+
+		* absolute or relative path to file
+		* http://<host>:<port>/cmd to connect to an r2 webserver
+		* tcp://<host>:<port> to connect to an r2 tcp server
+		* #!pipe when launching it from r2 via RLang.pipe
+
+		Args:
+			filename (str): path to filename or uri
+			writeable (bool): if True opens the file in read-write
+			bininfo (bool): if True loads the info from the binary
+		Returns:
+			Returns an object with methods to interact with r2 via commands
+		"""
 		try:
 			if os.name=="nt":
 				while 1:
@@ -55,8 +97,8 @@ class open:
 						print ("Could not open pipe\n")
 						return
 				windll.kernel32.WriteFile(hPipe, "e scr.color=false\n",18, byref(cbWritten), None)
-				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE,byref(cbRead), None)
-				self.pipe=[hPipe,hPipe]
+				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE, byref(cbRead), None)
+				self.pipe = [hPipe, hPipe]
 				self._cmd = self._cmd_pipe
 				self.url = "#!pipe"
 				return
@@ -76,7 +118,7 @@ class open:
 		elif filename.startswith("tcp"):
 			r = re.match(r'tcp://(\d+\.\d+.\d+.\d+):(\d+)/?', filename)
 			if not r:
-				raise r2pipeException("String doesn't match tcp format")
+				raise Exception("String doesn't match tcp format")
 			self._cmd = self._cmd_tcp
 			self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.conn.connect((r.group(1), int(r.group(2))))
@@ -104,7 +146,7 @@ class open:
 			if len(foo)<1:
 				return None
 			out += foo
-		return out[:-1].decode('utf-8')
+		return out.decode('utf-8')
 
 	def _cmd_tcp(self, cmd):
 		res = b''
@@ -130,7 +172,7 @@ class open:
 				out += res
 				if res[-1] == b'\x00':
 					break
-		return out[:-1].decode('utf-8')
+		return out.decode('utf-8')
 
 	def _cmd_http(self, cmd):
 		try:
@@ -142,33 +184,50 @@ class open:
 
 	# r2 commands
 	def cmd(self, cmd):
+		"""Run an r2 command return string with result
+		Args:
+			cmd (str): r2 command
+		Returns:
+			Returns an string with the results of the command
+		"""
 		return self._cmd(cmd)
 
 	def cmdj(self, cmd):
-		return self.cmd_json(cmd)
-
-	def cmd_json(self, cmd):
+		"""Same as cmd() but evaluates JSONs and returns an object
+		Args:
+			cmd (str): r2 command
+		Returns:
+			Returns a Python object respresenting the parsed JSON
+		"""
 		try:
 			data = json.loads(self.cmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write ("r2pipe.cmd_json.Error: %s\n"%(e))
+			sys.stderr.write ("r2pipe.cmdj.Error: %s\n"%(e))
 			data = None
 		return data
 
-	# system commands
 	def syscmd(self, cmd):
+		"""Executes a program and returns the output (stdout only)
+		Args:
+			cmd (str): commandline shell command
+		Returns:
+			Returns a string with the output
+		"""
 		p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
 		out, err = p.communicate()
 		return out
 
 	def syscmdj(self, cmd):
-		return self.syscmd_json(cmd)
-
-	def syscmd_json(self, cmd):
+		"""Executes a program and returns an object representing the parsed JSON of the output
+		Args:
+			cmd (str): commandline shell command
+		Returns:
+			Returns an object constructed by parsing the JSON returned by the command
+		"""
 		try:
 			data = json.loads(self.syscmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write ("r2pipe.syscmd_json.Error %s\n"%(e))
+			sys.stderr.write ("r2pipe.syscmdj.Error %s\n"%(e))
 			data = None
 		return data
 
@@ -184,7 +243,7 @@ if __name__ == "__main__":
 	rlocal = open("/bin/ls")
 	print(rlocal.cmd("pi 5"))
 	#print rlocal.cmd("pn")
-	info = rlocal.cmd_json("ij")
+	info = rlocal.cmdj("ij")
 	print ("Architecture: " + info['bin']['machine'])
 
 	# Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")
