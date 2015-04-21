@@ -4,7 +4,7 @@ r2pipe for Python
 Interact with radare2 using the #!pipe command or in standalone scripts
 that communicate with local or remoate r2 via pipe, tcp or http.
 
-Usage example:
+Usage example::
 
     $ python
     > import r2pipe
