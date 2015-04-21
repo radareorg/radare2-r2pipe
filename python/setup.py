@@ -1,7 +1,7 @@
 from distutils.core import setup
 import r2pipe
 
-setup (
+setup(
     name='r2pipe',
     version=r2pipe.version(),
     license='MIT',
