@@ -10,6 +10,3 @@ Usage example:
     > import r2pipe
     > r2 = r2pipe.open("/bin/ls")
     > print(r2.cmd("pd 10"))
-
-.. Author:: pancake <pancake@nopcode.org>
-.. Project:: http://www.radare.org/
