@@ -1,4 +1,5 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
+
 # author pancake@nopcode.org
 
 require 'pty'
