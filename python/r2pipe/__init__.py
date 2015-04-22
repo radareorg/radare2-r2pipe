@@ -31,7 +31,7 @@ import json
 import socket
 from subprocess import Popen, PIPE
 
-VERSION="0.6.0"
+VERSION="0.6.1"
 
 if sys.version_info >= (3,0):
 	import urllib.request
