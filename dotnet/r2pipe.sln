@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "r2pipe", "r2pipe\r2pipe.csproj", "{D5B3F257-E13E-42B5-A77E-AA0F809311FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpExample", "HttpExample\HttpExample.csproj", "{46CDE875-0070-4E62-B38D-267375321570}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalExample", "LocalExample\LocalExample.csproj", "{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46CDE875-0070-4E62-B38D-267375321570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CDE875-0070-4E62-B38D-267375321570}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46CDE875-0070-4E62-B38D-267375321570}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46CDE875-0070-4E62-B38D-267375321570}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>r2pipe\r2pipe.csproj</id>
+    <version>1.0.0</version>
+    <authors>radare2</authors>
+    <owners>radare2</owners>
+    <licenseUrl>https://github.com/radare/radare2-bindings/blob/master/COPYING</licenseUrl>
+    <projectUrl>https://github.com/radare/radare2-bindings</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>r2pipe</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2015</copyright>
+    <tags>radare2 r2pipe</tags>
+  </metadata>
+</package>
