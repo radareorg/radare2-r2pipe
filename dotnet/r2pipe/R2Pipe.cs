@@ -1,4 +1,4 @@
-﻿namespace r2pipe
+namespace r2pipe
 {
     using System;
     using System.Collections.Generic;
