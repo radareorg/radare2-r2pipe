@@ -10,19 +10,17 @@ MCS_LIB=$(MCS) -optimize -target:library -out:$(R2P_LIB)
 MCS_LINK=$(MCS) -optimize -reference:$(R2P_LIB)
 
 
-all: $(R2P_LIB) main.exe http.exe
+all: $(R2P_LIB) examples
 
 $(R2P_LIB): 
 	$(XBUILD) r2pipe/r2pipe.csproj
 
-main.exe: main.cs $(R2P_LIB)
-	$(MCS_LINK) main.cs
-
-http.exe: http.cs $(R2P_LIB)
-	$(MCS_LINK) http.cs
+examples:
+	$(XBUILD) LocalExample/LocalExample.csproj
+	$(XBUILD) HttpExample/HttpExample.csproj
 
 run:
-	$(MONO) main.exe
+	$(MONO) LocalExample/bin/Release/LocalExample.exe
 
 clean:
 	rm -f main.exe http.exe $(R2P_LIB)
@@ -33,4 +31,4 @@ nuget:
 indent:
 	for a in *.cs ; do $(MONO) $(NARRANGE) $$a ; done
 
-.PHONY: run all clean indent $(R2P_LIB)
+.PHONY: run all clean indent examples $(R2P_LIB)
