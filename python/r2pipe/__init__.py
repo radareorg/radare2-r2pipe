@@ -31,7 +31,7 @@ import json
 import socket
 from subprocess import Popen, PIPE
 
-VERSION="0.6.3"
+VERSION="0.6.4"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -166,11 +166,13 @@ class open:
 		else:
 			os.write (self.pipe[1], cmd)
 			while True:
-				res = os.read (self.pipe[0], 1024)
+				res = os.read (self.pipe[0], 4096)
+				# chop in last
 				if (len(res)<1):
 					break
 				out += res
 				if res[-1] == b'\x00':
+					out = out[0:-1]
 					break
 		return out.decode('utf-8')
 
