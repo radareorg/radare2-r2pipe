@@ -66,7 +66,7 @@ def version():
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
 	"""
-	def __init__(self, filename, writeable=False, bininfo=True):
+	def __init__(self, filename='', writeable=False, bininfo=True):
 		"""Open a new r2 pipe
 		The 'filename' can be one of the following:
 
