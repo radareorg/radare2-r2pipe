@@ -106,7 +106,9 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run cmd and return plaintext output */
     cmd: function(s, cb2) {
-      if (typeof cb2 !== 'function') cb2 = function () {};
+      if (typeof cb2 !== 'function') {
+        cb2 = function() {};
+      }
       if (typeof r2cmd === 'string') {
         pipeCmd(ls, s, cb2);
       } else if (typeof r2cmd === 'function') {
@@ -115,9 +117,11 @@ function r2bind(ls, cb, r2cmd) {
     },
 
     /* Run cmd and return JSON output */
-    cmdj: function (s, cb2) {
-      if (typeof cb2 !== 'function') cb2 = function () {};
-      r2.cmd(s, function (res) {
+    cmdj: function(s, cb2) {
+      if (typeof cb2 !== 'function') {
+        cb2 = function() {};
+      }
+      r2.cmd(s, function(res) {
         if (res === null) {
           cb2(null);
           return;
@@ -126,7 +130,7 @@ function r2bind(ls, cb, r2cmd) {
         var result;
         try {
           result = JSON.parse(res);
-        } catch (e) {
+        } catch ( e ) {
           result = null;
         } finally {
           cb2(result);
@@ -135,20 +139,25 @@ function r2bind(ls, cb, r2cmd) {
     },
 
     /* Run system cmd */
-    syscmd: function (command, cb2) {
-      if (typeof cb2 !== 'function') cb2 = function () {};
+    syscmd: function(command, cb2) {
+      if (typeof cb2 !== 'function') {
+        cb2 = function() {};
+      }
       var child = proc.exec(command, function(err, stdout, stderr) {
-        if (err)
+        if (err) {
           cb2 (null);
-        else
+        } else {
           cb2 (stdout);
+        }
       });
     },
 
     /* Run system cmd and return JSON output */
-    syscmdj: function (command, cb2) {
-      if (typeof cb2 !== 'function') cb2 = function () {};
-      r2.syscmd(command, function (res) {
+    syscmdj: function(command, cb2) {
+      if (typeof cb2 !== 'function') {
+        cb2 = function() {};
+      }
+      r2.syscmd(command, function(res) {
         if (res === null) {
           cb2(null);
           return;
@@ -157,7 +166,7 @@ function r2bind(ls, cb, r2cmd) {
         var result;
         try {
           result = JSON.parse(res);
-        } catch (e) {
+        } catch ( e ) {
           result = null;
         } finally {
           cb2(result);
@@ -172,7 +181,7 @@ function r2bind(ls, cb, r2cmd) {
     },
 
     /* Custom promises */
-    promise: function (func, cmd, callback) {
+    promise: function(func, cmd, callback) {
       return new promise.Promise(func, cmd, callback);
     }
   };
@@ -253,10 +262,16 @@ var r2node = {
     var OUT = +process.env.R2PIPE_OUT;
 
     var ls = {
-      stdin: fs.createWriteStream (null, {fd: OUT}),
-      stdout: fs.createReadStream (null, {fd: IN}),
+      stdin: fs.createWriteStream (null, {
+        fd: OUT
+      }),
+      stdout: fs.createReadStream (null, {
+        fd: IN
+      }),
       stderr: null,
-      kill: function () { process.exit(0); }
+      kill: function() {
+        process.exit(0);
+      }
     };
 
     r2bind (ls, cb, 'rlangpipe');
@@ -268,6 +283,45 @@ var r2node = {
 
   listen: function(file, cb) {
     // TODO
+  },
+
+  ioplugin: function(cb) {
+    var fs = require ('fs');
+    var nfd_in = +process.env.R2PIPE_IN;
+    var nfd_out = +process.env.R2PIPE_OUT;
+
+    if (!nfd_in || !nfd_out) {
+      console.error ("This script needs to run from radare2 with r2pipe://");
+      process.exit(1);
+    }
+
+    var fd_in = fs.createReadStream(null, {
+      fd: nfd_in
+    });
+    var fd_out = fs.createWriteStream(null, {
+      fd: nfd_out
+    });
+
+    console.log ("[+] Running r2pipe io");
+
+    fd_in.on('end', function() {
+      console.log ("[-] r2pipe-io is over");
+    });
+    function send(obj) {
+      //console.log ("Send Object To R2",obj);
+      fd_out.write (JSON.stringify (obj || {}) + "\x00");
+    }
+
+    fd_in.on('data', function(data) {
+      data = data.slice (0, -1);
+      var obj_in = JSON.parse (data);
+      if (cb) {
+        var me = {
+          'send': send
+        };
+        cb (me, obj_in);
+      }
+    });
   }
 };
 
