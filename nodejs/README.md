@@ -93,6 +93,30 @@ function doSomeStuff(r2) {
 r2pipe.launch ("/bin/ls", doSomeStuff);
 ```
 
+### ioplugin(callback)
+
+Callback for the libr/io/r2pipe plugin interface to write IO plugins using the r2pipe api.
+
+```js
+var r2pipe = require('r2pipe');
+
+r2pipe.ioplugin(function (io, msg) {
+  switch (msg.op) {
+    case 'read':
+      var obj = {
+        result: msg.count,
+        data: [1, 2, 3]
+      };
+      io.send(obj);
+      break;
+    /* ... */
+    default:
+      io.send();
+      break;
+  }
+});
+```
+
 
 ### connect (url, callback)
 
