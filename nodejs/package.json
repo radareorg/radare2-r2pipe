@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "pipe bindings for radare2",
   "main": "index.js",
   "scripts": {
@@ -10,11 +10,14 @@
     "type": "git",
     "url": "https://github.com/radare/radare2-bindings.git"
   },
-   "files": [
+  "files": [
     "README.md",
     "index.js",
     "promise.js",
-    "test-io.js",
+    "sync.js",
+    "examples/test-io.js",
+    "examples/test-pipeSync.js",
+    "examples/test-lpipeSync.js",
     "test.js"
   ],
   "keywords": [
@@ -42,5 +45,8 @@
   "bugs": {
     "url": "https://github.com/radare/radare2-bindings/issues"
   },
-  "homepage": "http://www.radare.org"
+  "homepage": "http://www.radare.org",
+  "optionalDependencies": {
+    "syspipe": "^0.1.4"
+  }
 }

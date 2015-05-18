@@ -4,7 +4,7 @@ r2 r2pipe://"node test-io.js"
 
 */
 
-var r2p = require ("./");
+var r2p = require ("./../");
 
 r2p.ioplugin(function(io, msg) {
   switch (msg.op) {

@@ -2,10 +2,14 @@ var fs = require('fs');
 var net = require('net');
 var http = require('http');
 var proc = require('child_process');
-var promise = require('./promise.js')
+var promise = require('./promise.js');
+var sync = require('./sync.js');
 
 var pipeQueue = [];
 
+
+var IN = parseInt(process.env.R2PIPE_IN);
+var OUT = parseInt(process.env.R2PIPE_OUT);
 
 
 /*
@@ -88,8 +92,22 @@ function pipeCmdOutput(proc, data) {
 }
 
 
-function syscmd(cmd, callback) {
+function parseJSON(func, cmd, callback) {
+  func(cmd, function(res) {
+    var result;
+    if (res === null) {
+      callback(null);
+      return;
+    }
 
+    try {
+      result = JSON.parse(res);
+    } catch ( e ) {
+      result = null;
+    } finally {
+      callback(result);
+    }
+  });
 }
 
 
@@ -121,21 +139,7 @@ function r2bind(ls, cb, r2cmd) {
       if (typeof cb2 !== 'function') {
         cb2 = function() {};
       }
-      r2.cmd(s, function(res) {
-        if (res === null) {
-          cb2(null);
-          return;
-        }
-
-        var result;
-        try {
-          result = JSON.parse(res);
-        } catch ( e ) {
-          result = null;
-        } finally {
-          cb2(result);
-        }
-      });
+      parseJSON(r2.cmd, s, cb2);
     },
 
     /* Run system cmd */
@@ -157,26 +161,13 @@ function r2bind(ls, cb, r2cmd) {
       if (typeof cb2 !== 'function') {
         cb2 = function() {};
       }
-      r2.syscmd(command, function(res) {
-        if (res === null) {
-          cb2(null);
-          return;
-        }
-
-        var result;
-        try {
-          result = JSON.parse(res);
-        } catch ( e ) {
-          result = null;
-        } finally {
-          cb2(result);
-        }
-      });
+      parseJSON(r2.syscmd, command, cb2);
     },
 
     /* Quit CMD */
     quit: function() {
-      ls.stdin.end();
+      if (ls.stdin && ls.stdin.end)
+        ls.stdin.end();
       ls.kill ('SIGINT');
     },
 
@@ -222,7 +213,7 @@ function r2bind(ls, cb, r2cmd) {
 
     ls.on('close', function(code) {
       running = false;
-      if (code != 0) {
+      if (code !== 0) {
         console.log('r2pipe: child process exited with code ' + code);
       }
     });
@@ -258,9 +249,6 @@ var r2node = {
   },
 
   rlangpipe: function(cb) {
-    var IN = +process.env.R2PIPE_IN;
-    var OUT = +process.env.R2PIPE_OUT;
-
     var ls = {
       stdin: fs.createWriteStream (null, {
         fd: OUT
@@ -279,6 +267,38 @@ var r2node = {
 
   lpipe: function(cb) {
     this.rlangpipe(cb);
+  },
+
+  pipeSync: function(file) {
+    var pipe, syspipe;
+    try {
+      syspipe = require('syspipe');
+      pipe = syspipe.pipe();
+    } catch (e) {
+      console.error('ERROR: pipeSync() is not available in this system');
+      process.exit(1);
+    }
+
+    var options = { stdio: ['pipe', pipe.write, 'pipe'] };
+    var ls = proc.spawn('r2', ["-q0", file], options);
+
+    ls.syncStdin = ls.stdin['_handle'].fd;
+    ls.syncStdout = pipe.read;
+
+    return sync.r2bind(ls, 'pipe');
+  },
+
+  lpipeSync: function() {
+    var ls = {
+      syncStdin: OUT,
+      syncStdout: IN,
+      stderr: null,
+      kill: function() {
+        process.exit(0);
+      }
+    };
+
+    return sync.r2bind(ls, 'lpipe');
   },
 
   listen: function(file, cb) {
