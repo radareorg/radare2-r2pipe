@@ -31,7 +31,7 @@ import json
 import socket
 from subprocess import Popen, PIPE
 
-VERSION="0.6.5"
+VERSION="0.6.6"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -53,7 +53,7 @@ if os.name=="nt":
 	ERROR_PIPE_BUSY = 231
 	ERROR_MORE_DATA = 234
 	BUFSIZE = 4096
-	szPipename = "\\\\.\\pipe\\R2PIPE_IN"
+	szPipename = "\\\\.\\pipe\\"
 	chBuf = create_string_buffer(BUFSIZE)
 	cbRead = c_ulong(0)
 	cbWritten = c_ulong(0)
@@ -84,8 +84,9 @@ class open:
 		"""
 		try:
 			if os.name=="nt":
+				mypipename=os.environ['r2pipe_path']
 				while 1:
-					hPipe = windll.kernel32.CreateFileA(szPipename, GENERIC_READ |GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
+					hPipe = windll.kernel32.CreateFileA(szPipename+mypipename, GENERIC_READ |GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
 					if (hPipe != INVALID_HANDLE_VALUE):
 						break
 					else:
