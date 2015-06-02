@@ -15,7 +15,6 @@ function runCmdSync(ls, cmd) {
 
     fs.writeSync(ls.syncStdin, cmd + '\n');
     while ((bread = fs.readSync(ls.syncStdout, buf, 0, BUFLEN, null)) > 0) {
-
         /* check for cmd end */
         if (buf[bread-1] !== 0x00) {
             result += buf.slice(0, bread).toString();

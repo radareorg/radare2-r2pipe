@@ -1,9 +1,9 @@
 var fs = require('fs');
 var net = require('net');
 var http = require('http');
+var sync = require('./sync.js');
 var proc = require('child_process');
 var promise = require('./promise.js');
-var sync = require('./sync.js');
 
 var pipeQueue = [];
 
@@ -227,8 +227,54 @@ function r2bind(ls, cb, r2cmd) {
   }
 }
 
+function ispath(path) {
+  return (text[0] == '.' || text[0] == '/');
+}
 
 var r2node = {
+
+  open: function() {
+    const arg = arguments;
+    switch (arg.length) {
+    case 1:
+      this.rlangpipe (arg[0]);
+      break;
+    case 2:
+      if (ispath (arg[0])) {
+        this.pipe(arg[0], arg[1]);
+      } else if (arg.indexOf('http://')==0) {
+        this.connect(arg[0], arg[1]);
+      } else if (arg.indexOf('io://')==0) {
+        this.connect(arg[0], arg[1]);
+      } else {
+        throw "Unknown uri";
+      }
+      break;
+    default:
+      throw "Invalid parameters";
+    }
+  },
+
+  openSync: function() {
+    const arg = arguments;
+    switch (arg.length) {
+    case 0:
+      return this.lpipeSync();
+    case 1:
+      if (ispath(arg[0])) {
+        return this.pipeSync (arg[0]);
+      } else if (arg.indexOf('http://')==0) {
+        throw "httpsync not supported";
+      } else if (arg.indexOf('io://')==0) {
+        throw "iosync not supported";
+      } else {
+        throw "Unknown uri";
+      }
+      break;
+    default:
+      throw "Invalid parameters";
+    }
+  },
 
   connect: function(uri, cb) {
     var ls = proc.spawn('r2', ["-qc.:" + uri]);
@@ -261,7 +307,6 @@ var r2node = {
         process.exit(0);
       }
     };
-
     r2bind (ls, cb, 'rlangpipe');
   },
 
@@ -275,8 +320,7 @@ var r2node = {
       syspipe = require('syspipe');
       pipe = syspipe.pipe();
     } catch (e) {
-      console.error('ERROR: pipeSync() is not available in this system');
-      process.exit(1);
+      throw 'ERROR: pipeSync() is not available in this system';
     }
 
     var options = { stdio: ['pipe', pipe.write, 'pipe'] };
@@ -311,8 +355,7 @@ var r2node = {
     var nfd_out = +process.env.R2PIPE_OUT;
 
     if (!nfd_in || !nfd_out) {
-      console.error ("This script needs to run from radare2 with r2pipe://");
-      process.exit(1);
+      throw "This script needs to run from radare2 with r2pipe://";
     }
 
     var fd_in = fs.createReadStream(null, {

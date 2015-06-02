@@ -33,6 +33,50 @@ Access methods
 
 There are multiple ways to interact with a radare2 session
 
+### open ([uri], callback)
+
+Runs different connection methods depending on the uri and the number of arguments
+
+```js
+var r2pipe = require('r2pipe');
+
+function doStuff (r2p) {
+  console.log (r2p.cmdj('ij'));
+  r2p.quit();
+}
+
+/* rlang r2pipe script ( r2 -qi foo.js /bin/ls ) */
+r2pipe.open (doStuff);
+
+r2pipe.open ('/bin/ls', doStuff);
+
+r2pipe.open ('http://cloud.radare.org/cmd/', doStuff);
+```
+
+### openSync ([uri])
+
+Runs different synchronous connection methods depending on the uri and the number of arguments
+
+NOTE: only lang and pipe methods supported, no http or so
+
+```js
+var r2pipe = require('r2pipe');
+
+/* sync rlang script */
+try {
+  var r2p = r2pipe.openSync ();
+  console.log (r2p.cmdj('ij'));
+  r2p.quit();
+} catch (e) {
+  console.error (e.message);
+}
+
+/* sync file open */
+var r2p = r2pipe.openSync ('/bin/ls');
+...
+
+```
+
 ### pipe (binfile, callback)
 
 Spawns a new process and comunicate with it through standard stdin, stdout, stderr file descriptors
@@ -254,7 +298,6 @@ This is a small example using the pipe connection method for standalone scripts.
 ```js
 var r2pipe = require ("r2pipe");
 
-
 function doSomeStuff(r2) {
 
   r2.cmdj ("aij entry0+2", function(o) {
@@ -269,7 +312,6 @@ function doSomeStuff(r2) {
   });
 
 }
-
 
 r2pipe.pipe ("/bin/ls", doSomeStuff);
 r2pipe.launch ("/bin/ls", doSomeStuff);
