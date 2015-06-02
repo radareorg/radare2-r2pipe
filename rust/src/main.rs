@@ -21,6 +21,7 @@ fn getenv(k: &str) -> i32 {
   }
 }
 
+fn rlang() {
   let fd_in = 9; //getenv("R2PIPE_IN");
   let fd_out = 12; //getenv("R2PIPE_OUT");
 
@@ -56,6 +57,8 @@ fn getenv(k: &str) -> i32 {
     libc::close (fd_in);
     libc::close (fd_out);
   }
+}
+
 fn main() {
-  r2pipe::new
+  rlang();
 }
