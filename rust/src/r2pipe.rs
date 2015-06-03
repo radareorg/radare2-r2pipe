@@ -109,7 +109,7 @@ impl R2Pipe {
 			.stdout(Stdio::piped())
 			.spawn() {
                 Ok(c) => c,
-                Err(e) => return Err("Unable to spawn r2."),
+                Err(_) => return Err("Unable to spawn r2."),
             };
 
 		let sin: process::ChildStdin;
