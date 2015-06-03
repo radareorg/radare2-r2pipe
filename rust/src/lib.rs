@@ -47,12 +47,12 @@ fn getenv(k: &str) -> i32 {
 
 impl R2Pipe {
 	pub fn open() -> R2PipeLang {
-        let (fin, fout) = match R2Pipe::in_session() {
-            Some(x) => x,
-            None => panic!("Please run from r2"),
-        };
-		
-        R2PipeLang {
+		let (fin, fout) = match R2Pipe::in_session() {
+			Some(x) => x,
+			None => panic!("Please run from r2"),
+		};
+
+		R2PipeLang {
 			fd_in: fin,
 			fd_out: fout
 		}
@@ -64,7 +64,7 @@ impl R2Pipe {
 		let fout = getenv("R2PIPE_OUT");
 
 		if fin == 0 || fout == 0 {
-            return None;
+			return None;
 		}
 
 		return Some((fin, fout));
@@ -74,12 +74,12 @@ impl R2Pipe {
 		let name = _name.to_string();
 		let path = Path::new(&*name);
 		let child = Command::new("r2")
-                            .arg("-q0")
-                            .arg(path)
-                            .stdin(Stdio::piped())
-                            .stdout(Stdio::piped())
-                            .spawn()
-                            .unwrap_or_else( |e| { panic!("failed to execute child: {}", e) });
+			.arg("-q0")
+			.arg(path)
+			.stdin(Stdio::piped())
+			.stdout(Stdio::piped())
+			.spawn()
+			.unwrap_or_else( |e| { panic!("failed to execute child: {}", e) });
 
 		let sin: process::ChildStdin;
 		let mut sout: process::ChildStdout;
@@ -102,7 +102,7 @@ impl R2Pipe {
 impl R2PipeSpawn {
 	pub fn cmdj(&mut self, cmd: &str) -> Json {
 		let res = &self.cmd(cmd).replace("\n","");
-        Json::from_str(res).unwrap()
+		Json::from_str(res).unwrap()
 	}
 
 	pub fn cmd(&mut self, cmd: &str) -> String {
@@ -113,8 +113,8 @@ impl R2PipeSpawn {
 		// Read in block size of 2048.
 		let mut s = [0; 2048];
 		let mut res: String = String::new();
-		
-        loop { 
+
+		loop { 
 			let count = self.read.read(&mut s).unwrap();
 			for c in s[..count].iter() {
 				res = res + &*format!("{}", *c as char);
@@ -124,9 +124,9 @@ impl R2PipeSpawn {
 			}
 		}
 
-        let len = res.len() - 1;
+		let len = res.len() - 1;
 		res.truncate(len); //[0..count];
-        res
+		res
 	}
 
 	pub fn close(&mut self) {
