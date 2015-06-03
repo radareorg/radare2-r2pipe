@@ -5,3 +5,4 @@ authors = ["pancake", "sushant94"]
 
 [dependencies]
 libc = "*"
+rustc-serialize = "*"
