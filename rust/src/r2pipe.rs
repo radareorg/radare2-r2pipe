@@ -58,8 +58,8 @@ impl R2Pipe {
 			None => return Err("Pipe not open. Please run from r2"),
 		};
 
-        let _res = R2PipeLang { fd_in: fin, fd_out: fout };
-        Ok(R2Pipe::Lang(_res))
+		let _res = R2PipeLang { fd_in: fin, fd_out: fout };
+		Ok(R2Pipe::Lang(_res))
 	}
 
 	pub fn cmd(&mut self, cmd: &str) -> String {
@@ -108,9 +108,9 @@ impl R2Pipe {
 			.stdin(Stdio::piped())
 			.stdout(Stdio::piped())
 			.spawn() {
-                Ok(c) => c,
-                Err(_) => return Err("Unable to spawn r2."),
-            };
+				Ok(c) => c,
+				Err(_) => return Err("Unable to spawn r2."),
+			};
 
 		let sin: process::ChildStdin;
 		let mut sout: process::ChildStdout;
@@ -123,10 +123,10 @@ impl R2Pipe {
 			sout.read(&mut w).unwrap();
 		}
 
-        let _res = R2PipeSpawn {
-            read: sout,
-            write: sin
-        };
+		let _res = R2PipeSpawn {
+			read: sout,
+			write: sin
+		};
 
 		Ok(R2Pipe::Pipe(_res))
 	}
