@@ -227,7 +227,7 @@ function r2bind(ls, cb, r2cmd) {
   }
 }
 
-function ispath(path) {
+function ispath(text) {
   return (text[0] == '.' || text[0] == '/');
 }
 
