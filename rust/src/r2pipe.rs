@@ -1,3 +1,7 @@
+//! Provides functionality to connect with radare2.
+//!
+//! Please check crate level documentation for more details and example.
+
 extern crate libc;
 use self::libc::{ c_void };
 use rustc_serialize::json::Json;
@@ -10,16 +14,19 @@ use std::str;
 use std::path::Path;
 use std::io::prelude::*;
 
+/// File descriptors to the parent r2 process.
 pub struct R2PipeLang {
 	fd_in: i32,
 	fd_out: i32
 }
 
+/// Stores descriptors to the spawned r2 process.
 pub struct R2PipeSpawn {
 	read: process::ChildStdout,
 	write: process::ChildStdin,
 }
 
+/// Provides abstraction between the two invocation methods.
 pub enum R2Pipe {
 	Pipe(R2PipeSpawn),
 	Lang(R2PipeLang),
@@ -37,12 +44,6 @@ fn getenv(k: &str) -> i32 {
 		Ok(val) => atoi(&val),
 		Err(_) => 0,
 	}
-}
-
-pub trait R2Connect {
-	fn cmd(&mut self, cmd: &str) -> String;
-	fn cmdj(&mut self, cmd: &str) -> Json;
-	fn close(&mut self);
 }
 
 #[macro_export]
@@ -95,6 +96,7 @@ impl R2Pipe {
 		return Some((fin, fout));
 	}
 
+    /// Creates a new R2PipeSpawn.
 	pub fn spawn(_name: &str) -> Result<R2Pipe, &'static str> {
 		if let Some(_) = R2Pipe::in_session() {
 			return R2Pipe::open();
@@ -132,8 +134,8 @@ impl R2Pipe {
 	}
 }
 
-impl R2Connect for R2PipeSpawn {
-	fn cmd(&mut self, cmd: &str) -> String {
+impl R2PipeSpawn {
+	pub fn cmd(&mut self, cmd: &str) -> String {
 		let cmd_ = cmd.to_owned() + "\n";
 		if let Err(e) = self.write.write(cmd_.as_bytes()) {
 			panic!("{}", e);
@@ -157,18 +159,18 @@ impl R2Connect for R2PipeSpawn {
 		res
 	}
 
-	fn cmdj(&mut self, cmd: &str) -> Json {
+	pub fn cmdj(&mut self, cmd: &str) -> Json {
 		let res = &self.cmd(cmd).replace("\n","");
 		Json::from_str(res).unwrap()
 	}
 
-	fn close(&mut self) {
+	pub fn close(&mut self) {
 		self.cmd("q!");
 	}
 }
 
-impl R2Connect for R2PipeLang {
-	fn cmd(&mut self, cmd: &str) -> String {
+impl R2PipeLang {
+	pub fn cmd(&mut self, cmd: &str) -> String {
 		let buf: [u8; 1024] = [0;1024];
 		unsafe {
 			libc::write (self.fd_out, cmd.as_ptr() as *const c_void, cmd.len() as u64);
@@ -180,12 +182,12 @@ impl R2Connect for R2PipeLang {
 		}
 	}
 
-	fn cmdj(&mut self, cmd: &str) -> Json {
+	pub fn cmdj(&mut self, cmd: &str) -> Json {
 		let res = &self.cmd(cmd).replace("\n","");
 		Json::from_str(res).unwrap()
 	}
 
-	fn close(&mut self) {
+	pub fn close(&mut self) {
 		unsafe {
 			libc::close (self.fd_in);
 			libc::close (self.fd_out);

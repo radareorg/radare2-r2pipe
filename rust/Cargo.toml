@@ -3,6 +3,17 @@ name = "r2pipe"
 version = "0.1.0"
 authors = ["pancake", "sushant94"]
 
+description = "Library to interact with radare2 using r2pipes."
+
+# Repository
+repository = "https://github.com/radare/radare2-bindings/tree/master/r2pipe/rust"
+
+# Readme link
+readme = "README.md"
+
+# License information
+license = "MIT"
+
 [dependencies]
 libc = "*"
 rustc-serialize = "*"
