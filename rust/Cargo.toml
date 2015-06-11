@@ -1,0 +1,26 @@
+[package]
+name = "r2pipe"
+version = "0.1.0"
+authors = ["pancake", "sushant94 <sushant.dinesh94@gmail.com>"]
+
+description = "Library to interact with radare2 using r2pipes."
+
+# Repository
+repository = "https://github.com/radare/r2pipe.rs"
+documentation = "https://radare.github.io/r2pipe.rs/"
+
+keywords = ["r2", "debugger", "hex", "editor", "radare", "radare2", "reverse engineering"]
+
+# Readme link
+readme = "README.md"
+
+# License information
+license = "MIT"
+
+[dependencies.libc]
+doc = "false"
+libc = "*"
+
+[dependencies.rustc-serialize]
+doc = "false"
+rustc-serialize = "*"
