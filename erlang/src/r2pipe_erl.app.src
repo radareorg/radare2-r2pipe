@@ -1,0 +1,11 @@
+{application, r2pipe_erl,
+ [
+  {description, "Erlang radare2 pipe bindings"},
+  {vsn, "0.0.1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.

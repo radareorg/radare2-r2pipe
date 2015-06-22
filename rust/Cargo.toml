@@ -9,7 +9,7 @@ description = "Library to interact with radare2 using r2pipes."
 repository = "https://github.com/radare/r2pipe.rs"
 documentation = "https://radare.github.io/r2pipe.rs/"
 
-keywords = ["r2", "debugger", "hex", "editor", "radare", "radare2", "reverse engineering"]
+keywords = ["r2", "debugger", "hex" , "editor", "radare"]
 
 # Readme link
 readme = "README.md"
