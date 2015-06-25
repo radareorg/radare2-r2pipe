@@ -1,0 +1,9 @@
+{ 
+	"name": "r2pipe-ircbot",
+	"version": "0.0.1",
+	"dependencies": {
+		"r2pipe": "*",
+		"optimist": "*",
+		"irc.js": "*"
+	}
+}
