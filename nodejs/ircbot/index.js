@@ -56,6 +56,8 @@ r2p.launch("/bin/ls", startIrcBot);
 
 function startIrcBot(r2) {
 	r2.cmd("e cfg.sandbox=true");
+	r2.cmd("e scr.color=false");
+	r2.cmd("e scr.interactive=false");
 
 	print (Chi, "[=>] Connecting to irc ",Cend)
 	print (Chi, "     HOST: ", host, ":", port, Cend)
