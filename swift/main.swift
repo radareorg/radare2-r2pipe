@@ -1,6 +1,6 @@
 import Foundation
 
-println("Hello r2pipe.swift!");
+print("Hello r2pipe.swift!");
 
 let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/");
 if (r2p != nil) {

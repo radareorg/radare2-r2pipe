@@ -8,8 +8,8 @@ enum R2PipeChannel {
 
 extension String {
 	func URLEncodedString() -> String? {
-		var customAllowedSet =  NSCharacterSet.URLQueryAllowedCharacterSet()
-		var escapedString = self.stringByAddingPercentEncodingWithAllowedCharacters(customAllowedSet)
+		let customAllowedSet =  NSCharacterSet.URLQueryAllowedCharacterSet()
+		let escapedString = self.stringByAddingPercentEncodingWithAllowedCharacters(customAllowedSet)
 		return escapedString
 	}
 	func ToR2WebURL(str:String) -> String {
@@ -39,7 +39,7 @@ class R2Pipe {
 		let url = NSURL(string: urlstr);
 		let request = NSURLRequest(URL: url!)
 		NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
-			let str = NSString(data: data, encoding: NSUTF8StringEncoding)
+			let str = NSString(data: data!, encoding: NSUTF8StringEncoding)
 			closure (str as! String);
 		}
 		return true;
