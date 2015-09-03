@@ -1,7 +1,7 @@
 #if HAVE_SPAWN
 import Foundation
 
-struct Stack<T> {
+private struct Stack<T> {
 	var items = [T]()
 	mutating func push(item:T) {
 		items.append (item);
@@ -17,15 +17,14 @@ struct Stack<T> {
 typealias Closure = (String)->Void
 
 class R2PipeSpawn {
-	var stack = Stack<Closure>();
-	let pipe = NSPipe()
-	let pipeIn = NSPipe()
-	let task = NSTask()
-	var bufferedString = "";
-	let inHandle:NSFileHandle;
-	/* state */
 	var taskNotLaunched = true;
 	var initState = true;
+	private var stack = Stack<Closure>();
+	private let pipe = NSPipe()
+	private let pipeIn = NSPipe()
+	private let task = NSTask()
+	private var bufferedString = "";
+	private let inHandle:NSFileHandle;
 
 	init?(file:String) {
 		let outHandle:NSFileHandle;
@@ -67,7 +66,6 @@ class R2PipeSpawn {
 								self.bufferedString += str as String;
 								self.runCallback (self.bufferedString);
 								self.bufferedString = "";
-
 							} else {
 								print ("ERROR")
 							}
@@ -79,7 +77,7 @@ class R2PipeSpawn {
 						pointer = UnsafePointer<UInt8>(newBytes)
 						buffer = UnsafeBufferPointer<UInt8>(start:pointer, count:count)
 
-						if count<1 {
+						if count < 1 {
 							break;
 						}
 						foundTerminator = false;
@@ -135,7 +133,7 @@ class R2PipeSpawn {
 		if (self.taskNotLaunched) {
 			task.launch()
 			self.taskNotLaunched = false;
-			//self.initState = true;
+			self.initState = true;
 		}
 		return true;
 	}
@@ -153,7 +151,7 @@ class R2PipeSpawn {
 				return r;
 			}
 			let next = NSDate(timeIntervalSinceNow:0.1)
-				NSRunLoop.currentRunLoop().runUntilDate(next);
+			NSRunLoop.currentRunLoop().runUntilDate(next);
 		}
 		return nil;
 	}

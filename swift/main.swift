@@ -7,6 +7,7 @@ private func log (a:String, b:String) {
 }
 
 #if HAVE_SPAWN
+
 private func testSpawn () {
 	print ("Testing r2pipe spawn method");
 	if let r2p = R2Pipe(url:"/bin/ls") {
@@ -23,7 +24,9 @@ private func testSpawn () {
 		print ("ERROR: spawn not working\n");
 	}
 }
+
 #else
+
 private func testSpawn () {
 	print ("ERROR: Compiled without spawn support")
 }
@@ -41,7 +44,6 @@ private func testHttp() {
 		r2p.cmd("pi 5 @ entry0", closure:{
 			(str:String)->() in
 			log ("http-async", b: str);
-
 			exit (0);
 		});
 	} else {

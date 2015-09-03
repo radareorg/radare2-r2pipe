@@ -21,7 +21,7 @@ And optionally supports to parse JSON
 
 Example
 -------
-```
+```swift
 if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
 	if let str = r2p.cmdSync ("?V") {
 		print ("Version: \(str)");
