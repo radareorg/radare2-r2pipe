@@ -1,6 +1,6 @@
 import Foundation
 #if HAVE_SPAWN
-//import r2PipeSpawn
+//import r2PipeNative
 #endif
 #if USE_SWIFTY_JSON
 import SwiftyJSON
@@ -9,7 +9,7 @@ import SwiftyJSON
 enum R2PipeChannel {
 	case Unknown
 	case Http
-	case Spawn
+	case Native
 	case Env
 }
 
@@ -32,31 +32,31 @@ class R2Pipe {
 	var mode : R2PipeChannel = .Unknown;
 	var path = "";
 #if HAVE_SPAWN
-	var r2pipeSpawn : R2PipeSpawn? = nil;
+	var r2p : R2PipeNative? = nil;
 #endif
 
-	init?(url: String) {
-		if url == "#!pipe" {
+	init?(url: String?) {
+		if url == nil || url == "#!pipe" {
 #if USE_ENV_PIPE
 			mode = .Env
-			self.r2pipeSpawn = R2PipeSpawn(file:nil);
-			if self.r2pipeSpawn == nil {
+			self.r2p = R2PipeNative(file:nil);
+			if self.r2p == nil {
 				return nil;
 			}
 #else
 			return nil;
 #endif
-		} else if url.rangeOfString("://") != nil {
-			if url.hasPrefix ("http://")
-			|| url.hasPrefix ("https://") {
+		} else if url!.rangeOfString("://") != nil {
+			if url!.hasPrefix ("http://")
+			|| url!.hasPrefix ("https://") {
 				mode = .Http
-				path = url
+				path = url!
 			}
 		} else {
 #if HAVE_SPAWN
-			mode = .Spawn
-			path = url
-			self.r2pipeSpawn = R2PipeSpawn(file:url)
+			mode = .Native
+			path = url!
+			self.r2p = R2PipeNative(file:url!)
 #else
 			return nil
 #endif
@@ -107,8 +107,8 @@ class R2Pipe {
 		switch (mode) {
 		case .Http:
 			return cmdHttp(str, closure:closure);
-		case .Spawn, .Env:
-			if let r2p = self.r2pipeSpawn {
+		case .Native, .Env:
+			if let r2p = self.r2p {
 				return r2p.sendCommand (str, closure:closure);
 			} else {
 				return false;
@@ -122,8 +122,8 @@ class R2Pipe {
 		switch (mode) {
 		case .Http:
 			return cmdHttpSync(str);
-		case .Spawn, .Env:
-			if let r2p = self.r2pipeSpawn {
+		case .Native, .Env:
+			if let r2p = self.r2p {
 				return r2p.sendCommandSync(str);
 			} else {
 				return nil;

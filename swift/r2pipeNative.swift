@@ -16,7 +16,7 @@ private struct Stack<T> {
 
 typealias Closure = (String)->Void
 
-class R2PipeSpawn {
+class R2PipeNative {
 	var taskNotLaunched = true;
 	var initState = true;
 	private var stack = Stack<Closure>();

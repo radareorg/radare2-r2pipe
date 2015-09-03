@@ -58,7 +58,7 @@ private func testHttp() {
 
 print("Hello r2pipe.swift!");
 
-if let r2p = R2Pipe(url:"#!pipe") {
+if let r2p = R2Pipe(url:nil) { //"#!pipe") {
 	r2p.cmd ("?V", closure:{
 		(str:String) in
 		print ("R2PIPE.SWIFT: \(str)");
