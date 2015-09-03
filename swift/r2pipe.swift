@@ -34,16 +34,13 @@ class R2Pipe {
 #if HAVE_SPAWN
 	var r2pipeSpawn : R2PipeSpawn? = nil;
 #endif
-#if USE_ENV_PIPE
-	var r2pipeEnv : R2PipeEnv? = nil;
-#endif
 
 	init?(url: String) {
 		if url == "#!pipe" {
 #if USE_ENV_PIPE
 			mode = .Env
-			self.r2pipeEnv = R2PipeEnv();
-			if self.r2pipeEnv == nil {
+			self.r2pipeSpawn = R2PipeSpawn(file:nil);
+			if self.r2pipeSpawn == nil {
 				return nil;
 			}
 #else
@@ -110,14 +107,8 @@ class R2Pipe {
 		switch (mode) {
 		case .Http:
 			return cmdHttp(str, closure:closure);
-		case .Spawn:
+		case .Spawn, .Env:
 			if let r2p = self.r2pipeSpawn {
-				return r2p.sendCommand (str, closure:closure);
-			} else {
-				return false;
-			}
-		case .Env:
-			if let r2p = self.r2pipeEnv {
 				return r2p.sendCommand (str, closure:closure);
 			} else {
 				return false;
@@ -131,14 +122,8 @@ class R2Pipe {
 		switch (mode) {
 		case .Http:
 			return cmdHttpSync(str);
-		case .Spawn:
+		case .Spawn, .Env:
 			if let r2p = self.r2pipeSpawn {
-				return r2p.sendCommandSync(str);
-			} else {
-				return nil;
-			}
-		case .Env:
-			if let r2p = self.r2pipeEnv {
 				return r2p.sendCommandSync(str);
 			} else {
 				return nil;

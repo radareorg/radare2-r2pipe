@@ -23,7 +23,6 @@ endif
 SWIFTFLAGS=
 ifeq ($(USE_ENV_PIPE),1)
 SWIFTFLAGS+=-D USE_ENV_PIPE
-SWIFT_FILES+=r2pipeEnv.swift
 endif
 ifeq ($(HAVE_SPAWN),1)
 SWIFTFLAGS+=-D HAVE_SPAWN

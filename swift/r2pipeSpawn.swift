@@ -24,17 +24,43 @@ class R2PipeSpawn {
 	private let pipeIn = NSPipe()
 	private let task = NSTask()
 	private var bufferedString = "";
-	private let inHandle:NSFileHandle;
+	private var inHandle:NSFileHandle? = nil;
 
-	init?(file:String) {
+	init?(file:String?) {
 		let outHandle:NSFileHandle;
-		task.launchPath = "/usr/bin/radare2"
-		task.arguments = ["-q0", file]
-		 
-		task.standardOutput = pipe
-		task.standardInput = pipeIn
-		outHandle = pipe.fileHandleForReading
-		inHandle = pipeIn.fileHandleForWriting
+		if file == nil {
+#if USE_ENV_PIPE
+			let dict = NSProcessInfo.processInfo().environment
+				let env_IN = dict["R2PIPE_IN"] as String?
+				let env_OUT = dict["R2PIPE_OUT"] as String?
+
+				// print ("PIPES \(env_IN) \(env_OUT)");
+				if env_IN == nil || env_OUT == nil {
+					return nil;
+				}
+			let fd_IN = Int32(env_IN!);
+			let fd_OUT = Int32(env_OUT!);
+			if fd_IN == nil || fd_OUT == nil {
+				return nil;
+			}
+			if fd_IN < 0 || fd_OUT < 0 {
+				return nil;
+			}
+			initState = false;
+			taskNotLaunched = false;
+			outHandle = NSFileHandle(fileDescriptor:fd_IN!)
+			inHandle = NSFileHandle(fileDescriptor:fd_OUT!)
+#else
+			return nil;
+#endif
+		} else {
+			task.launchPath = "/usr/bin/radare2";
+			task.arguments = ["-q0", file!]
+			task.standardOutput = pipe
+			task.standardInput = pipeIn
+			outHandle = pipe.fileHandleForReading
+			inHandle = pipeIn.fileHandleForWriting
+		}
 		outHandle.waitForDataInBackgroundAndNotify()
 		NSNotificationCenter.defaultCenter()
 				.addObserverForName(NSFileHandleDataAvailableNotification,
@@ -127,7 +153,7 @@ class R2PipeSpawn {
 	func sendCommand(str:String, closure:Closure) -> Bool{
 		let cmd = str + "\n";
 		if let data = cmd.dataUsingEncoding(NSUTF8StringEncoding) {
-			inHandle.writeData (data)
+			inHandle!.writeData (data)
 			stack.push (closure);
 		}
 		if (self.taskNotLaunched) {
