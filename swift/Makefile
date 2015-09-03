@@ -7,6 +7,7 @@ SWIFT_FILES=r2pipe.swift
 
 HAVE_SPAWN=1
 USE_NSURL_SESSION=0
+USE_ENV_PIPE=1
 
 ifeq ($(TARGET),ios)
 SDK=iphoneos
@@ -20,9 +21,13 @@ SDK=macosx
 endif
 
 SWIFTFLAGS=
+ifeq ($(USE_ENV_PIPE),1)
+SWIFTFLAGS+=-D USE_ENV_PIPE
+SWIFT_FILES+=r2pipeEnv.swift
+endif
 ifeq ($(HAVE_SPAWN),1)
 SWIFTFLAGS+=-D HAVE_SPAWN
-SWIFT_FILES+=r2pipeSPawn.swift
+SWIFT_FILES+=r2pipeSpawn.swift
 endif
 ifeq ($(USE_NSURL_SESSION),1)
 SWIFTFLAGS+=-D USE_NSURL_SESSION

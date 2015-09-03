@@ -11,6 +11,7 @@ This API provides support to run commands in r2 using different channels:
 
 * http
 * spawn
+* pipe
 
 And can be accessed:
 
@@ -21,6 +22,9 @@ And optionally supports to parse JSON
 
 Example
 -------
+
+This example shows how to use the sync and async APIs for HTTP:
+
 ```swift
 if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
 	if let str = r2p.cmdSync ("?V") {
@@ -33,6 +37,29 @@ if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
 		print ("Disasm:\n\(str)");
 	});
 }
+```
+
+But Swift also supports the R2Pipe Env interface:
+
+```swift
+if let r2p = R2Pipe(url:"#!pipe") {
+	r2p.cmd ("?V", closure:{
+		(str:String) in
+		print ("R2PIPE.SWIFT: \(str)");
+		exit (0);
+	});
+	NSRunLoop.currentRunLoop().run();
+} else {
+	print ("Invalid R2PIPE_{IN|OUT} environment")
+}
+```
+
+Which can be executed from inside r2:
+
+```
+$ r2 -qc '#!pipe ./main' -
+Hello r2pipe.swift!
+R2PIPE.SWIFT: 0.10.0-git aka 0.9.9-790-gccd2e51 commit 8899
 ```
 
 Compilation

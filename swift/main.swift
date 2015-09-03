@@ -1,5 +1,6 @@
 import Foundation
 
+
 private func log (a:String, b:String) {
 	let Color = "\u{001b}[32m"
 	let Reset = "\u{001b}[0m"
@@ -56,8 +57,19 @@ private func testHttp() {
 /* ---------------------------- */
 
 print("Hello r2pipe.swift!");
-testSpawn();
-testHttp();
+
+if let r2p = R2Pipe(url:"#!pipe") {
+	r2p.cmd ("?V", closure:{
+		(str:String) in
+		print ("R2PIPE.SWIFT: \(str)");
+		exit (0);
+	});
+	NSRunLoop.currentRunLoop().run();
+} else {
+	print ("Invalid R2PIPE_{IN|OUT} environment")
+	testSpawn();
+	testHttp();
+}
 
 /* main loop required for async network requests */
 NSRunLoop.currentRunLoop().run();
