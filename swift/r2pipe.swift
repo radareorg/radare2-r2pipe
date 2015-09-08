@@ -34,12 +34,16 @@ class R2Pipe {
 
 	init?(url: String?) {
 		if url == nil || url == "#!pipe" {
+#if HAVE_SPAWN
 #if USE_ENV_PIPE
 			mode = .Env
 			self.r2p = R2PipeNative(file:nil);
 			if self.r2p == nil {
 				return nil;
 			}
+#else
+			return nil;
+#endif
 #else
 			return nil;
 #endif
@@ -71,7 +75,6 @@ class R2Pipe {
 			closure (str as! String);
 		})
 #else
-		let ret = false;
 		NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
 			if let d = data {
 				let str = NSString(data: d, encoding: NSUTF8StringEncoding)
@@ -110,15 +113,12 @@ class R2Pipe {
 		case .Http:
 			return cmdHttp(str, closure:closure);
 		case .Native, .Env:
-            #if HAVE_SPAWN
+#if HAVE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommand (str, closure:closure);
-			} else {
-				return false;
 			}
-                #else
-                return false;
-                #endif
+#endif
+			return false;
 		default:
 			return false;
 		}
@@ -129,13 +129,11 @@ class R2Pipe {
 		case .Http:
 			return cmdHttpSync(str);
 		case .Native, .Env:
-            #if HAVE_SPAWN
+#if HAVE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommandSync(str);
-			} else {
-				return nil;
 			}
-                #endif
+#endif
             return nil;
 		default:
 			return nil;
@@ -153,7 +151,7 @@ class R2Pipe {
 
 	func cmdj(str:String, closure:(NSDictionary)->()) -> Bool {
 		cmd (str, closure:{
-			(s:String)->() in
+			(s:String?)->() in
 			if let js = JSON (obj) {
 				closure (js)
 			}
@@ -184,11 +182,15 @@ class R2Pipe {
 		return nil;
 	}
 
-	func cmdj(str:String, closure:(NSDictionary)->()) -> Bool {
+	func cmdj(str:String, closure:(NSDictionary?)->()) -> Bool {
 		cmd (str, closure:{
-			(s:String)->() in
-			if let obj = self.jsonParse (s) {
-				closure (obj);
+			(s:String?)->() in
+			if (s != nil) {
+				if let obj = self.jsonParse (s!) {
+					closure (obj);
+				}
+			} else {
+				closure(nil);
 			}
 		});
 		return true;

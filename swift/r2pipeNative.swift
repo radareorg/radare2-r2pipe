@@ -14,7 +14,7 @@ private struct Stack<T> {
 	}
 }
 
-typealias Closure = (String)->Void
+typealias Closure = (String?)->Void
 
 class R2PipeNative {
 	var taskNotLaunched = true;
@@ -168,7 +168,7 @@ class R2PipeNative {
 		let timeout = 10000000;
 		var result:String? = nil;
 		self.sendCommand (str, closure:{
-			(str:String) in
+			(str:String?) in
 			result = str
 		})
 		for (var i = 0; i<timeout; i++) {
