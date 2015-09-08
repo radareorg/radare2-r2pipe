@@ -18,8 +18,12 @@ private func testSpawn () {
 			print ("ERROR: spawnCmdSync");
 		}
 		r2p.cmd("pd 5 @ entry0", closure:{
-			(str:String)->() in
-			log("spawn-async", b:str)
+			(str:String?)->() in
+			if let s = str {
+				log("spawn-async", b:s)
+			} else {
+				log("Error", b:"Network error");
+			}
 		});
 	} else {
 		print ("ERROR: spawn not working\n");
@@ -43,8 +47,12 @@ private func testHttp() {
 			print ("ERROR: HTTP Sync Call failed");
 		}
 		r2p.cmd("pi 5 @ entry0", closure:{
-			(str:String)->() in
-			log ("http-async", b: str);
+			(str:String?)->() in
+			if let s = str {
+				log ("http-async", b: s);
+			} else {
+				log ("error", b: "network");
+			}
 			exit (0);
 		});
 	} else {
@@ -60,9 +68,14 @@ print("Hello r2pipe.swift!");
 
 if let r2p = R2Pipe(url:nil) { //"#!pipe") {
 	r2p.cmd ("?V", closure:{
-		(str:String) in
-		print ("R2PIPE.SWIFT: \(str)");
-		exit (0);
+		(str:String?) in
+		if let s = str {
+			print ("R2PIPE.SWIFT: \(str)");
+			exit (0);
+		} else {
+			debugPrint ("R2PIPE. Error");
+			exit (1);
+		}
 	});
 	NSRunLoop.currentRunLoop().run();
 } else {

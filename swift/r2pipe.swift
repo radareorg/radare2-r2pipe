@@ -1,7 +1,4 @@
 import Foundation
-#if HAVE_SPAWN
-//import r2PipeNative
-#endif
 #if USE_SWIFTY_JSON
 import SwiftyJSON
 #endif
@@ -63,7 +60,7 @@ class R2Pipe {
 		}
 	}
 
-	func cmdHttp(str: String, closure:(String)->()) -> Bool {
+	func cmdHttp(str: String, closure:(String?)->()) -> Bool {
 		let urlstr = self.path.ToR2WebURL(str);
 		let url = NSURL(string: urlstr);
 		let request = NSURLRequest(URL: url!)
@@ -74,9 +71,14 @@ class R2Pipe {
 			closure (str as! String);
 		})
 #else
+		let ret = false;
 		NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
-			let str = NSString(data: data!, encoding: NSUTF8StringEncoding)
-			closure (str as! String);
+			if let d = data {
+				let str = NSString(data: d, encoding: NSUTF8StringEncoding)
+				closure (str as String?);
+			} else {
+				closure (nil);
+			}
 		}
 #endif
 		return true;
@@ -103,16 +105,20 @@ class R2Pipe {
 		return nil;
 	}
 
-	func cmd(str:String, closure:(String)->()) -> Bool {
+	func cmd(str:String, closure:(String?)->()) -> Bool {
 		switch (mode) {
 		case .Http:
 			return cmdHttp(str, closure:closure);
 		case .Native, .Env:
+            #if HAVE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommand (str, closure:closure);
 			} else {
 				return false;
 			}
+                #else
+                return false;
+                #endif
 		default:
 			return false;
 		}
@@ -123,11 +129,14 @@ class R2Pipe {
 		case .Http:
 			return cmdHttpSync(str);
 		case .Native, .Env:
+            #if HAVE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommandSync(str);
 			} else {
 				return nil;
 			}
+                #endif
+            return nil;
 		default:
 			return nil;
 		}
