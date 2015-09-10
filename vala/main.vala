@@ -1,4 +1,3 @@
-
 public static int main (string[] args) {
 	MainLoop loop = new MainLoop ();
 	var r2p = new R2Pipe ("/bin/ls");
