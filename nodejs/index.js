@@ -323,7 +323,7 @@ var r2node = {
       throw 'ERROR: pipeSync() is not available in this system';
     }
 
-    var options = { stdio: ['pipe', pipe.write, 'pipe'] };
+    var options = { stdio: ['pipe', pipe.write, 'ignore'] };
     var ls = proc.spawn('r2', ["-q0", file], options);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
