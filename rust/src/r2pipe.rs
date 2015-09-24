@@ -2,27 +2,29 @@
 //!
 //! Please check crate level documentation for more details and example.
 
-extern crate libc;
-use self::libc::{ c_void };
+use std::os::unix::io::FromRawFd;
 use rustc_serialize::json::Json;
 
+use libc;
 use std::process::Command;
 use std::process::Stdio;
 use std::process;
 use std::env;
 use std::str;
 use std::path::Path;
+use std::fs::File;
 use std::io::prelude::*;
+use std::io::BufReader;
 
 /// File descriptors to the parent r2 process.
 pub struct R2PipeLang {
-	fd_in: i32,
-	fd_out: i32
+	read: BufReader<File>,
+	write: File,
 }
 
 /// Stores descriptors to the spawned r2 process.
 pub struct R2PipeSpawn {
-	read: process::ChildStdout,
+	read: BufReader<process::ChildStdout>,
 	write: process::ChildStdin,
 }
 
@@ -35,21 +37,40 @@ pub enum R2Pipe {
 fn atoi(k: &str) -> i32 {
 	match k.parse::<i32>() {
 		Ok(val) => val,
-		Err(_) => 0
+		Err(_) => -1 
 	}
 }
 
 fn getenv(k: &str) -> i32 {
 	match env::var(k) {
 		Ok(val) => atoi(&val),
-		Err(_) => 0,
+		Err(_) => -1,
 	}
+}
+
+fn process_result(res:Vec<u8>) -> Result<String, String> {
+	let len = res.len();
+	let out = if len > 0 {
+		let res_without_zero = &res[..len-1];
+		if let Ok (utf8str) = str::from_utf8(res_without_zero) {
+			String::from(utf8str)
+		} else {
+			return Err("Failed".to_owned());
+		}
+	} else {
+		"".to_owned()
+	};
+	Ok(out)
 }
 
 #[macro_export]
 macro_rules! open_pipe {
-	($x:expr) => (R2Pipe::spawn($x));
-	() => (R2Pipe::open());
+	($x: expr) => {
+		match $x {
+			Some(path) => R2Pipe::spawn(path),
+			None => R2Pipe::open(),
+		}
+	}
 }
 
 impl R2Pipe {
@@ -58,19 +79,25 @@ impl R2Pipe {
 			Some(x) => x,
 			None => return Err("Pipe not open. Please run from r2"),
 		};
-
-		let _res = R2PipeLang { fd_in: fin, fd_out: fout };
+		let _res = unsafe {
+			/* dup file descriptors to avoid from_raw_fd ownership issue */
+			let (din, dout) = (libc::dup(fin), libc::dup(fout));
+			R2PipeLang {
+				read: BufReader::new(File::from_raw_fd(din)),
+				write: File::from_raw_fd(dout)
+			}
+		};
 		Ok(R2Pipe::Lang(_res))
 	}
 
-	pub fn cmd(&mut self, cmd: &str) -> String {
+	pub fn cmd(&mut self, cmd: &str) -> Result<String,String> {
 		match *self {
 			R2Pipe::Pipe(ref mut x) => x.cmd(cmd),
 			R2Pipe::Lang(ref mut x) => x.cmd(cmd),
 		}
 	}
 
-	pub fn cmdj(&mut self, cmd: &str) -> Json {
+	pub fn cmdj(&mut self, cmd: &str) -> Result<Json,String> {
 		match *self {
 			R2Pipe::Pipe(ref mut x) => x.cmdj(cmd),
 			R2Pipe::Lang(ref mut x) => x.cmdj(cmd),
@@ -88,21 +115,20 @@ impl R2Pipe {
 	pub fn in_session() -> Option<(i32, i32)> {
 		let fin = getenv("R2PIPE_IN");
 		let fout = getenv("R2PIPE_OUT");
-
-		if fin == 0 || fout == 0 {
+		if fin < 0 || fout < 0 {
 			return None;
 		}
-
 		return Some((fin, fout));
 	}
 
 	/// Creates a new R2PipeSpawn.
-	pub fn spawn(_name: &str) -> Result<R2Pipe, &'static str> {
-		if let Some(_) = R2Pipe::in_session() {
-			return R2Pipe::open();
+	pub fn spawn(name: String) -> Result<R2Pipe, &'static str> {
+		if name == "" {
+			if let Some(_) = R2Pipe::in_session() {
+				return R2Pipe::open();
+			}
 		}
 
-		let name = _name.to_string();
 		let path = Path::new(&*name);
 		let child = match Command::new("r2")
 			.arg("-q0")
@@ -114,19 +140,15 @@ impl R2Pipe {
 				Err(_) => return Err("Unable to spawn r2."),
 			};
 
-		let sin: process::ChildStdin;
-		let mut sout: process::ChildStdout;
+		let sin = child.stdin.unwrap();
+		let mut sout = child.stdout.unwrap();
 
-		{
-			sin = child.stdin.unwrap();
-			sout = child.stdout.unwrap();
-			// flush out the initial null byte.
-			let mut w = [0;1];
-			sout.read(&mut w).unwrap();
-		}
+		// flush out the initial null byte.
+		let mut w = [0;1];
+		sout.read(&mut w).unwrap();
 
 		let _res = R2PipeSpawn {
-			read: sout,
+			read: BufReader::new(sout),
 			write: sin
 		};
 
@@ -135,62 +157,44 @@ impl R2Pipe {
 }
 
 impl R2PipeSpawn {
-	pub fn cmd(&mut self, cmd: &str) -> String {
+	pub fn cmd(&mut self, cmd: &str) -> Result<String, String> {
 		let cmd_ = cmd.to_owned() + "\n";
 		if let Err(e) = self.write.write(cmd_.as_bytes()) {
-			panic!("{}", e);
-		}
-		// Read in block size of 2048.
-		let mut s = [0; 2048];
-		let mut res: String = String::new();
-
-		loop { 
-			let count = self.read.read(&mut s).unwrap();
-			for c in s[..count].iter() {
-				res = res + &*format!("{}", *c as char);
-			}
-			if count < 2048 {
-				break;
-			}
+			return Err(e.to_string())
 		}
 
-		let len = res.len() - 1;
-		res.truncate(len);
-		res
+		let mut res: Vec<u8> = Vec::new();
+		if let Err(e) = self.read.read_until(0u8, &mut res) {
+			return Err(e.to_string())
+		}
+		process_result (res)
 	}
 
-	pub fn cmdj(&mut self, cmd: &str) -> Json {
-		let res = &self.cmd(cmd).replace("\n","");
-		Json::from_str(res).unwrap()
+	pub fn cmdj(&mut self, cmd: &str) -> Result<Json, String> {
+		let res = &self.cmd(cmd).unwrap();
+		Ok(Json::from_str(res).unwrap())
 	}
 
 	pub fn close(&mut self) {
-		self.cmd("q!");
+		let _ = self.cmd("q!");
 	}
 }
 
 impl R2PipeLang {
-	pub fn cmd(&mut self, cmd: &str) -> String {
-		let buf: [u8; 1024] = [0;1024];
-		unsafe {
-			libc::write (self.fd_out, cmd.as_ptr() as *const c_void, cmd.len() as u64);
-			libc::write (self.fd_out, "\x00".as_ptr() as *const c_void, 1);
-			let len = libc::read (self.fd_in, buf.as_ptr() as *mut c_void, buf.len() as u64) as usize;
-			let buf2 : Box<&[u8]> = Box::new(&buf[0..len-1]);
-			let s = str::from_utf8(&buf2).unwrap();
-			s.to_string()
-		}
+	pub fn cmd(&mut self, cmd: &str) -> Result<String, String> {
+		self.write.write(cmd.as_bytes()).unwrap();
+		let mut res: Vec<u8> = Vec::new();
+		self.read.read_until(0u8, &mut res).unwrap();
+		process_result (res)
 	}
 
-	pub fn cmdj(&mut self, cmd: &str) -> Json {
-		let res = &self.cmd(cmd).replace("\n","");
-		Json::from_str(res).unwrap()
+	pub fn cmdj(&mut self, cmd: &str) -> Result<Json, String> {
+		let res = try!(self.cmd(cmd));
+		Ok(Json::from_str(&res).unwrap())
 	}
 
 	pub fn close(&mut self) {
-		unsafe {
-			libc::close (self.fd_in);
-			libc::close (self.fd_out);
-		}
+		// self.read.close();
+		// self.write.close();
 	}
 }
