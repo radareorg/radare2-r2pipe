@@ -22,8 +22,8 @@ sub new {
 	if ($R2PIPE_IN && $R2PIPE_OUT) {
 		$R2PIPE_IN = 0+$R2PIPE_IN;
 		$R2PIPE_OUT = 0+$R2PIPE_OUT;
-		open $Reader, "<&=", $R2PIPE_IN or die "cannot open reader pipe";
-		open $Writer, ">&=", $R2PIPE_OUT or die "cannot open writer pipe";
+		open $Reader, "<&=".$R2PIPE_IN or die "cannot open reader pipe";
+		open $Writer, ">&=".$R2PIPE_OUT or die "cannot open writer pipe";
 		autoflush $Reader 1;
 		autoflush $Writer 1;
 		undef $pid;
