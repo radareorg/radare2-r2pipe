@@ -126,7 +126,7 @@ class open:
 			self.conn.connect((r.group(1), int(r.group(2))))
 		else:
 			self._cmd = self._cmd_process
-			cmd = ["r2", "-q0", filename]
+			cmd = ["radare2", "-q0", filename]
 			if writeable:
 				cmd = cmd[:1] + ["-w"] + cmd[1:]
 			if debug:
