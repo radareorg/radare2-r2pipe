@@ -185,7 +185,11 @@ function r2bind(ls, cb, r2cmd) {
       /* Set as running for connect & launch methods */
       if (!running && (typeof r2cmd !== 'string')) {
         running = true;
-        cb(r2);
+        if (typeof cb == 'function') {
+          cb(r2);
+        } else {
+          throw 'Callback in .cmd() is not a function';
+        }
       }
     });
   }
@@ -213,7 +217,7 @@ function r2bind(ls, cb, r2cmd) {
 
     ls.on('close', function(code) {
       running = false;
-      if (code !== 0) {
+      if (code !== 0 && r2cmd.toString().indexOf('httpCmd') == -1) {
         console.log('r2pipe: child process exited with code ' + code);
       }
     });
