@@ -1,7 +1,7 @@
 /*  Small tests for r2pipe */
 // return true;
 
-var r2pipe = require ("./");
+var r2pipe = require ("../");
 
 
 function doSomeStuff(r2) {

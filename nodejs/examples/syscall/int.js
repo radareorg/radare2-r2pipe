@@ -30,7 +30,7 @@ function syscall_linux_x86_32(r2p,regs) {
 }
 
 // it works using r2pipe, connecting to r2 session
-r2pipe.rlangpipe(function (r2p) {
+r2pipe.lpipe(function (r2p) {
 	var syscall = syscall_linux_x86_32;
 	switch (sn) {
 	case 3: // same as INT3

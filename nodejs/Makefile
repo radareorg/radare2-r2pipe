@@ -1,6 +1,6 @@
 all:
 	ln -fs /usr/share/radare2/last/www/t/r2.js
-	node test.js
+	cd examples ; node test-channels.js
 
 indent: node_modules/jsfmt
 	node_modules/.bin/jsfmt -w index.js

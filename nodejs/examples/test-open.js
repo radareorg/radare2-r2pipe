@@ -1,8 +1,8 @@
 /*
-  Test open and openSync rlangpipe protocols
+  Test open and openSync lpipe protocols
 */
 
-var r2pipe = require ('./');
+var r2pipe = require ('../');
 
 var sync_mode = process.argv[2] == '-s';
 

@@ -7,7 +7,7 @@
 
 /* require the nodejs api */
 var r2jsapi = "./r2.js";
-var r2node = require ("./");
+var r2node = require ("../");
 
 function doSomeStuff(r) {
   var r2 = require (r2jsapi)(r);

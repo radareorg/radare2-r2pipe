@@ -1,7 +1,7 @@
 'use strict';
 
 var r2pipe = require('../..');
-var ts = require('..');
+var TestSuite = require('..');
 
 function testAsync5(fin) {
 	let result = '';
@@ -25,7 +25,7 @@ function testAsync5(fin) {
 			}, 10);
 		});
 	} catch (e) {
-		console.error(e);
+		console.error("XXX", e);
 	}
 	return result;
 }
@@ -56,8 +56,7 @@ function testAsyncFor5(fin) {
 	return result;
 }
 
-ts.addTest('testAsync5', testAsync5, 'a\na\na\na\na\n');
-ts.addTest('testAsyncFor5', testAsyncFor5, 'a\na\na\na\na\n');
-
-ts.inSerial();
-ts.inParalel();
+TestSuite
+.addTest('testAsync5', testAsync5, 'a\na\na\na\na\n')
+.addTest('testAsyncFor5', testAsyncFor5, 'a\na\na\na\na\n')
+.inParalel();

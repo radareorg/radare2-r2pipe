@@ -177,7 +177,6 @@ function r2bind(ls, cb, r2cmd) {
     }
   };
 
-
   /* handle SDTERR message */
   if (ls.stderr !== null) {
     ls.stderr.on('data', function(data) {
@@ -193,7 +192,6 @@ function r2bind(ls, cb, r2cmd) {
       }
     });
   }
-
 
   /* handle STDOUT nessages */
   ls.stdout.on('data', function(data) {
@@ -223,39 +221,43 @@ function r2bind(ls, cb, r2cmd) {
     });
   }
 
-  /* rlangpipe is ready from the start and does not
+  /* lpipe (rlangpipe) is ready from the start and does not
    * require to wait for any input from stdin or stdout */
-  if (!running && (r2cmd === 'rlangpipe')) {
+  if (!running && (r2cmd === 'lpipe')) {
     running = true;
     cb(r2);
   }
 }
 
 function ispath(text) {
-  return (text[0] == '.' || text[0] == '/');
+  return (text[0] == '.' || text[0] == '/' || fs.existsSync(text));
 }
 
 var r2node = {
-
   open: function() {
-    const arg = arguments;
-    switch (arg.length) {
-    case 1:
-      this.rlangpipe (arg[0]);
-      break;
-    case 2:
+    const options = [ function(me, arg) {
+      return me.lpipeSync ();
+    }, function(me, arg) {
       if (ispath (arg[0])) {
-        this.pipe(arg[0], arg[1]);
+        return me.pipeSync (arg[0]);
+      } else {
+        return me.lpipe (arg[0]);
+      }
+    }, function(me, arg) {
+      if (ispath (arg[0])) {
+        me.pipe(arg[0], arg[1]);
       } else if (arg.indexOf('http://')==0) {
-        this.connect(arg[0], arg[1]);
+        me.connect(arg[0], arg[1]);
       } else if (arg.indexOf('io://')==0) {
-        this.connect(arg[0], arg[1]);
+        me.connect(arg[0], arg[1]);
       } else {
         throw "Unknown uri";
       }
-      break;
-    default:
-      throw "Invalid parameters";
+    }];
+    if (arguments.length<options.length) {
+      return options[arguments.length](this, arguments);
+    } else {
+      throw 'Invalid parameters';
     }
   },
 
@@ -276,7 +278,7 @@ var r2node = {
       }
       break;
     default:
-      throw "Invalid parameters";
+      throw 'Invalid parameters';
     }
   },
 
@@ -298,7 +300,7 @@ var r2node = {
     r2bind (ls, cb, 'pipe');
   },
 
-  rlangpipe: function(cb) {
+  lpipe: function(cb) {
     var ls = {
       stdin: fs.createWriteStream (null, {
         fd: OUT
@@ -311,11 +313,7 @@ var r2node = {
         process.exit(0);
       }
     };
-    r2bind (ls, cb, 'rlangpipe');
-  },
-
-  lpipe: function(cb) {
-    this.rlangpipe(cb);
+    r2bind (ls, cb, 'lpipe');
   },
 
   pipeSync: function(file) {
@@ -324,7 +322,7 @@ var r2node = {
       syspipe = require('syspipe');
       pipe = syspipe.pipe();
     } catch (e) {
-      throw 'ERROR: pipeSync() is not available in this system';
+      throw 'ERROR: Cannot find "syspipe" npm module';
     }
 
     var options = { stdio: ['pipe', pipe.write, 'ignore'] };
