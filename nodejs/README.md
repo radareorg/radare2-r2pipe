@@ -14,7 +14,7 @@ Also, memory management results into a much simpler thing because you only have 
 Getting Started
 ===============
 
-This plugin requires radare >= `0.9.8` (some features such as rlangpipe require git version)
+This plugin requires radare >= `0.9.8` (some features such as lpipe require git version)
 
 Once radare2 is installed, you may install this plugin using this command:
 
@@ -91,7 +91,7 @@ function doSomeStuff(r2) {
 r2pipe.pipe ("/bin/ls", doSomeStuff);
 ```
 
-### lpipe (callback) / rlangpipe (callback)
+### lpipe (callback)
 
 This method is intended to be used while running scripts from the r2 console
 
@@ -271,7 +271,7 @@ In case of error "null" will be passed as argument to the callback instead of an
 
 ### quit ()
 
-Close the connection, kill the radare spawned process or terminate the rlangpipe script execution
+Close the connection, kill the radare spawned process or terminate the lpipe script execution
 
 ```js
 var r2pipe = require('r2pipe');
