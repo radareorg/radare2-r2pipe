@@ -33,7 +33,7 @@ Access methods
 
 There are multiple ways to interact with a radare2 session
 
-### open ([uri], callback)
+### open ([uri], [callback])
 
 Runs different connection methods depending on the uri and the number of arguments
 
@@ -52,6 +52,18 @@ r2pipe.open ('/bin/ls', doStuff);
 
 r2pipe.open ('http://cloud.radare.org/cmd/', doStuff);
 ```
+
+This method can be also used when running node scripts from r2 like this:
+
+```
+$ cat test.js
+var r2 = require('r2pipe').open();
+console.log(r2.cmd('x'));
+r2.quit();
+$ r2 -qi test.js /bin/ls
+```
+
+As long as `open()` gets no parameters, the r2pipe api asumes you are performing a sync lpipe connection. This is the same as calling `openSync()`.
 
 ### openSync ([uri])
 
