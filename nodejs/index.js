@@ -51,7 +51,6 @@ function httpCmd(uri, cmd, cb) {
   });
 }
 
-
 function pipeCmd(proc, cmd, cb) {
   pipeQueue.push({
     cmd: cmd,
@@ -109,9 +108,6 @@ function parseJSON(func, cmd, callback) {
     }
   });
 }
-
-
-
 
 /*
  * r2pipe main
@@ -301,7 +297,7 @@ var r2node = {
   },
 
   lpipe: function(cb) {
-    var R2PIPE_PATH = process.env['r2pipe_path'];
+    var R2PIPE_PATH = process.env['R2PIPE_PATH'];
     if (typeof R2PIPE_PATH == 'string' && R2PIPE_PATH.indexOf('\\\\') != -1) {
       var client = net.connect(R2PIPE_PATH);
       var input = fs.createWriteStream ();
