@@ -5,7 +5,6 @@ void main() {
        auto r2 = r2pipe.open ();
        writeln ("Hello "~ r2.cmd("?e World"));
        writeln ("Hello "~ r2.cmd("?e Works"));
-
-       string uri = r2.cmdj("ij")["core"]["uri"].str;
-       writeln ("Uri: ",uri);
+       string file = r2.cmdj("ij")["core"]["file"].str;
+       writeln ("File: ", file);
 }
