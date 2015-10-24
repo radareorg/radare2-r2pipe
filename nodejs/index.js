@@ -168,7 +168,8 @@ function r2bind(ls, cb, r2cmd) {
     quit: function() {
       if (ls.stdin && ls.stdin.end)
         ls.stdin.end();
-      ls.kill ('SIGINT');
+      if (ls.kill)
+        ls.kill ('SIGINT');
     },
 
     /* Custom promises */
@@ -180,7 +181,6 @@ function r2bind(ls, cb, r2cmd) {
   /* handle SDTERR message */
   if (ls.stderr !== null) {
     ls.stderr.on('data', function(data) {
-
       /* Set as running for connect & launch methods */
       if (!running && (typeof r2cmd !== 'string')) {
         running = true;
@@ -195,7 +195,6 @@ function r2bind(ls, cb, r2cmd) {
 
   /* handle STDOUT nessages */
   ls.stdout.on('data', function(data) {
-
     /* Set as running for pipe method */
     if (!running) {
       running = true;
@@ -204,7 +203,6 @@ function r2bind(ls, cb, r2cmd) {
       pipeCmdOutput (ls, data);
     }
   });
-
 
   /* Proccess event handling only for methods using childs */
   if (typeof ls.on === 'function') {
@@ -303,18 +301,43 @@ var r2node = {
   },
 
   lpipe: function(cb) {
-    var ls = {
-      stdin: fs.createWriteStream (null, {
-        fd: OUT
-      }),
-      stdout: fs.createReadStream (null, {
-        fd: IN
-      }),
-      stderr: null,
-      kill: function() {
+    var R2PIPE_IN = process.env.R2PIPE_IN;
+    if (R2PIPE_IN.indexOf('\\\\') != -1) {
+      var client = net.connect(R2PIPE_IN);
+      var input = fs.createWriteStream ();
+      var ls = {
+        stdin: input,
+        stdout: fs.createReadStream (),
+        stderr: null,
+        kill: function() {
+          process.exit(0);
+        }
+      };
+      client.on('data', function(data) {
+        console.error("Read: "+str.toString());
+        ls.stdout.write (data);
+      });
+      client.on('end', function(data) {
+        // TODO: call callback when connection is closed (r2 dies)
         process.exit(0);
-      }
-    };
+      });
+      input.on('data', function(data) {
+        client.write(data);
+      });
+    } else {
+      var ls = {
+        stdin: fs.createWriteStream (null, {
+          fd: OUT
+        }),
+        stdout: fs.createReadStream (null, {
+          fd: IN
+        }),
+        stderr: null,
+        kill: function() {
+          process.exit(0);
+        }
+      };
+    }
     r2bind (ls, cb, 'lpipe');
   },
 
