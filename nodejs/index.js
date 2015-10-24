@@ -1,12 +1,12 @@
+'use strict';
+
 var fs = require('fs');
 var net = require('net');
 var http = require('http');
 var sync = require('./sync.js');
 var proc = require('child_process');
 var promise = require('./promise.js');
-
 var pipeQueue = [];
-
 
 var IN = parseInt(process.env.R2PIPE_IN);
 var OUT = parseInt(process.env.R2PIPE_OUT);
@@ -282,21 +282,23 @@ var r2node = {
     }
   },
 
+  r2bin: 'radare2',
+
   connect: function(uri, cb) {
-    var ls = proc.spawn('r2', ["-qc.:" + uri]);
+    var ls = proc.spawn(this.r2bin, ["-qc.:" + uri]);
     ls.cmdparm = uri;
     r2bind (ls, cb, httpCmd);
   },
 
   launch: function(file, cb) {
     var port = (4000 + (Math.random() * 4000)) | 0;
-    var ls = proc.spawn('r2', ["-qc.:" + port, file]);
+    var ls = proc.spawn(this.r2bin, ["-qc.:" + port, file]);
     ls.cmdparm = port;
     r2bind (ls, cb, remoteCmd);
   },
 
   pipe: function(file, cb) {
-    var ls = proc.spawn('r2', ["-q0", file]);
+    let ls = proc.spawn(this.r2bin, ["-q0", file]);
     r2bind (ls, cb, 'pipe');
   },
 
@@ -326,7 +328,7 @@ var r2node = {
     }
 
     var options = { stdio: ['pipe', pipe.write, 'ignore'] };
-    var ls = proc.spawn('r2', ["-q0", file], options);
+    var ls = proc.spawn(r2bin, ["-q0", file], options);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
     ls.syncStdout = pipe.read;
