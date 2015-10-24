@@ -301,9 +301,9 @@ var r2node = {
   },
 
   lpipe: function(cb) {
-    var R2PIPE_IN = process.env.R2PIPE_IN;
-    if (R2PIPE_IN.indexOf('\\\\') != -1) {
-      var client = net.connect(R2PIPE_IN);
+    var R2PIPE_PATH = process.env['r2pipe_path'];
+    if (typeof R2PIPE_PATH == 'string' && R2PIPE_PATH.indexOf('\\\\') != -1) {
+      var client = net.connect(R2PIPE_PATH);
       var input = fs.createWriteStream ();
       var ls = {
         stdin: input,
