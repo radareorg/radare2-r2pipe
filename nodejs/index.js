@@ -1,5 +1,6 @@
 'use strict';
 
+var os = require('os');
 var fs = require('fs');
 var net = require('net');
 var http = require('http');
@@ -8,9 +9,13 @@ var proc = require('child_process');
 var promise = require('./promise.js');
 var pipeQueue = [];
 
-var IN = parseInt(process.env.R2PIPE_IN);
-var OUT = parseInt(process.env.R2PIPE_OUT);
+var IN, OUT, R2PIPE_PATH;
 
+try {
+  IN = parseInt(process.env.R2PIPE_IN);
+  OUT = parseInt(process.env.R2PIPE_OUT);
+  R2PIPE_PATH = process.env['R2PIPE_PATH'];
+} catch (e) {}
 
 /*
  * CMD handlers for different connection methods
@@ -164,8 +169,8 @@ function r2bind(ls, cb, r2cmd) {
     quit: function() {
       if (ls.stdin && ls.stdin.end)
         ls.stdin.end();
-      if (ls.kill)
-        ls.kill ('SIGINT');
+
+      ls.kill ('SIGINT');
     },
 
     /* Custom promises */
@@ -229,7 +234,7 @@ function ispath(text) {
 
 var r2node = {
   open: function() {
-    const options = [ function(me, arg) {
+    var options = [ function(me, arg) {
       return me.lpipeSync ();
     }, function(me, arg) {
       if (ispath (arg[0])) {
@@ -256,7 +261,7 @@ var r2node = {
   },
 
   openSync: function() {
-    const arg = arguments;
+    var arg = arguments;
     switch (arg.length) {
     case 0:
       return this.lpipeSync();
@@ -292,36 +297,27 @@ var r2node = {
   },
 
   pipe: function(file, cb) {
-    let ls = proc.spawn(this.r2bin, ["-q0", file]);
+    var ls = proc.spawn(this.r2bin, ["-q0", file]);
     r2bind (ls, cb, 'pipe');
   },
 
   lpipe: function(cb) {
-    var R2PIPE_PATH = process.env['R2PIPE_PATH'];
-    if (typeof R2PIPE_PATH == 'string' && R2PIPE_PATH.indexOf('\\\\') != -1) {
-      var client = net.connect(R2PIPE_PATH);
-      var input = fs.createWriteStream ();
-      var ls = {
-        stdin: input,
-        stdout: fs.createReadStream (),
+    var ls;
+
+    if (os.platform() === 'win32') {
+      var client = net.connect('\\\\.\\pipe\\' + R2PIPE_PATH);
+      ls = {
+        stdin: client,
+        stdout: client,
         stderr: null,
         kill: function() {
           process.exit(0);
         }
       };
-      client.on('data', function(data) {
-        console.error("Read: "+str.toString());
-        ls.stdout.write (data);
-      });
-      client.on('end', function(data) {
-        // TODO: call callback when connection is closed (r2 dies)
-        process.exit(0);
-      });
-      input.on('data', function(data) {
-        client.write(data);
-      });
+
+    // OS: linux/sunos/osx
     } else {
-      var ls = {
+      ls = {
         stdin: fs.createWriteStream (null, {
           fd: OUT
         }),
@@ -334,6 +330,7 @@ var r2node = {
         }
       };
     }
+
     r2bind (ls, cb, 'lpipe');
   },
 
