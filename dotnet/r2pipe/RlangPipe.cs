@@ -28,6 +28,7 @@ namespace r2pipe
         public RlangPipe()
         {
 #if __MonoCS__
+// XXX what if running mono on windows?
             ureadStream = new UnixStream(int.Parse(Environment.GetEnvironmentVariable("R2PIPE_IN")));
             reader = new StreamReader(ureadStream);
            
@@ -35,7 +36,7 @@ namespace r2pipe
             writer = new StreamWriter(uwriteStream);
 #else
             // Using named pipes on windows. I like this.
-            inclient = new NamedPipeClientStream("R2PIPE_IN");
+            inclient = new NamedPipeClientStream("R2PIPE_PATH");
             reader = new StreamReader(inclient);
             writer = new StreamWriter(inclient);
 #endif
