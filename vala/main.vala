@@ -1,4 +1,9 @@
 public static int main (string[] args) {
+	var r2 = new R2Pipe.sync("/bin/ls");
+	stdout.printf ("%s\n", r2.cmdSync("x"));
+	stdout.printf ("%s\n", r2.cmdSync("pd 20"));
+
+
 	MainLoop loop = new MainLoop ();
 	var r2p = new R2Pipe ("/bin/ls");
 	r2p.cmd ("pi 4", (x) => {
