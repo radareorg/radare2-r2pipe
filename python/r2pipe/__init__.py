@@ -164,7 +164,7 @@ class open:
 	def _cmd_pipe(self, cmd):
 		out = ''
 		if os.name=="nt":
-			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None
+			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None)
 			while True:
 				fSuccess = windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE,byref(cbRead), None)
 				out += chBuf.value
