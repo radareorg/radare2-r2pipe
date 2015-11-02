@@ -195,15 +195,19 @@ function r2bind(ls, cb, r2cmd) {
   }
 
   /* handle STDOUT nessages */
-  ls.stdout.on('data', function(data) {
-    /* Set as running for pipe method */
-    if (!running) {
-      running = true;
-      cb (r2);
-    } else if (running && (typeof r2cmd === 'string')) {
-      pipeCmdOutput (ls, data);
-    }
-  });
+  if (ls.stdout !== null) {
+    ls.stdout.on('data', function(data) {
+      /* Set as running for pipe method */
+      if (!running) {
+        running = true;
+        cb (r2);
+      } else if (running && (typeof r2cmd === 'string')) {
+        pipeCmdOutput (ls, data);
+      }
+    });
+  } else {
+    cb(r2); // Callback for connect
+  }
 
   /* Proccess event handling only for methods using childs */
   if (typeof ls.on === 'function') {
@@ -284,8 +288,12 @@ var r2node = {
   r2bin: 'radare2',
 
   connect: function(uri, cb) {
-    var ls = proc.spawn(this.r2bin, ["-qc.:" + uri]);
-    ls.cmdparm = uri;
+    var ls = {
+      cmdparm: uri,
+      stderr: null,
+      stdout: null,
+      kill: function() {}
+    };
     r2bind (ls, cb, httpCmd);
   },
 
@@ -344,7 +352,7 @@ var r2node = {
     }
 
     var options = { stdio: ['pipe', pipe.write, 'ignore'] };
-    var ls = proc.spawn(r2bin, ["-q0", file], options);
+    var ls = proc.spawn(this.r2bin, ["-q0", file], options);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
     ls.syncStdout = pipe.read;
