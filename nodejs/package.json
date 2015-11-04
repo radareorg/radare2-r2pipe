@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "pipe bindings for radare2",
   "main": "index.js",
   "scripts": {

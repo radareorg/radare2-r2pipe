@@ -20,13 +20,40 @@ try {
 /*
  * CMD handlers for different connection methods
  */
+function syscmd(command, cb2) {
+  if (typeof cb2 !== 'function') {
+    cb2 = function() {};
+  }
+  const callback = function(err, stdout, stderr) {
+    if (err) {
+      cb2 (null);
+    } else {
+      cb2 (stdout);
+    }
+  }
+  if (typeof command == 'string') {
+    proc.exec(command, callback);
+  } else if (typeof command == 'object' && command.length > 0) {
+    proc.execFile(command[0], command.slice(1), callback);
+  } else {
+    throw 'Invalid command type in syscmd';
+  }
+}
+
+/* Run system cmd and return JSON output */
+function syscmdj(command, cb2) {
+  if (typeof cb2 !== 'function') {
+    cb2 = function() {};
+  }
+  parseJSON(syscmd, command, cb2);
+}
 
 function remoteCmd(port, cmd, cb) {
-  var msg = "";
+  var msg = '';
   try {
     var client = new net.Socket();
-    client.connect(port, "localhost", function() {});
-    client.write (cmd + "\n");
+    client.connect(port, 'localhost', function() {});
+    client.write (cmd + '\n');
     client.on('data', function(data) {
       msg += data;
     });
@@ -45,11 +72,11 @@ function remoteCmd(port, cmd, cb) {
 function httpCmd(uri, cmd, cb) {
   var text = "";
   var req = http.get(uri + cmd, function(res) {
-    res.on("data", function(res) {
+    res.on('data', function(res) {
       text += res;
     });
-  }).on ("error", function(res) {
-    console.log("Got response: " + res.statusCode);
+  }).on ('error', function(res) {
+    console.log('Got response: ' + res.statusCode);
   });
   req.on('close', function(e) {
     cb (text);
@@ -68,13 +95,12 @@ function pipeCmd(proc, cmd, cb) {
   }
 }
 
-
 function pipeCmdOutput(proc, data) {
   var len = data.length;
   var response;
 
   if (pipeQueue.length < 1) {
-    console.error("r2pipe error: No pending commands for incomming data");
+    console.error('r2pipe error: No pending commands for incomming data');
     return;
   }
 
@@ -94,7 +120,6 @@ function pipeCmdOutput(proc, data) {
     proc.stdin.write(pipeQueue[0].cmd + "\n");
   }
 }
-
 
 function parseJSON(func, cmd, callback) {
   func(cmd, function(res) {
@@ -144,26 +169,8 @@ function r2bind(ls, cb, r2cmd) {
     },
 
     /* Run system cmd */
-    syscmd: function(command, cb2) {
-      if (typeof cb2 !== 'function') {
-        cb2 = function() {};
-      }
-      var child = proc.exec(command, function(err, stdout, stderr) {
-        if (err) {
-          cb2 (null);
-        } else {
-          cb2 (stdout);
-        }
-      });
-    },
-
-    /* Run system cmd and return JSON output */
-    syscmdj: function(command, cb2) {
-      if (typeof cb2 !== 'function') {
-        cb2 = function() {};
-      }
-      parseJSON(r2.syscmd, command, cb2);
-    },
+    syscmd: syscmd,
+    syscmdj: syscmdj,
 
     /* Quit CMD */
     quit: function() {
@@ -237,6 +244,8 @@ function ispath(text) {
 }
 
 var r2node = {
+  syscmd: syscmd,
+  syscmdj: syscmdj,
   open: function() {
     var options = [ function(me, arg) {
       return me.lpipeSync ();
@@ -273,11 +282,11 @@ var r2node = {
       if (ispath(arg[0])) {
         return this.pipeSync (arg[0]);
       } else if (arg.indexOf('http://')==0) {
-        throw "httpsync not supported";
+        throw 'httpsync not supported';
       } else if (arg.indexOf('io://')==0) {
-        throw "iosync not supported";
+        throw 'iosync not supported';
       } else {
-        throw "Unknown uri";
+        throw 'Unknown uri';
       }
       break;
     default:
@@ -299,13 +308,13 @@ var r2node = {
 
   launch: function(file, cb) {
     var port = (4000 + (Math.random() * 4000)) | 0;
-    var ls = proc.spawn(this.r2bin, ["-qc.:" + port, file]);
+    var ls = proc.spawn(this.r2bin, ['-qc.:' + port, file]);
     ls.cmdparm = port;
     r2bind (ls, cb, remoteCmd);
   },
 
   pipe: function(file, cb) {
-    var ls = proc.spawn(this.r2bin, ["-q0", file]);
+    var ls = proc.spawn(this.r2bin, ['-q0', file]);
     r2bind (ls, cb, 'pipe');
   },
 
@@ -383,7 +392,7 @@ var r2node = {
     var nfd_out = +process.env.R2PIPE_OUT;
 
     if (!nfd_in || !nfd_out) {
-      throw "This script needs to run from radare2 with r2pipe://";
+      throw 'This script needs to run from radare2 with r2pipe://';
     }
 
     var fd_in = fs.createReadStream(null, {
@@ -393,14 +402,14 @@ var r2node = {
       fd: nfd_out
     });
 
-    console.log ("[+] Running r2pipe io");
+    console.log('[+] Running r2pipe io');
 
     fd_in.on('end', function() {
-      console.log ("[-] r2pipe-io is over");
+      console.log('[-] r2pipe-io is over');
     });
     function send(obj) {
       //console.log ("Send Object To R2",obj);
-      fd_out.write (JSON.stringify (obj || {}) + "\x00");
+      fd_out.write (JSON.stringify (obj || {}) + '\x00');
     }
 
     fd_in.on('data', function(data) {
