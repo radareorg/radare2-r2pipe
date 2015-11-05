@@ -28,6 +28,19 @@ Once the plugin has been installed, you can load it with this line of JavaScript
 var r2pipe = require('r2pipe');
 ```
 
+Spawn options
+=============
+
+The `r2pipe.options` array is used to specify the extra arguments passed to r2 when using any spawn method like `.launch()` or `.pipe()` and their `*Sync` versions.
+
+```
+var r2pipe = require('r2pipe');
+r2pipe.options = ['-n'];
+var r2 = r2pipe.open('/bin/ls');
+console.log (r2.cmd('x'));
+r2.quit();
+```
+
 Access methods
 ==============
 

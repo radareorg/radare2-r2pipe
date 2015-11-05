@@ -17,6 +17,11 @@ try {
   R2PIPE_PATH = process.env['R2PIPE_PATH'];
 } catch (e) {}
 
+function mergeArrays(a, b) {
+  let c = a.concat(b)
+  return c.filter((i, p) => {return c.indexOf(i) == p});
+}
+
 /*
  * CMD handlers for different connection methods
  */
@@ -244,6 +249,7 @@ function ispath(text) {
 }
 
 var r2node = {
+  options: [],
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function() {
@@ -306,15 +312,17 @@ var r2node = {
     r2bind (ls, cb, httpCmd);
   },
 
+  /* TCP connection */
   launch: function(file, cb) {
     var port = (4000 + (Math.random() * 4000)) | 0;
-    var ls = proc.spawn(this.r2bin, ['-qc.:' + port, file]);
+    var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(this.options).concat(file));
     ls.cmdparm = port;
     r2bind (ls, cb, remoteCmd);
   },
 
+  /* spawn + raw fd pipe (faster method) */
   pipe: function(file, cb) {
-    var ls = proc.spawn(this.r2bin, ['-q0', file]);
+    var ls = proc.spawn(this.r2bin, ['-q0'].concat(this.options).concat(file));
     r2bind (ls, cb, 'pipe');
   },
 
@@ -360,8 +368,8 @@ var r2node = {
       throw 'ERROR: Cannot find "syspipe" npm module';
     }
 
-    var options = { stdio: ['pipe', pipe.write, 'ignore'] };
-    var ls = proc.spawn(this.r2bin, ["-q0", file], options);
+    var proc_options = { stdio: ['pipe', pipe.write, 'ignore'] };
+    var ls = proc.spawn(this.r2bin, ["-q0"].concat(this.options).concat(file), proc_options);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
     ls.syncStdout = pipe.read;
