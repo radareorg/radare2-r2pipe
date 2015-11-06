@@ -25,23 +25,29 @@ function mergeArrays(a, b) {
 /*
  * CMD handlers for different connection methods
  */
-function syscmd(command, cb2) {
+function syscmd(command, child_opts, cb2) {
+  var childopt = {};
+  switch (typeof child_opts) {
+  case 'object':
+    childopt = child_opts;
+    break;
+  case 'function':
+    cb2 = child_opts;
+    break;
+  }
   if (typeof cb2 !== 'function') {
     cb2 = function() {};
   }
-  const callback = function(err, stdout, stderr) {
-    if (err) {
-      cb2 (null);
-    } else {
-      cb2 (stdout);
-    }
+  var callback = function(err, stdout, stderr) {
+    cb2(err? null: stdout);
   }
   if (typeof command == 'string') {
-    proc.exec(command, callback);
+    proc.exec(command, childopt, callback);
   } else if (typeof command == 'object' && command.length > 0) {
-    proc.execFile(command[0], command.slice(1), callback);
+    proc.execFile(command[0], command.slice(1), childopt, callback);
   } else {
-    throw 'Invalid command type in syscmd';
+    console.error ('r2pipe.js: Invalid command type in syscmd');
+    cb2 (null);
   }
 }
 
@@ -100,13 +106,13 @@ function pipeCmd(proc, cmd, cb) {
   }
 }
 
-function pipeCmdOutput(proc, data) {
+function pipeCmdOutput(proc, data, cb) {
   var len = data.length;
   var response;
 
   if (pipeQueue.length < 1) {
     console.error('r2pipe error: No pending commands for incomming data');
-    return;
+    return ; //cb(null);
   }
 
   if (data[len - 1] !== 0x00) {
@@ -115,9 +121,7 @@ function pipeCmdOutput(proc, data) {
   }
 
   pipeQueue[0].result += data.toString().substr(0, len - 1);
-
   response = (pipeQueue[0].error) ? null : pipeQueue[0].result;
-
   pipeQueue[0].cb(response);
   pipeQueue.splice(0, 1);
 
@@ -214,7 +218,7 @@ function r2bind(ls, cb, r2cmd) {
         running = true;
         cb (r2);
       } else if (running && (typeof r2cmd === 'string')) {
-        pipeCmdOutput (ls, data);
+        pipeCmdOutput (ls, data, cb);
       }
     });
   } else {
@@ -253,7 +257,7 @@ var r2node = {
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function() {
-    var options = [ function(me, arg) {
+    var modes = [ function(me, arg) {
       return me.lpipeSync ();
     }, function(me, arg) {
       if (ispath (arg[0])) {
@@ -272,13 +276,12 @@ var r2node = {
         throw "Unknown uri";
       }
     }];
-    if (arguments.length<options.length) {
-      return options[arguments.length](this, arguments);
+    if (arguments.length<modes.length) {
+      return modes[arguments.length](this, arguments);
     } else {
       throw 'Invalid parameters';
     }
   },
-
   openSync: function() {
     var arg = arguments;
     switch (arg.length) {
@@ -313,16 +316,26 @@ var r2node = {
   },
 
   /* TCP connection */
-  launch: function(file, cb) {
+  launch: function(file, opts, cb) {
+    if (typeof opts === 'function') {
+      opts = this.options;
+      cb = opts;
+    }
     var port = (4000 + (Math.random() * 4000)) | 0;
-    var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(this.options).concat(file));
+    var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
     ls.cmdparm = port;
     r2bind (ls, cb, remoteCmd);
   },
 
   /* spawn + raw fd pipe (faster method) */
-  pipe: function(file, cb) {
-    var ls = proc.spawn(this.r2bin, ['-q0'].concat(this.options).concat(file));
+  pipe: function(file, opts, cb) {
+    if (typeof opts !== 'object') {
+      if (cb === undefined)
+        cb = opts;
+      opts = this.options;
+    }
+    const args = ['-q0'].concat(opts).concat(file);
+    var ls = proc.spawn(this.r2bin, args);
     r2bind (ls, cb, 'pipe');
   },
 
@@ -359,7 +372,7 @@ var r2node = {
     r2bind (ls, cb, 'lpipe');
   },
 
-  pipeSync: function(file) {
+  pipeSync: function(file, opts) {
     var pipe, syspipe;
     try {
       syspipe = require('syspipe');
@@ -367,9 +380,14 @@ var r2node = {
     } catch (e) {
       throw 'ERROR: Cannot find "syspipe" npm module';
     }
-
-    var proc_options = { stdio: ['pipe', pipe.write, 'ignore'] };
-    var ls = proc.spawn(this.r2bin, ["-q0"].concat(this.options).concat(file), proc_options);
+    if (typeof opts !== 'object') {
+      opts = this.options;
+    }
+    var proc_options = {
+      stdio: ['pipe', pipe.write, 'ignore']
+    };
+    var ls = proc.spawn(this.r2bin,
+      ["-q0"].concat(opts).concat(file), proc_options);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
     ls.syncStdout = pipe.read;
