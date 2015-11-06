@@ -333,6 +333,7 @@ var r2node = {
       cb = opts;
       opts = this.options;
     }
+    if (!opts) opts = this.options;
     const args = ['-q0'].concat(opts).concat(file);
     var ls = proc.spawn(this.r2bin, args);
     r2bind (ls, cb, 'pipe');
