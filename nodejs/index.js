@@ -318,8 +318,8 @@ var r2node = {
   /* TCP connection */
   launch: function(file, opts, cb) {
     if (typeof opts === 'function') {
-      opts = this.options;
       cb = opts;
+      opts = this.options;
     }
     var port = (4000 + (Math.random() * 4000)) | 0;
     var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
@@ -329,9 +329,8 @@ var r2node = {
 
   /* spawn + raw fd pipe (faster method) */
   pipe: function(file, opts, cb) {
-    if (typeof opts !== 'object') {
-      if (cb === undefined)
-        cb = opts;
+    if (typeof opts === 'function') {
+      cb = opts;
       opts = this.options;
     }
     const args = ['-q0'].concat(opts).concat(file);
