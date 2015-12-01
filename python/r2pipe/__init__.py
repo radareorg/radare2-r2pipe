@@ -21,6 +21,7 @@ Example:
   > r = r2pipe.open("/bin/ls")
   > print(r.cmd("pd 10"))
   > print(r.cmdj("aoj")[0]['size'])
+  > r.quit()
 """
 
 import os
@@ -29,9 +30,10 @@ import sys
 import time
 import json
 import socket
+import urllib
 from subprocess import Popen, PIPE
 
-VERSION="0.7.0"
+VERSION="0.8.0"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -186,11 +188,21 @@ class open:
 
 	def _cmd_http(self, cmd):
 		try:
-			response = urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=cmd))
+			quocmd = urllib.quote(cmd)
+			response = urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=quocmd))
 			return response.read().decode('utf-8')
 		except URLError:
 			pass
 		return None
+
+	def quit(self):
+		"""Quit current r2pipe session and kill
+		"""
+		self.cmd("q")
+		if hasattr(self, 'process'):
+			self.process.stdin.flush()
+			self.process.terminate()
+			self.process.wait()
 
 	# r2 commands
 	def cmd(self, cmd):
