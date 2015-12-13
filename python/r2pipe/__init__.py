@@ -68,7 +68,7 @@ def version():
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
 	"""
-	def __init__(self, filename='', writeable=False, bininfo=True, debug=False,):
+	def __init__(self, filename='', flags=[]):
 		"""Open a new r2 pipe
 		The 'filename' can be one of the following:
 
@@ -79,9 +79,8 @@ class open:
 
 		Args:
 			filename (str): path to filename or uri
-			writeable (bool): if True opens the file in read-write
-			bininfo (bool): if True loads the info from the binary
-			debug (bool): if True opens in debugger (r2 -d)
+			flags (list of str): arguments, either in comapct form
+				("-wdn") or sepparated by commas ("-w","-d","-n")
 		Returns:
 			Returns an object with methods to interact with r2 via commands
 		"""
@@ -129,12 +128,7 @@ class open:
 		else:
 			self._cmd = self._cmd_process
 			cmd = ["radare2", "-q0", filename]
-			if writeable:
-				cmd = cmd[:1] + ["-w"] + cmd[1:]
-			if debug:
-				cmd = cmd[:1] + ["-d"] + cmd[1:]
-			if not bininfo:
-				cmd = cmd[:1] + ["-n"] + cmd[1:]
+			cmd = cmd[:1] + flags + cmd[1:]
 			self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
 			self.process.stdout.read(1) # Reads initial \x00
 
