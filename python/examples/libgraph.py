@@ -4,6 +4,7 @@ import os
 
 r2 = r2pipe.open("/bin/ls")
 libpath = ['', '.', '/lib', '/usr/lib']
+output = 'aa' # 'dot'
 
 done = {}
 
@@ -46,7 +47,10 @@ def graphlibs(src, root):
 if len(sys.argv) > 1:
 	path = sys.argv[1]
 	graphlibs(path, None)
-	print r2.cmd("e scr.color=true;agg")
+	if output == "dot":
+		print r2.cmd("aggd")
+	else:
+		print r2.cmd("e scr.color=true;agg")
 	r2.quit()
 else:
 	print "Usage: libgraph.py [path-to-bin]"
