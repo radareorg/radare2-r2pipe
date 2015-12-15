@@ -4,7 +4,8 @@ import os
 
 r2 = r2pipe.open("/bin/ls")
 libpath = ['', '.', '/lib', '/usr/lib']
-output = 'aa' # 'dot'
+output = 'aa'
+# output = 'dot'
 
 done = {}
 
@@ -20,7 +21,7 @@ def getlibs(lib):
 	return r2.syscmdj("rabin2 -lj %s"%(lib))['libs']
 
 def filter(s):
-	return s.replace("-","_")
+	return s.replace("-","_").replace("+","x")
 
 def makeNode(name):
 	r2.cmd("agn %s"%(filter(name)))
@@ -31,6 +32,7 @@ def makeEdge(f,t):
 def graphlibs(src, root):
 	hs = src.replace("/","_")
 	hs = hs.replace("-","_")
+	hs = hs.replace("+","x")
 	try:
 		if done[hs]:
 			return;
