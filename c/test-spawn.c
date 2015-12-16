@@ -15,6 +15,7 @@ int main() {
 		r2cmd (r2, "?e Hello World");
 		r2cmd (r2, "x");
 		r2cmd (r2, "?e Hello World");
+		r2cmd (r2, "pd 20");
 		r2p_close (r2);
 		return 0;
 	}
