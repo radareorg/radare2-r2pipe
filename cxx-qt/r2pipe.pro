@@ -1,5 +1,6 @@
 CONFIG += qt
 SOURCES += r2pipe.cxx
+SOURCES += test.cxx
 
 QT += network
 QT += core
