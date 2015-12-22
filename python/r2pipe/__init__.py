@@ -250,9 +250,9 @@ class open:
 # Hello World
 if __name__ == "__main__":
 	print("[+] Spawning r2 tcp and http servers")
-	system ("pkill r2")
-	system ("r2 -qc.:9080 /bin/ls &")
-	system ("r2 -qc=h /bin/ls &")
+	os.system("pkill r2")
+	os.system("r2 -qc.:9080 /bin/ls &")
+	os.system("r2 -qc=h /bin/ls &")
 	time.sleep(1)
 	# Test r2pipe with local process
 	print("[+] Testing python r2pipe local")
@@ -279,4 +279,4 @@ if __name__ == "__main__":
 		print("Error with remote http conection")
 	else:
 		print(disas)
-	system ("pkill -INT r2")
+	os.system("pkill -INT r2")
