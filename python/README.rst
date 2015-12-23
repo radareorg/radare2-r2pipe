@@ -2,7 +2,7 @@ r2pipe for Python
 =================
 
 Interact with radare2 using the #!pipe command or in standalone scripts
-that communicate with local or remoate r2 via pipe, tcp or http.
+that communicate with local or remote r2 via pipe, tcp or http.
 
 Usage example::
 
