@@ -60,13 +60,39 @@ private func testHttp() {
 	}
 }
 
+private func testCcall() {
+	print ("Testing r2pipe Ccall method");
+	if let r2p = R2Pipe(url:"#!ccall") {
+		if let str = r2p.cmdSync ("?V") {
+			log("http-sync", b:str)
+		} else {
+			print ("ERROR: Ccall Sync Call failed");
+		}
+		r2p.cmdSync ("o /bin/ls");
+		r2p.cmd("pi 5 @ entry0", closure:{
+			(str:String?)->() in
+			if let s = str {
+				log ("http-async", b: s);
+			} else {
+				log ("error", b: "network");
+			}
+			exit (0);
+		});
+	} else {
+		print ("ERROR: Ccall method");
+	}
+}
+
 /* ---------------------------- */
 /* --          main          -- */
 /* ---------------------------- */
 
 print("Hello r2pipe.swift!");
 
-if let r2p = R2Pipe(url:nil) { //"#!pipe") {
+testCcall();
+//if let r2p = R2Pipe(url:nil) { //"#!pipe") {
+/*
+if let r2p = R2Pipe(url:"#!ccall") { //"#!pipe") {
 	r2p.cmd ("?V", closure:{
 		(str:String?) in
 		if let s = str {
@@ -80,9 +106,11 @@ if let r2p = R2Pipe(url:nil) { //"#!pipe") {
 	NSRunLoop.currentRunLoop().run();
 } else {
 	print ("Invalid R2PIPE_{IN|OUT} environment")
-	testSpawn();
-	testHttp();
+	//testSpawn();
+	//testHttp();
+	testCcall();
 }
+*/
 
 /* main loop required for async network requests */
 NSRunLoop.currentRunLoop().run();

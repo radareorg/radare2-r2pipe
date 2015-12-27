@@ -1,4 +1,4 @@
-#if HAVE_SPAWN
+#if USE_SPAWN
 import Foundation
 
 private struct Stack<T> {

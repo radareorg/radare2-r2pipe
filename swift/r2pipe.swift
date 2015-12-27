@@ -2,11 +2,15 @@ import Foundation
 #if USE_SWIFTY_JSON
 import SwiftyJSON
 #endif
+#if USE_CCALL
+import r_core
+#endif
 
 enum R2PipeChannel {
 	case Unknown
 	case Http
 	case Native
+	case Ccall
 	case Env
 }
 
@@ -28,13 +32,15 @@ extension String {
 class R2Pipe {
 	var mode : R2PipeChannel = .Unknown;
 	var path = "";
-#if HAVE_SPAWN
+#if USE_CCALL
+	var r2c : UnsafeMutablePointer<()> = nil;
+#endif
+#if USE_SPAWN
 	var r2p : R2PipeNative? = nil;
 #endif
-
 	init?(url: String?) {
 		if url == nil || url == "#!pipe" {
-#if HAVE_SPAWN
+#if USE_SPAWN
 #if USE_ENV_PIPE
 			mode = .Env
 			self.r2p = R2PipeNative(file:nil);
@@ -47,6 +53,13 @@ class R2Pipe {
 #else
 			return nil;
 #endif
+		} else if url == "#!ccall" {
+			mode = .Ccall;
+#if USE_CCALL
+			r2c = r_core.r_core_new();
+#else
+			return nil;
+#endif
 		} else if url!.rangeOfString("://") != nil {
 			if url!.hasPrefix ("http://")
 			|| url!.hasPrefix ("https://") {
@@ -54,7 +67,7 @@ class R2Pipe {
 				path = url!
 			}
 		} else {
-#if HAVE_SPAWN
+#if USE_SPAWN
 			mode = .Native
 			path = url!
 			self.r2p = R2PipeNative(file:url!)
@@ -64,6 +77,28 @@ class R2Pipe {
 		}
 	}
 
+#if USE_CCALL
+	func cmdCcall(str: String, closure:(String?)->()) -> Bool {
+		if let s = cmdCcallSync(str) {
+			closure (s);
+			return true;
+		}
+		return false;
+	}
+
+	func cmdCcallSync(str: String) -> String? {
+		if r2c != nil {
+			let s = r_core.r_core_cmd_str(r2c, str);
+			if s != nil {
+				let r = String.fromCString(s);
+	//			r_core.free (s);
+				return r;
+			}
+		}
+		return nil;
+	}
+#endif
+
 	func cmdHttp(str: String, closure:(String?)->()) -> Bool {
 		let urlstr = self.path.ToR2WebURL(str);
 		let url = NSURL(string: urlstr);
@@ -72,7 +107,7 @@ class R2Pipe {
 		NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler:{
 			(data:NSData?, url:NSURLResponse?, error:NSError?) -> Void in
 			let str = NSString(data: data!, encoding: NSUTF8StringEncoding)
-			closure (str as! String);
+			closure (str as? String);
 		})
 #else
 		NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
@@ -110,10 +145,16 @@ class R2Pipe {
 
 	func cmd(str:String, closure:(String?)->()) -> Bool {
 		switch (mode) {
+		case .Ccall:
+#if USE_CCALL
+			return cmdCcall(str, closure:closure);
+#else
+			return false;
+#endif
 		case .Http:
 			return cmdHttp(str, closure:closure);
 		case .Native, .Env:
-#if HAVE_SPAWN
+#if USE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommand (str, closure:closure);
 			}
@@ -126,10 +167,16 @@ class R2Pipe {
 
 	func cmdSync(str:String) -> String? {
 		switch (mode) {
+		case .Ccall:
+#if USE_CCALL
+			return cmdCcallSync(str);
+#else
+			return nil;
+#endif
 		case .Http:
 			return cmdHttpSync(str);
 		case .Native, .Env:
-#if HAVE_SPAWN
+#if USE_SPAWN
 			if let r2p = self.r2p {
 				return r2p.sendCommandSync(str);
 			}

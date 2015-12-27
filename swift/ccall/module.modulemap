@@ -1,0 +1,5 @@
+module r_core [system] [extern_c] {
+  header "/usr/local/include/libr/naked.h"
+  link "r_core"
+  export *
+}
