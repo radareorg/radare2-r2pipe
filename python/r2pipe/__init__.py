@@ -125,9 +125,9 @@ class open:
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
 			self.uri = filename + "/cmd"
-		elif filename.startswith("native://"):
+		elif filename.startswith("ccall://"):
 			self._cmd = self._cmd_native
-			self.uri = filename[9:]
+			self.uri = filename[7:]
 		elif filename.startswith("tcp"):
 			r = re.match(r'tcp://(\d+\.\d+.\d+.\d+):(\d+)/?', filename)
 			if not r:
