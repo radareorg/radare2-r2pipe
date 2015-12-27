@@ -33,7 +33,14 @@ import socket
 import urllib
 from subprocess import Popen, PIPE
 
-VERSION="0.8.0"
+try:
+	import native
+	has_native = True
+except:
+	has_native = False
+	pass
+
+VERSION="0.8.1"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -118,6 +125,9 @@ class open:
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
 			self.uri = filename + "/cmd"
+		elif filename.startswith("native://"):
+			self._cmd = self._cmd_native
+			self.uri = filename[9:]
 		elif filename.startswith("tcp"):
 			r = re.match(r'tcp://(\d+\.\d+.\d+.\d+):(\d+)/?', filename)
 			if not r:
@@ -164,8 +174,8 @@ class open:
 			while True:
 				fSuccess = windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE,byref(cbRead), None)
 				out += chBuf.value
-				if ord(chBuf[cbRead.value-1])==0:
-					out=out[0:-1]
+				if ord(chBuf[cbRead.value-1]) == 0:
+					out = out[0:-1]
 					break
 		else:
 			os.write (self.pipe[1], cmd)
@@ -179,6 +189,14 @@ class open:
 					out = out[0:-1]
 					break
 		return out.decode('utf-8')
+
+	def _cmd_native(self, cmd):
+		if not has_native:
+			raise Exception('No native ctypes connector available')
+		if not hasattr(self, 'native'):
+			self.native = native.RCore()
+			self.native.cmd_str("o "+self.uri)
+		return self.native.cmd_str(cmd)
 
 	def _cmd_http(self, cmd):
 		try:
