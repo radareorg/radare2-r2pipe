@@ -1,4 +1,7 @@
+'use strict';
+
 /* nodejs r2 telegram bot */
+
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var qs = require ('querystring');
@@ -6,10 +9,16 @@ var https = require ('https');
 var r2p = require ('r2pipe');
 var fs = require ('fs');
 
+const config = {
+  target: 'http://cloud.rada.re/cmd/',
+  anycmd: true,
+  token: ''
+};
+
 /* required to run the bot */
-var TOKEN = slurp("TOKEN", true);
+var TOKEN = slurp('TOKEN', true);
 /* required for the admin */
-var OWNER = slurp("OWNER", false);
+var OWNER = slurp('OWNER', false);
 
 function slurp(file, assert) {
   try {
@@ -23,7 +32,7 @@ function slurp(file, assert) {
   }
 }
 
-var BASEURL = 'https://api.telegram.org/';
+var TGAPIURL = 'https://api.telegram.org/';
 
 function jlog(x) {
   console.log (JSON.stringify (JSON.parse(x), null, "  "));
@@ -72,12 +81,20 @@ function TelegramBot(apiurl, cb) {
   });
 }
 
+function filtercmd(x) {
+  for (const token of ';|') {
+    const pos = x.indexOf(token);
+    if (pos != -1) x = x.substring (0, pos);
+  }
+  return x;
+}
+
 function launchTelegramBot(r2) {
   (function SetupR2(r2) {
     r2.cmd("e scr.color=false");
     r2.cmd("e cfg.sandbox=true");
   })(r2);
-  TelegramBot (BASEURL, function(bot, msg) {
+  TelegramBot (TGAPIURL, function(bot, msg) {
     function sendMessage(from, chat, text) {
       function sendChunk(txt) {
         var args = {
@@ -138,7 +155,7 @@ function launchTelegramBot(r2) {
           if (text.length > 4) {
             text = text.substring (4).trim();
           }
-          var off = text.indexOf ('@');
+          const off = text.indexOf('@');
           var addr = '';
           if (off != -1) {
             addr = text.substring(off);
@@ -147,7 +164,7 @@ function launchTelegramBot(r2) {
           var words = text.split(' ');
           var idx = 0;
           if (words[0] == '/dis') {
-            replyMessage("Usage: /dis [-arch:bits] [hexpairs] [@ addr]");
+            replyMessage('Usage: /dis [-arch:bits] [hexpairs] [@ addr]');
           } else {
             if (words[0] && words[0][0] == '-') {
               arch = words[0].substring(1);
@@ -161,8 +178,8 @@ function launchTelegramBot(r2) {
             if (addr) {
               text += addr;
             }
-            console.log ("===========> " + text);
-            r2.cmd(text, replyMessage);
+            console.log ('[r2cmd]', text);
+            r2.cmd(filtercmd(text), replyMessage);
           }
           return;
         } else if (text.indexOf ('/asm') == 0) {
@@ -196,7 +213,7 @@ function launchTelegramBot(r2) {
               text += addr;
             }
             console.log ("===========> " + text);
-            r2.cmd(text, replyMessage);
+            r2.cmd(filtercmd(text), replyMessage);
           }
           return;
 
@@ -223,10 +240,14 @@ function launchTelegramBot(r2) {
               "r2bot accepts r2 commands and /start /help /list /asm /dis");
             break;
           default:
-            r2.cmd(text, function(data) {
-              console.log (data);
-              sendMessage (from, chat, data);
-            });
+            if (config.anycmd) {
+              r2.cmd(text, function(data) {
+                console.log (data);
+                sendMessage (from, chat, data);
+              });
+            } else {
+              sendMessage (from, chat, "Arbitrary r2 command execution disabled");
+            }
         }
       }
     }
@@ -259,5 +280,5 @@ function launchTelegramBot(r2) {
   });
 }
 
-//r2p.launch("/bin/ls", launchTelegramBot);
-r2p.connect ("http://cloud.rada.re/cmd/", launchTelegramBot);
+((x) => { return (x.indexOf ('http') == 0)? r2p.connect: r2p.launch; })
+(config.target) (config.target, launchTelegramBot);
