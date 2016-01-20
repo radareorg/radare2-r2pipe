@@ -1,0 +1,17 @@
+{ 
+	"name": "r2pipe-ircbot",
+	"version": "0.0.1",
+	"dependencies": {
+		"node-telegram-bot-api": "*",
+		"optimist": "*",
+		"irc.js": "*"
+	},
+	"optionalDependencies": {
+		"jscs": "*",
+		"js-beautify": "*"
+	},
+	"scripts": {
+		"indent":"node_modules/.bin/js-beautify -s 2 -r *.js",
+		"verify":"node_modules/.bin/jscs -x -r inline *.js"
+	}
+}
