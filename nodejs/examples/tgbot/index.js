@@ -12,6 +12,7 @@ var fs = require ('fs');
 const config = {
   target: 'http://cloud.rada.re/cmd/',
   anycmd: true,
+  markdown: true,
   token: ''
 };
 
@@ -89,9 +90,34 @@ function filtercmd(x) {
   return x;
 }
 
+function filterMarkdown(x) {
+if (!config.markdown) {
+ return x;
+}
+   x = x.replace('`', '\'');
+/*
+ x = x.replace('[', '#');
+ x = x.replace(']', '#');
+ // x = x.replace('(', '#');
+ // x = x.replace(')', '#');
+ x = x.replace('_', '-');
+ x = x.replace('=', '-');
+ x = x.replace(';', '-');
+ x = x.replace('*', '#');
+ x = x.replace('.', '#');
+ x = x.replace('---', '111');
+*/
+      var lines = x.split('\n');
+      // trim all lines, some markdown parsers fail to decode
+      lines = lines.map((a)=>{ return a.trim()});
+      x = lines.join('\n');
+      return '`'+ x + '`';
+    }
+
 function launchTelegramBot(r2) {
   (function SetupR2(r2) {
     r2.cmd("e scr.color=false");
+    r2.cmd("e scr.html=false");
     r2.cmd("e cfg.sandbox=true");
   })(r2);
   TelegramBot (TGAPIURL, function(bot, msg) {
@@ -103,6 +129,10 @@ function launchTelegramBot(r2) {
         };
         if (chat) {
           args['chat_id'] = chat.id;
+        }
+        if (config.markdown === true) {
+          args['parse_mode'] = 'Markdown';
+	  args.text = filterMarkdown (args.text);
         }
         bot.query('sendMessage', args, function(data) {
           if (!data) {
@@ -118,6 +148,7 @@ function launchTelegramBot(r2) {
       }
       sendChunk(text);
     }
+
     function onMessage(from, chat, text) {
       function replyMessage(txt) {
         sendMessage (from, chat, txt);
@@ -242,7 +273,7 @@ function launchTelegramBot(r2) {
           default:
             if (config.anycmd) {
               r2.cmd(text, function(data) {
-                console.log (data);
+                //console.log (data);
                 sendMessage (from, chat, data);
               });
             } else {
