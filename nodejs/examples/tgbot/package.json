@@ -4,6 +4,9 @@
 	"dependencies": {
 		"r2pipe": "*"
 	},
+	"optionalDependencies": {
+		"js-beautify": "*"
+	},
 	"scripts": {
 		"bot": "node index.js"
 	}
