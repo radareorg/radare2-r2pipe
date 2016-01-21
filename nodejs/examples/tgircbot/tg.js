@@ -48,8 +48,16 @@ module.exports = function(irc) {
       console.log(e);
     }
     console.log(msg);
-    var msgline = '<' + name + '> ' + msg.text.replace('@r2tgircBot', '').trim();
-    irc.privmsg(channel, msgline);
+    var lines = msg.text.replace('@r2tgircBot', '').split("\n");
+    var count = 10;
+    for (var line in lines) {
+      var msgline = '<' + name + '> ' + line.trim();
+      irc.privmsg(channel, msgline);
+      if (count--<1) {
+        irc.privmsg(channel, '<'+name+'> ...');
+        break;
+      }
+    }
     //  var photo = 'cats.png';
     // bot.sendPhoto(chatId, photo, {caption: 'Lovely kittens'});
   });
