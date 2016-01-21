@@ -1,21 +1,26 @@
 'use strict';
 
 /* IRC */
-var IRC = require('irc.js');
+const IRC = require('irc.js');
+var irc = null;
+var bot = null;
+var gChatId = null;
+var channel = null;
 
-module.exports.bot = null;
+module.exports.telegramLink = function(b, c) {
+  bot = b;
+  gChatId = c;
+}
 
-module.exports.start = function(OPT) {
-
+module.exports.start = function(OPT, connectCallback) {
   /* config */
   var nick = OPT.nick || 'r2tgirc';
-  var channel = OPT.channel || '#radare';
+  channel = OPT.channel || '#radare';
   var host = OPT.host || 'irc.freenode.net';
   var port = OPT.port || 6667;
   var owner = OPT.owner || 'pancake';
   var file = OPT.file || '/bin/ls';
   var limit = OPT.limit || 10;
-  var irc = null;
 
   const msgtimeout = 1000;
   const Chi = '\x1b[32m';
@@ -58,7 +63,7 @@ module.exports.start = function(OPT) {
   /* r2 stuff */
   print(Chi, '[=>] Initializing r2 core...', Cend);
 
-  function startIrcBot() {
+  function startIrcBot(cb) {
     print(Chi, '[=>] Connecting to irc ', Cend);
     print(Chi, '     HOST: ', host, ':', port, Cend);
     print(Chi, '     NICK: ', nick, ' ', channel, Cend);
@@ -76,6 +81,10 @@ module.exports.start = function(OPT) {
       irc.nick(nick);
       irc.join(channel, function(x) {
         irc.privmsg(channel, 'hi');
+        if (connectCallback) {
+          console.log("CALLING CONNECT CALLBACK");
+          connectCallback(irc, channel);
+        }
       });
       print('connected');
     });
@@ -110,7 +119,14 @@ module.exports.start = function(OPT) {
       print('<' + from + '> to ' + to + ' ' + msg);
       var msgline = to + ' <' + from + '> ' + msg;
       if (bot != null) {
-        bot.sendMessage(gChatId, msgline);
+        if (gChatId === null) {
+          console.error('UNDEFINED CHATID');
+        } else {
+          console.log('CHATID', gChatId);
+          bot.sendMessage(gChatId, msgline);
+        }
+      } else {
+        console.error("BOT IS NOT DEFINED");
       }
     });
 

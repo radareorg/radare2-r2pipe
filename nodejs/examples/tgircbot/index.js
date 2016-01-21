@@ -1,6 +1,13 @@
 'use strict';
 
-var OPT = require('optimist').argv;
+const OPT = require('optimist').argv;
+const pipe = {
+  irc: require('./irc'),
+  tg: require('./tg')
+};
 
-const p0 = require('./irc').start(OPT);
-p0.bot = require('./tg')(p0);
+pipe.irc.start(OPT, (irc, channel) => {
+  pipe.tg.ircProxy(irc, channel, function(bot, chatid) {
+    pipe.irc.telegramLink(bot, chatid);
+  });
+});
