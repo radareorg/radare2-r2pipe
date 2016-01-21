@@ -2,12 +2,17 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 var gChatId = null;
+var bot = null;
 
-module.exports.getChannel = function() {
-  return gChatId;
+module.exports.bridgeMessage = function(name, text) {
+  if (gChatId !== null) {
+    bot.sendMessage(gChatId, '<' + name + '> ' + text);
+  } else {
+    console.error("Global chat_id not yet known");
+  }
 }
 
-module.exports.ircProxy = function(irc, ircChannel, channelCallback) {
+module.exports.launch = function(endpoint) {
   const token = slurp('TOKEN', true);
 
   function slurp(file, assert) {
@@ -23,9 +28,7 @@ module.exports.ircProxy = function(irc, ircChannel, channelCallback) {
   }
 
   /* Telegram Bot Side */
-
-  // Setup polling way
-  var bot = new TelegramBot(token, {
+  bot = new TelegramBot(token, {
     polling: true
   });
   bot.onText(/(.*)/, function(msg, match) {
@@ -36,9 +39,6 @@ module.exports.ircProxy = function(irc, ircChannel, channelCallback) {
     var chatId = msg.chat.id;
     if (!gChatId && chatId) {
       gChatId = chatId;
-      if (channelCallback) {
-        channelCallback(bot, gChatId);
-      }
     }
     console.log(gChatId, chatId);
     //bot.sendMessage(chatId, 'hello world');
@@ -54,24 +54,8 @@ module.exports.ircProxy = function(irc, ircChannel, channelCallback) {
       console.log(e);
     }
     console.log(msg);
-    var lines = msg.text.replace('@r2tgircBot', '').split("\n");
-    var count = 10;
-    console.log("SENDING MESSAGE!", irc);
-    for (var line of lines) {
-      console.log("SENDING LINE!", line);
-      const msgline = '<' + name + '> ' + line.trim();
-      if (count-- < 1) {
-        irc.privmsg(ircChannel, '<' + name + '> ...');
-        break;
-      }
-      if (irc === null) {
-        console.error("irc instance not yet defined");
-      } else {
-        irc.privmsg(ircChannel, msgline);
-      }
-    }
-    //  var photo = 'cats.png';
-    // bot.sendPhoto(chatId, photo, {caption: 'Lovely kittens'});
+    endpoint.bridgeMessage(name, msg.text);
+    // bot.sendPhoto(chatId, 'cats.png', {caption: 'Lovely kittens'});
   });
   return bot;
 };

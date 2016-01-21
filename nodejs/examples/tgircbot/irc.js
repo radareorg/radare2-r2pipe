@@ -4,24 +4,29 @@
 const IRC = require('irc.js');
 var irc = null;
 var bot = null;
-var gChatId = null;
 var channel = null;
 
-module.exports.telegramLink = function(b, c) {
-  bot = b;
-  gChatId = c;
+module.exports.bridgeMessage = function(name, text) {
+  if (irc === null) {
+    console.error("irc instance not yet defined");
+    return false;
+  }
+  irc.privmsg(channel, 'DEMO');
+  var lines = text.replace('@r2tgircBot', '').split("\n");
+  var count = 10;
+  const who = '<' + name + '> ';
+  for (var line of lines) {
+    console.log("LINE", line);
+    if (count-- < 1) {
+      irc.privmsg(channel, who + '...');
+      break;
+    }
+    irc.privmsg(channel, who + line.trim());
+  }
 }
 
-module.exports.start = function(OPT, connectCallback) {
+module.exports.bind = function(endpoint) {
   /* config */
-  var nick = OPT.nick || 'r2tg';
-  channel = OPT.channel || '#radare';
-  var host = OPT.host || 'irc.freenode.net';
-  var port = OPT.port || 6667;
-  var owner = OPT.owner || 'pancake';
-  var file = OPT.file || '/bin/ls';
-  var limit = OPT.limit || 10;
-
   const msgtimeout = 1000;
   const Chi = '\x1b[32m';
   const Cend = '\x1b[0m';
@@ -32,30 +37,6 @@ module.exports.start = function(OPT, connectCallback) {
     print('^C :D');
     process.exit(0);
   }
-  if (channel[0] != '#') {
-    channel = '#' + channel;
-  }
-
-  if (OPT.help || OPT.h) {
-    print('r2irc.js [--ssl] [--host host] [--port port] [--file program]');
-    print('         [--nick nick] [--channel chan] [--owner nick] [--limit num]');
-    process.exit(0);
-  }
-
-  if (OPT.ssl) {
-    const sslport = 9000 + (100 * Math.random());
-    const cmd = 'socat TCP4-LISTEN:' + sslport + ' OPENSSL:' + host + ':' + port + ',verify=0';
-    //print ("SPAWN ("+cmd+")")
-    require('child_process')
-      .spawn('/bin/sh', ['-c', cmd], {
-        stdio: 'pipe'
-      })
-      .on('exit', function() {
-        print('socat closed');
-      });
-    host = '127.0.0.1';
-    port = sslport;
-  }
 
   process.on('SIGINT', finalize);
   process.on('SIGTERM', finalize);
@@ -63,7 +44,41 @@ module.exports.start = function(OPT, connectCallback) {
   /* r2 stuff */
   print(Chi, '[=>] Initializing r2 core...', Cend);
 
-  function startIrcBot(cb) {
+  function startIrcBot(OPT) {
+    /* parse commandline options */
+    var nick = OPT.nick || 'r2tg';
+    channel = OPT.channel || '#radare';
+    var host = OPT.host || 'irc.freenode.net';
+    var port = OPT.port || 6667;
+    var owner = OPT.owner || 'pancake';
+    var file = OPT.file || '/bin/ls';
+    var limit = OPT.limit || 10;
+    if (channel[0] != '#') {
+      channel = '#' + channel;
+    }
+
+    if (OPT.help || OPT.h) {
+      print('r2tgirc.js [--ssl] [--host host] [--port port] [--file program]');
+      print('    [--nick nick] [--channel chan] [--owner nick] [--limit num]');
+      process.exit(0);
+    }
+
+    if (OPT.ssl) {
+      const sslport = 9000 + (100 * Math.random());
+      const cmd = 'socat TCP4-LISTEN:' + sslport + ' OPENSSL:' + host + ':' + port + ',verify=0';
+      //print ("SPAWN ("+cmd+")")
+      require('child_process')
+        .spawn('/bin/sh', ['-c', cmd], {
+          stdio: 'pipe'
+        })
+        .on('exit', function() {
+          print('socat closed');
+        });
+      host = '127.0.0.1';
+      port = sslport;
+    }
+
+    /* connect to irc */
     print(Chi, '[=>] Connecting to irc ', Cend);
     print(Chi, '     HOST: ', host, ':', port, Cend);
     print(Chi, '     NICK: ', nick, ' ', channel, Cend);
@@ -81,8 +96,8 @@ module.exports.start = function(OPT, connectCallback) {
       irc.nick(nick);
       irc.join(channel, function(x) {
         irc.privmsg(channel, 'hi');
-        if (connectCallback) {
-          connectCallback(irc, channel);
+        if (endpoint && endpoint.launch) {
+          endpoint.launch(module.exports);
         }
       });
       print('connected');
@@ -116,18 +131,21 @@ module.exports.start = function(OPT, connectCallback) {
         }
       }
       print('<' + from + '> to ' + to + ' ' + msg);
-      if (bot !== null && gChatId) {
-        // console.log('CHATID', gChatId);
+      if (endpoint.bridgeMessage !== null) {
         const msgline = to + ' <' + from + '> ' + msg;
-        bot.sendMessage(gChatId, msgline);
+        endpoint.bridgeMessage(from, msgline);
       } else {
-        console.error("BOT IS NOT YET DEFINED");
-        irc.privmsg (channel, 'Bridge not initialized yet, message not forwarded.');
+        console.error('Undefined endpoint');
+        irc.privmsg(channel, 'Bridge not initialized yet, message not forwarded.');
       }
+      //  const msgline = to + ' <' + from + '> ' + msg;
+      // endpoint.bridgeMessage(msgline);
     });
 
     irc.connect(nick, 'radare-telegram-irc-bridge');
   }
-  startIrcBot();
+  return {
+    start: startIrcBot
+  }
   return irc;
-};
+}
