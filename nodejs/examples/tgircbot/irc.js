@@ -11,7 +11,6 @@ module.exports.bridgeMessage = function(name, text) {
     console.error("irc instance not yet defined");
     return false;
   }
-  irc.privmsg(channel, 'DEMO');
   var lines = text.replace('@r2tgircBot', '').split("\n");
   var count = 10;
   const who = '<' + name + '> ';
@@ -132,8 +131,7 @@ module.exports.bind = function(endpoint) {
       }
       print('<' + from + '> to ' + to + ' ' + msg);
       if (endpoint.bridgeMessage !== null) {
-        const msgline = to + ' <' + from + '> ' + msg;
-        endpoint.bridgeMessage(from, msgline);
+        endpoint.bridgeMessage(from, msg);
       } else {
         console.error('Undefined endpoint');
         irc.privmsg(channel, 'Bridge not initialized yet, message not forwarded.');
