@@ -14,7 +14,7 @@ module.exports.telegramLink = function(b, c) {
 
 module.exports.start = function(OPT, connectCallback) {
   /* config */
-  var nick = OPT.nick || 'r2tgirc';
+  var nick = OPT.nick || 'r2tg';
   channel = OPT.channel || '#radare';
   var host = OPT.host || 'irc.freenode.net';
   var port = OPT.port || 6667;
@@ -82,7 +82,6 @@ module.exports.start = function(OPT, connectCallback) {
       irc.join(channel, function(x) {
         irc.privmsg(channel, 'hi');
         if (connectCallback) {
-          console.log("CALLING CONNECT CALLBACK");
           connectCallback(irc, channel);
         }
       });
@@ -117,20 +116,17 @@ module.exports.start = function(OPT, connectCallback) {
         }
       }
       print('<' + from + '> to ' + to + ' ' + msg);
-      var msgline = to + ' <' + from + '> ' + msg;
-      if (bot != null) {
-        if (gChatId === null) {
-          console.error('UNDEFINED CHATID');
-        } else {
-          console.log('CHATID', gChatId);
-          bot.sendMessage(gChatId, msgline);
-        }
+      if (bot !== null && gChatId) {
+        // console.log('CHATID', gChatId);
+        const msgline = to + ' <' + from + '> ' + msg;
+        bot.sendMessage(gChatId, msgline);
       } else {
-        console.error("BOT IS NOT DEFINED");
+        console.error("BOT IS NOT YET DEFINED");
+        irc.privmsg (channel, 'Bridge not initialized yet, message not forwarded.');
       }
     });
 
-    irc.connect(nick, 'http://www.radare.org/', 'r2tgirc');
+    irc.connect(nick, 'radare-telegram-irc-bridge');
   }
   startIrcBot();
   return irc;
