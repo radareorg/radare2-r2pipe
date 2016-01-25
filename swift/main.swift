@@ -7,7 +7,7 @@ private func log (a:String, b:String) {
 	print (Color+"\(a)("+Reset+"\n\(b)"+Color+")"+Reset)
 }
 
-#if HAVE_SPAWN
+#if USE_SPAWN
 
 private func testSpawn () {
 	print ("Testing r2pipe spawn method");
@@ -89,6 +89,7 @@ private func testCcall() {
 
 print("Hello r2pipe.swift!");
 
+testSpawn();
 testCcall();
 //if let r2p = R2Pipe(url:nil) { //"#!pipe") {
 /*
@@ -106,7 +107,7 @@ if let r2p = R2Pipe(url:"#!ccall") { //"#!pipe") {
 	NSRunLoop.currentRunLoop().run();
 } else {
 	print ("Invalid R2PIPE_{IN|OUT} environment")
-	//testSpawn();
+	testSpawn();
 	//testHttp();
 	testCcall();
 }

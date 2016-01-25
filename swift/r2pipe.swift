@@ -6,7 +6,7 @@ import SwiftyJSON
 import r_core
 #endif
 
-enum R2PipeChannel {
+public enum R2PipeChannel {
 	case Unknown
 	case Http
 	case Native
@@ -29,7 +29,7 @@ extension String {
 	}
 }
 
-class R2Pipe {
+public class R2Pipe {
 	var mode : R2PipeChannel = .Unknown;
 	var path = "";
 #if USE_CCALL
@@ -38,7 +38,7 @@ class R2Pipe {
 #if USE_SPAWN
 	var r2p : R2PipeNative? = nil;
 #endif
-	init?(url: String?) {
+	public init?(url: String?) {
 		if url == nil || url == "#!pipe" {
 #if USE_SPAWN
 #if USE_ENV_PIPE
@@ -65,13 +65,17 @@ class R2Pipe {
 			|| url!.hasPrefix ("https://") {
 				mode = .Http
 				path = url!
+			} else {
+				return nil;
 			}
 		} else {
 #if USE_SPAWN
+print("RUNNING ANTIVE SPAWN");
 			mode = .Native
 			path = url!
 			self.r2p = R2PipeNative(file:url!)
 #else
+print("NO SPAWN");
 			return nil
 #endif
 		}
@@ -143,7 +147,7 @@ class R2Pipe {
 		return nil;
 	}
 
-	func cmd(str:String, closure:(String?)->()) -> Bool {
+	public func cmd(str:String, closure:(String?)->()) -> Bool {
 		switch (mode) {
 		case .Ccall:
 #if USE_CCALL
@@ -165,7 +169,7 @@ class R2Pipe {
 		}
 	}
 
-	func cmdSync(str:String) -> String? {
+	public func cmdSync(str:String) -> String? {
 		switch (mode) {
 		case .Ccall:
 #if USE_CCALL
@@ -189,14 +193,14 @@ class R2Pipe {
 
 	/* JSON APIs */
 #if USE_SWIFTY_JSON
-	func cmdjSync(str:String) -> NSDictionary? {
+	public func cmdjSync(str:String) -> NSDictionary? {
 		if let s = cmdSync (str) {
 			return JSON (s)
 		}
 		return nil;
 	}
 
-	func cmdj(str:String, closure:(NSDictionary)->()) -> Bool {
+	public func cmdj(str:String, closure:(NSDictionary)->()) -> Bool {
 		cmd (str, closure:{
 			(s:String?)->() in
 			if let js = JSON (obj) {
@@ -220,7 +224,7 @@ class R2Pipe {
 		return nil;
 	}
 
-	func cmdjSync(str:String) -> NSDictionary? {
+	public func cmdjSync(str:String) -> NSDictionary? {
 		if let s = cmdSync (str) {
 			if let obj = self.jsonParse (s) {
 				return obj;
@@ -229,7 +233,7 @@ class R2Pipe {
 		return nil;
 	}
 
-	func cmdj(str:String, closure:(NSDictionary?)->()) -> Bool {
+	public func cmdj(str:String, closure:(NSDictionary?)->()) -> Bool {
 		cmd (str, closure:{
 			(s:String?)->() in
 			if (s != nil) {

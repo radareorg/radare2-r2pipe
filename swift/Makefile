@@ -13,7 +13,7 @@ USE_ENV_PIPE=1
 ifeq ($(TARGET),ios)
 SDK=iphoneos
 CPU=arm64
-IOS=8.4
+IOS=9.2
 # IOS=9.0 # deprecates Sync methods? Use Just library?
 SC+=-target $(CPU)-apple-ios$(IOS)
 USE_NSURL_SESSION=1
@@ -41,6 +41,24 @@ endif
 all:
 	$(SC) $(SFLAGS) main.swift $(SFILES)
 
+repl: lib
+	@echo
+	@echo
+	@echo "import R2Pipe;"
+	@echo "/* let r2p = R2Pipe(url:\"/bin/ls\")!; */"
+	@echo "let r2p = R2Pipe(url:\"http://cloud.radare.org/cmd/\")!;"
+	@echo "print(r2p.cmdSync(\"x\")!);"
+	@echo
+	@echo
+	swift -I . -L . -lR2Pipe -module-link-name R2Pipe
+
+lib:
+	swiftc -emit-library -emit-object -module-name R2Pipe $(SFLAGS) $(SFILES)
+	ar rcs libR2Pipe.a r2pipe.o r2pipeNative.o
+	swiftc -emit-library -emit-module -module-name R2Pipe $(SFLAGS) $(SFILES)
+
 clean:
 	rm -f main
 	rm -rf main.dSYM
+
+.PHONY: lib repl all clean
