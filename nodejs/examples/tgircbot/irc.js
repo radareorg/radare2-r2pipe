@@ -85,7 +85,8 @@ module.exports.bind = function(endpoint) {
     irc = new IRC(host, port);
 
     irc.on('disconnected', function(data) {
-      print('Cannot connect');
+      print('Disconnected from the IRC');
+      irc.connect(nick, 'radare-telegram-irc-bridge');
     });
 
     irc.on('raw', function(data) {
