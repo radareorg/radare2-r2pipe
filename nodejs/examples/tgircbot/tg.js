@@ -28,6 +28,9 @@ module.exports.launch = function(endpoint) {
   }
 
   /* Telegram Bot Side */
+  if (bot !== null) {
+    return;
+  }
   bot = new TelegramBot(token, {
     polling: true
   });
