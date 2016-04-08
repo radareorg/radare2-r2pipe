@@ -110,18 +110,15 @@ class open:
 				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE, byref(cbRead), None)
 				self.pipe = [hPipe, hPipe]
 				self._cmd = self._cmd_pipe
-				self.url = "#!pipe"
-				return
 			else:
 				self.pipe = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
 				self._cmd = self._cmd_pipe
-				self.url = "#!pipe"
-				return
+			self.url = "#!pipe"
+			return
 		except:
 			pass
 		if filename.startswith("#!pipe"):
-			print("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
-			return
+			raise Exception("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
 		if filename.startswith("http"):
 			self._cmd = self._cmd_http
 			self.uri = filename + "/cmd"
