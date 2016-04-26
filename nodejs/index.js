@@ -234,7 +234,7 @@ function r2bind(ls, cb, r2cmd) {
 
     ls.on('close', function(code) {
       running = false;
-      if (code !== 0 && r2cmd.toString().indexOf('httpCmd') == -1) {
+      if (code && r2cmd.toString().indexOf('httpCmd') == -1) {
         console.log('r2pipe: child process exited with code ' + code);
       }
     });
