@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>r2pipe\r2pipe.csproj</id>
+    <id>r2pipe</id>
     <version>1.0.0</version>
     <authors>radare2</authors>
     <owners>radare2</owners>
@@ -12,5 +12,11 @@
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>radare2 r2pipe</tags>
+    <dependencies>
+      <dependency id="Mono.Posix" version="4.0.0" />
+    </dependencies>
   </metadata>
+  <files>
+      <file src="bin/Release/r2pipe.dll" target="lib" />
+  </files>
 </package>

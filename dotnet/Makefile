@@ -26,7 +26,7 @@ clean:
 	rm -f main.exe http.exe $(R2P_LIB)
 
 nuget:
-	$(NUGET) pack r2pipe/r2pipe.csproj
+	$(NUGET) pack r2pipe/r2pipe.csproj.nuspec
 
 indent:
 	for a in *.cs ; do $(MONO) $(NARRANGE) $$a ; done

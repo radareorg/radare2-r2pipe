@@ -27,7 +27,7 @@ namespace r2pipe
         public RlangPipe()
         {
 #if __MonoCS__
-			if(Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
+            if(Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
 
             ureadStream = new UnixStream(int.Parse(Environment.GetEnvironmentVariable("R2PIPE_IN")));
             reader = new StreamReader(ureadStream);
@@ -35,15 +35,15 @@ namespace r2pipe
             uwriteStream = new UnixStream(int.Parse(Environment.GetEnvironmentVariable("R2PIPE_OUT")));
             writer = new StreamWriter(uwriteStream);
 
-			}
-			else {
+            }
+            else {
 #endif
             // Using named pipes on windows. I like this.
             inclient = new NamedPipeClientStream("R2PIPE_PATH");
             reader = new StreamReader(inclient);
             writer = new StreamWriter(inclient);
 #if __MonoCS__
-			}
+            }
 #endif
         }
 
@@ -107,15 +107,15 @@ namespace r2pipe
             reader.Dispose();
             writer.Dispose();
 #if __MonoCS__
-			if(Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
-	            ureadStream.Dispose();
-	            uwriteStream.Dispose();
-			}
-			else {
+            if(Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
+                ureadStream.Dispose();
+                uwriteStream.Dispose();
+            }
+            else {
 #endif
             inclient.Dispose();
 #if __MonoCS__
-			}
+            }
 #endif
         }
     }
