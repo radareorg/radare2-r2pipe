@@ -9,11 +9,20 @@ NARRANGE=$(NARRANGE_WD)/narrange-console.exe
 MCS_LIB=$(MCS) -optimize -target:library -out:$(R2P_LIB)
 MCS_LINK=$(MCS) -optimize -reference:$(R2P_LIB)
 
+ifneq ($(KEYFILE),)
+MCS_LIB+=-keyfile:$(KEYFILE)
+MCS_LINK+=-keyfile:$(KEYFILE)
+endif
+
 
 all: $(R2P_LIB) examples
 
 $(R2P_LIB): 
+ifneq ($(KEYFILE),)
+	$(XBUILD) /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=$(KEYFILE) r2pipe/r2pipe.csproj
+else
 	$(XBUILD) r2pipe/r2pipe.csproj
+endif
 
 examples:
 	$(XBUILD) LocalExample/LocalExample.csproj
@@ -24,6 +33,9 @@ run:
 
 clean:
 	rm -f main.exe http.exe $(R2P_LIB)
+	rm -rf r2pipe/obj r2pipe/bin
+	rm -rf HttpExample/obj HttpExample/bin
+	rm -rf LocalExample/obj LocalExample/bin
 
 nuget:
 	$(NUGET) pack r2pipe/r2pipe.csproj.nuspec
