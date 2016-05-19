@@ -62,7 +62,8 @@ namespace r2pipe
             r2Process.Start();
             r2Process.StandardInput.AutoFlush = true;
             // ignore first run
-            Console.WriteLine(r2Process.StandardOutput.Read());
+            r2Process.StandardOutput.Read();
+            // Console.WriteLine(r2Process.StandardOutput.Read());
         }
 
         /// <summary>
