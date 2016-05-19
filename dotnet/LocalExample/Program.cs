@@ -14,7 +14,7 @@ namespace LocalExample
         {
 
 #if __MonoCS__
-            using(IR2Pipe pipe = new R2Pipe("/bin/ls"))
+            using (IR2Pipe pipe = new R2Pipe("/bin/ls"))
 #else
             using (IR2Pipe pipe = new R2Pipe(@"C:\Windows\notepad.exe", @"C:\radare2\radare2.exe"))
 #endif
