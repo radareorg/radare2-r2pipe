@@ -12,6 +12,7 @@ namespace r2pipe
 
         private bool iOpenedPipe = false;
 
+#if !PORTABLE
         /// <summary>
         /// Initializes a new instance of the <see cref="QueuedR2Pipe"/> class.
         /// </summary>
@@ -21,6 +22,7 @@ namespace r2pipe
         {
             iOpenedPipe = true;
         }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueuedR2Pipe"/> class, using a HttpR2Pipe.
@@ -40,6 +42,7 @@ namespace r2pipe
             this.pipe = pipe;
         }
 
+#if !PORTABLE
         /// <summary>
         /// Initializes a new instance of the <see cref="QueuedR2Pipe"/> class.
         /// </summary>
@@ -48,6 +51,7 @@ namespace r2pipe
         {
             iOpenedPipe = true;
         }
+#endif
 
         /// <summary>
         /// Executes the commands.

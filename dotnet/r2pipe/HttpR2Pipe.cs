@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace r2pipe
         /// </summary>
         internal Uri uri;
 
-        protected WebClient client = new WebClient();
+        protected HttpClient client = new HttpClient();
 
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace r2pipe
         /// </returns>
         public string RunCommand(string command)
         {
-            return client.DownloadString(new Uri(uri, command));
+            return client.GetStringAsync(new Uri(uri, command)).Result;
         }
 
 #if !OLDNETFX
@@ -65,7 +66,7 @@ namespace r2pipe
         /// </returns>
         public async Task<string> RunCommandAsync(string command)
         {
-            return await client.DownloadStringTaskAsync(new Uri(uri, "/" + command));
+            return await client.GetStringAsync(new Uri(uri, "/" + command));
         }
 #endif
 

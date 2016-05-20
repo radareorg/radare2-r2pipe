@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>r2pipe</id>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <authors>radare2</authors>
     <owners>radare2</owners>
     <licenseUrl>https://github.com/radare/radare2-bindings/blob/master/COPYING</licenseUrl>
@@ -13,10 +13,17 @@
     <copyright>Copyright 2015</copyright>
     <tags>radare2 r2pipe</tags>
     <dependencies>
-      <dependency id="Mono.Posix" version="4.0.0" />
+      <!-- Everything but... -->
+      <group targetFramework="net40">
+        <dependency id="Mono.Posix" version="4.0.0" />
+      </group>
+      <!-- ... profile 111 for xamarin -->
+      <group targetFramework="netstandard1.1">
+      </group>
     </dependencies>
   </metadata>
   <files>
-      <file src="bin/Release/r2pipe.dll" target="lib" />
+    <file src="r2pipe-portable/bin/Release/r2pipe-portable.dll" target="lib\netstandard1.1" />
+    <file src="r2pipe/bin/Release/r2pipe.dll" target="lib\net40\r2pipe.dll" />
   </files>
 </package>
