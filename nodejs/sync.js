@@ -1,3 +1,4 @@
+var util = require('./util');
 var fs = require('fs');
 var proc = require('child_process');
 
@@ -52,11 +53,13 @@ function r2bind(ls, r2cmd) {
 
         /* Run R2 cmd */
         cmd: function(cmd) {
+            cmd = util.cleanCmd(cmd);
             return runCmdSync(ls, cmd);
         },
 
         /* Run cmd and return JSON output */
         cmdj: function(cmd) {
+            cmd = util.cleanCmd(cmd);
             return parseJSON(r2.cmd, cmd);
         },
 

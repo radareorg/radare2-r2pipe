@@ -5,6 +5,7 @@ var fs = require('fs');
 var net = require('net');
 var http = require('http');
 var sync = require('./sync.js');
+var util = require('./util');
 var proc = require('child_process');
 var promise = require('./promise.js');
 var pipeQueue = [];
@@ -159,6 +160,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run cmd and return plaintext output */
     cmd: function(s, cb2) {
+      s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
         cb2 = function() {};
       }
@@ -171,6 +173,7 @@ function r2bind(ls, cb, r2cmd) {
 
     /* Run cmd and return JSON output */
     cmdj: function(s, cb2) {
+      s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
         cb2 = function() {};
       }
