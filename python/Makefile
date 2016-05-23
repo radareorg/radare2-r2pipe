@@ -12,6 +12,9 @@ install: uninstall
 symstall: uninstall
 	ln -fs $(PWD)/r2pipe "$(PYTHON_INSTALL_DIR)"
 
+test:
+	PYTHONPATH=$$PWD python examples/bug.py
+
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
 

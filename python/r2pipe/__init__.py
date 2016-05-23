@@ -40,7 +40,7 @@ except:
 	has_native = False
 	pass
 
-VERSION="0.8.1"
+VERSION="0.8.2"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -221,7 +221,7 @@ class open:
 		Returns:
 			Returns an string with the results of the command
 		"""
-		return self._cmd(cmd)
+		return self._cmd(cmd).strip()
 
 	def cmdj(self, cmd):
 		"""Same as cmd() but evaluates JSONs and returns an object
