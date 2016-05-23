@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "description": "pipe bindings for radare2",
   "main": "index.js",
   "scripts": {
@@ -15,6 +15,7 @@
     "index.js",
     "promise.js",
     "sync.js",
+    "util.js",
     "examples/hello.js",
     "examples/r2co.js",
     "examples/test-io.js",
