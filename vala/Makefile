@@ -1,8 +1,8 @@
 include ../../config.mk
 
 all:
-	valac main.vala r2pipe.vala
-	valac -g --library=r2pipe -H r2pipe.h r2pipe.vala -X -fPIC -c
+	valac -g -X -O3 main.vala r2pipe.vala
+	valac -g -X -O3 --library=r2pipe -H r2pipe.h r2pipe.vala -X -fPIC -c
 	rm -f libr2pipe.a
 	ar q libr2pipe.a r2pipe.vala.o
 
