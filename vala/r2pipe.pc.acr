@@ -1,0 +1,11 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=@LIBDIR@
+includedir=${prefix}/include
+
+Name: r2pipe
+Description: r2pipe vala api library
+Version: @VERSION@
+Requires:
+Libs: -L${libdir} -lr2pipe
+Cflags: -I${includedir}/r2pipe
