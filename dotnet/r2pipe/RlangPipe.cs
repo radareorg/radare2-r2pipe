@@ -11,15 +11,15 @@ using Mono.Unix;
 
 namespace r2pipe
 {
-    class RlangPipe : IR2Pipe
+    public class RlangPipe : IR2Pipe
     {
 #if __MonoCS__
-        UnixStream ureadStream;
-        UnixStream uwriteStream;
+        public UnixStream ureadStream;
+        public UnixStream uwriteStream;
 #endif
-        NamedPipeClientStream inclient;
-        StreamReader reader;
-        StreamWriter writer;
+        public NamedPipeClientStream inclient;
+        public StreamReader reader;
+        public StreamWriter writer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RlangPipe"/> class.
@@ -27,7 +27,7 @@ namespace r2pipe
         public RlangPipe()
         {
 #if __MonoCS__
-            if(Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX) {
 
             ureadStream = new UnixStream(int.Parse(Environment.GetEnvironmentVariable("R2PIPE_IN")));
             reader = new StreamReader(ureadStream);
@@ -35,8 +35,7 @@ namespace r2pipe
             uwriteStream = new UnixStream(int.Parse(Environment.GetEnvironmentVariable("R2PIPE_OUT")));
             writer = new StreamWriter(uwriteStream);
 
-            }
-            else {
+            } else {
 #endif
             // Using named pipes on windows. I like this.
             inclient = new NamedPipeClientStream("R2PIPE_PATH");
@@ -69,7 +68,7 @@ namespace r2pipe
 
                 sb.Append(buffer);
             }
-            return sb.ToString();
+            return sb.ToString().Trim();
         }
 
         /// <summary>
@@ -99,7 +98,7 @@ namespace r2pipe
                 }
             }
         outer:
-            return builder.ToString();
+            return builder.ToString().Trim();
         }
 
         public void Dispose()

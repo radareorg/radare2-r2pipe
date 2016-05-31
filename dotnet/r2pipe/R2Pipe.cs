@@ -8,7 +8,7 @@ namespace r2pipe
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using r2pipe.OldApi;
+    //using r2pipe.OldApi;
 
     public class R2Pipe : IR2Pipe, IDisposable
     {
@@ -28,6 +28,13 @@ namespace r2pipe
         /// </summary>
         internal Process r2Process;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="R2Pipe"/> class.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        public R2Pipe()
+		: this("-", "radare2") {
+	}
 
         /// <summary>
         /// Initializes a new instance of the <see cref="R2Pipe"/> class.
@@ -44,7 +51,6 @@ namespace r2pipe
         /// <param name="r2executable">The r2executable.</param>
         public R2Pipe(string file, string r2executable)
         {
-            
             if (file == null)
                 file = "-";
 
