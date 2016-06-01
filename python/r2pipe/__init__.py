@@ -32,6 +32,10 @@ import json
 import socket
 import urllib
 from subprocess import Popen, PIPE
+try:
+	import r2lang
+except:
+	pass
 
 try:
 	import native
@@ -40,7 +44,7 @@ except:
 	has_native = False
 	pass
 
-VERSION="0.8.2"
+VERSION="0.8.4"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -72,6 +76,9 @@ def version():
 	"""
 	return VERSION
 
+def in_rlang():
+	return 'r2lang' in globals() and r2lang.cmd != None
+
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
 	"""
@@ -91,6 +98,12 @@ class open:
 		Returns:
 			Returns an object with methods to interact with r2 via commands
 		"""
+		if in_rlang():
+			print "RLANG IS SET"
+			self._cmd = self._cmd_rlang
+			return
+		self._cmd = self._cmd_rlang
+		return;
 		try:
 			if os.name=="nt":
 				mypipename=os.environ['r2pipe_path']
@@ -194,6 +207,9 @@ class open:
 			self.native = native.RCore()
 			self.native.cmd_str("o "+self.uri)
 		return self.native.cmd_str(cmd)
+
+	def _cmd_rlang(self, cmd):
+		return r2lang.cmd(cmd)
 
 	def _cmd_http(self, cmd):
 		try:
