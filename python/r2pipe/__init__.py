@@ -35,14 +35,13 @@ from subprocess import Popen, PIPE
 try:
 	import r2lang
 except:
-	pass
+	r2lang = None
 
 try:
 	import native
 	has_native = True
 except:
 	has_native = False
-	pass
 
 VERSION="0.8.4"
 
@@ -77,7 +76,7 @@ def version():
 	return VERSION
 
 def in_rlang():
-	return 'r2lang' in globals() and r2lang.cmd != None
+	return r2lang is not None and r2lang.cmd is not None
 
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
@@ -99,11 +98,8 @@ class open:
 			Returns an object with methods to interact with r2 via commands
 		"""
 		if in_rlang():
-			print "RLANG IS SET"
 			self._cmd = self._cmd_rlang
 			return
-		self._cmd = self._cmd_rlang
-		return;
 		try:
 			if os.name=="nt":
 				mypipename=os.environ['r2pipe_path']
