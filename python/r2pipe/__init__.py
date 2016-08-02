@@ -209,7 +209,10 @@ class open:
 
 	def _cmd_http(self, cmd):
 		try:
-			quocmd = urllib.quote(cmd)
+			try:
+				quocmd = urllib.parse.quote(cmd)
+			except:
+				quocmd = urllib.quote(cmd)
 			response = urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=quocmd))
 			return response.read().decode('utf-8')
 		except URLError:
