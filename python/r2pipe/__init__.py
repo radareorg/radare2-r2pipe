@@ -43,7 +43,7 @@ try:
 except:
 	has_native = False
 
-VERSION="0.8.6"
+VERSION="0.8.8"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -145,7 +145,10 @@ class open:
 			self._cmd = self._cmd_process
 			cmd = ["radare2", "-q0", filename]
 			cmd = cmd[:1] + flags + cmd[1:]
-			self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+			try:
+				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+			except:
+				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1) # Reads initial \x00
 
 	def _cmd_process(self, cmd):
