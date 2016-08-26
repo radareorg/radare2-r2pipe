@@ -55,6 +55,9 @@
     "url": "https://github.com/radare/radare2-bindings/issues"
   },
   "homepage": "http://www.radare.org",
+  "devDependencies": {
+    "semistandard": "*"
+  },
   "optionalDependencies": {
     "syspipe": "^0.1.4"
   }

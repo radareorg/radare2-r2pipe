@@ -18,84 +18,86 @@ try {
   R2PIPE_PATH = process.env['R2PIPE_PATH'];
 } catch (e) {}
 
-function mergeArrays(a, b) {
-  let c = a.concat(b)
-  return c.filter((i, p) => {return c.indexOf(i) == p});
+function mergeArrays (a, b) {
+  let c = a.concat(b);
+  return c.filter((i, p) => {
+    return c.indexOf(i) === p;
+  });
 }
 
 /*
  * CMD handlers for different connection methods
  */
-function syscmd(command, child_opts, cb2) {
+function syscmd (command, childOpts, cb2) {
   var childopt = {};
-  switch (typeof child_opts) {
-  case 'object':
-    childopt = child_opts;
-    break;
-  case 'function':
-    cb2 = child_opts;
-    break;
+  switch (typeof childOpts) {
+    case 'object':
+      childopt = childOpts;
+      break;
+    case 'function':
+      cb2 = childOpts;
+      break;
   }
   if (typeof cb2 !== 'function') {
-    cb2 = function() {};
+    cb2 = function () {};
   }
-  var callback = function(err, stdout, stderr) {
-    cb2(err? null: stdout);
-  }
-  if (typeof command == 'string') {
+  var callback = function (err, stdout, stderr) {
+    cb2(err ? null : stdout);
+  };
+  if (typeof command === 'string') {
     proc.exec(command, childopt, callback);
-  } else if (typeof command == 'object' && command.length > 0) {
+  } else if (typeof command === 'object' && command.length > 0) {
     proc.execFile(command[0], command.slice(1), childopt, callback);
   } else {
-    console.error ('r2pipe.js: Invalid command type in syscmd');
-    cb2 (null);
+    console.error('r2pipe.js: Invalid command type in syscmd');
+    cb2(null);
   }
 }
 
 /* Run system cmd and return JSON output */
-function syscmdj(command, cb2) {
+function syscmdj (command, cb2) {
   if (typeof cb2 !== 'function') {
-    cb2 = function() {};
+    cb2 = function () {};
   }
   parseJSON(syscmd, command, cb2);
 }
 
-function remoteCmd(port, cmd, cb) {
+function remoteCmd (port, cmd, cb) {
   var msg = '';
   try {
     var client = new net.Socket();
-    client.connect(port, 'localhost', function() {});
-    client.write (cmd + '\n');
-    client.on('data', function(data) {
+    client.connect(port, 'localhost', function () {});
+    client.write(cmd + '\n');
+    client.on('data', function (data) {
       msg += data;
     });
 
     // Add a 'close' event handler for the client socket
-    client.on('close', function() {
+    client.on('close', function () {
       if (cb) {
-        cb (msg);
+        cb(msg);
       }
     });
-  } catch ( e ) {
-    console.error (e);
+  } catch (e) {
+    console.error(e);
   }
 }
 
-function httpCmd(uri, cmd, cb) {
-  var text = "";
-  var req = http.get(uri + cmd, function(res) {
-    res.on('data', function(res) {
+function httpCmd (uri, cmd, cb) {
+  var text = '';
+  var req = http.get(uri + cmd, function (res) {
+    res.on('data', function (res) {
       text += res;
     });
-  }).on ('error', function(res) {
+  }).on('error', function (res) {
     console.log('Got response: ' + res.statusCode);
   });
-  req.on('close', function(e) {
-    cb (text);
+  req.on('close', function (e) {
+    cb(text);
   });
 }
 
-function pipeCmd(proc, cmd, cb) {
+function pipeCmd (proc, cmd, cb) {
   pipeQueue.push({
     cmd: cmd,
     cb: cb,
@@ -103,17 +105,17 @@ function pipeCmd(proc, cmd, cb) {
     error: false
   });
   if (pipeQueue.length === 1) {
-    proc.stdin.write(cmd + "\n");
+    proc.stdin.write(cmd + '\n');
   }
 }
 
-function pipeCmdOutput(proc, data, cb) {
+function pipeCmdOutput (proc, data, cb) {
   var len = data.length;
   var response;
 
   if (pipeQueue.length < 1) {
     console.error('r2pipe error: No pending commands for incomming data');
-    return ; //cb(null);
+    return; // cb(null);
   }
 
   if (data[len - 1] !== 0x00) {
@@ -127,12 +129,12 @@ function pipeCmdOutput(proc, data, cb) {
   pipeQueue.splice(0, 1);
 
   if (pipeQueue.length > 0) {
-    proc.stdin.write(pipeQueue[0].cmd + "\n");
+    proc.stdin.write(pipeQueue[0].cmd + '\n');
   }
 }
 
-function parseJSON(func, cmd, callback) {
-  func(cmd, function(res) {
+function parseJSON (func, cmd, callback) {
+  func(cmd, function (res) {
     var result;
     if (res === null) {
       callback(null);
@@ -141,7 +143,7 @@ function parseJSON(func, cmd, callback) {
 
     try {
       result = JSON.parse(res);
-    } catch ( e ) {
+    } catch (e) {
       result = null;
     } finally {
       callback(result);
@@ -153,29 +155,29 @@ function parseJSON(func, cmd, callback) {
  * r2pipe main
  */
 
-function r2bind(ls, cb, r2cmd) {
+function r2bind (ls, cb, r2cmd) {
   var running = false;
 
   var r2 = {
 
     /* Run cmd and return plaintext output */
-    cmd: function(s, cb2) {
+    cmd: function (s, cb2) {
       s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
-        cb2 = function() {};
+        cb2 = function () {};
       }
       if (typeof r2cmd === 'string') {
         pipeCmd(ls, s, cb2);
       } else if (typeof r2cmd === 'function') {
-        r2cmd (ls.cmdparm, s, cb2);
+        r2cmd(ls.cmdparm, s, cb2);
       }
     },
 
     /* Run cmd and return JSON output */
-    cmdj: function(s, cb2) {
+    cmdj: function (s, cb2) {
       s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
-        cb2 = function() {};
+        cb2 = function () {};
       }
       parseJSON(r2.cmd, s, cb2);
     },
@@ -185,29 +187,29 @@ function r2bind(ls, cb, r2cmd) {
     syscmdj: syscmdj,
 
     /* Quit CMD */
-    quit: function() {
-      if (ls.stdin && ls.stdin.end)
+    quit: function () {
+      if (ls.stdin && ls.stdin.end) {
         ls.stdin.end();
-
-      ls.kill ('SIGINT');
+      }
+      ls.kill('SIGINT');
     },
 
     /* Custom promises */
-    promise: function(func, cmd, callback) {
+    promise: function (func, cmd, callback) {
       return new promise.Promise(func, cmd, callback);
     }
   };
 
   /* handle SDTERR message */
   if (ls.stderr !== null) {
-    ls.stderr.on('data', function(data) {
+    ls.stderr.on('data', function (data) {
       /* Set as running for connect & launch methods */
       if (!running && (typeof r2cmd !== 'string')) {
         running = true;
-        if (typeof cb == 'function') {
+        if (typeof cb === 'function') {
           cb(r2);
         } else {
-          throw 'Callback in .cmd() is not a function';
+          throw new Error('Callback in .cmd() is not a function');
         }
       }
     });
@@ -215,13 +217,13 @@ function r2bind(ls, cb, r2cmd) {
 
   /* handle STDOUT nessages */
   if (ls.stdout !== null) {
-    ls.stdout.on('data', function(data) {
+    ls.stdout.on('data', function (data) {
       /* Set as running for pipe method */
       if (!running) {
         running = true;
-        cb (r2);
+        cb(r2);
       } else if (running && (typeof r2cmd === 'string')) {
-        pipeCmdOutput (ls, data, cb);
+        pipeCmdOutput(ls, data, cb);
       }
     });
   } else {
@@ -230,14 +232,14 @@ function r2bind(ls, cb, r2cmd) {
 
   /* Proccess event handling only for methods using childs */
   if (typeof ls.on === 'function') {
-    ls.on('error', function(code) {
+    ls.on('error', function (code) {
       running = false;
       console.log('ERROR');
     });
 
-    ls.on('close', function(code) {
+    ls.on('close', function (code) {
       running = false;
-      if (code && r2cmd.toString().indexOf('httpCmd') == -1) {
+      if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
         console.log('r2pipe: child process exited with code ' + code);
       }
     });
@@ -251,75 +253,79 @@ function r2bind(ls, cb, r2cmd) {
   }
 }
 
-function ispath(text) {
-  return (text[0] == '.' || text[0] == '/' || fs.existsSync(text));
+function ispath (text) {
+  return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
 }
 
 var r2node = {
   options: [],
   syscmd: syscmd,
   syscmdj: syscmdj,
-  open: function() {
-    var modes = [ function(me, arg) {
-      return me.lpipeSync ();
-    }, function(me, arg) {
-      if (ispath (arg[0])) {
-        return me.pipeSync (arg[0]);
+  open: function () {
+    var modes = [ function (me, arg) {
+      return me.lpipeSync();
+    }, function (me, arg) {
+      if (ispath(arg[0])) {
+        return me.pipeSync(arg[0]);
       } else {
-        return me.lpipe (arg[0]);
+        return me.lpipe(arg[0]);
       }
-    }, function(me, arg) {
-      if (ispath (arg[0])) {
+    }, function (me, arg) {
+      if (ispath(arg[0])) {
         me.pipe(arg[0], arg[1]);
-      } else if (arg.indexOf('http://')==0) {
+      } else if (arg.indexOf('http://') === 0) {
         me.connect(arg[0], arg[1]);
-      } else if (arg.indexOf('io://')==0) {
+      } else if (arg.indexOf('io://') === 0) {
         me.connect(arg[0], arg[1]);
       } else {
-        throw "Unknown uri";
+        throw new Error('Unknown uri');
       }
     }];
-    if (arguments.length<modes.length) {
+    if (arguments.length < modes.length) {
       return modes[arguments.length](this, arguments);
     } else {
-      throw 'Invalid parameters';
+      throw new Error('Invalid parameters');
     }
   },
-  openSync: function() {
-    var arg = arguments;
+  openSync: function () {
+    let msg;
+    let arg = arguments;
     switch (arg.length) {
-    case 0:
-      return this.lpipeSync();
-    case 1:
-      if (ispath(arg[0])) {
-        return this.pipeSync (arg[0]);
-      } else if (arg.indexOf('http://')==0) {
-        throw 'httpsync not supported';
-      } else if (arg.indexOf('io://')==0) {
-        throw 'iosync not supported';
-      } else {
-        throw 'Unknown uri';
-      }
-      break;
-    default:
-      throw 'Invalid parameters';
+      case 0:
+        return this.lpipeSync();
+      case 1:
+        if (ispath(arg[0])) {
+          return this.pipeSync(arg[0]);
+        } else if (arg.indexOf('http://') === 0) {
+          msg = 'httpsync not supported';
+        } else if (arg.indexOf('io://') === 0) {
+          msg = 'iosync not supported';
+        } else {
+          msg = 'Unknown uri';
+        }
+        break;
+      default:
+        msg = 'Invalid parameters';
+    }
+    if (msg !== undefined) {
+      throw new Error(msg);
     }
   },
 
   r2bin: 'radare2',
 
-  connect: function(uri, cb) {
+  connect: function (uri, cb) {
     var ls = {
       cmdparm: uri,
       stderr: null,
       stdout: null,
-      kill: function() {}
+      kill: function () {}
     };
-    r2bind (ls, cb, httpCmd);
+    r2bind(ls, cb, httpCmd);
   },
 
   /* TCP connection */
-  launch: function(file, opts, cb) {
+  launch: function (file, opts, cb) {
     if (typeof opts === 'function') {
       cb = opts;
       opts = this.options;
@@ -327,11 +333,11 @@ var r2node = {
     var port = (4000 + (Math.random() * 4000)) | 0;
     var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
     ls.cmdparm = port;
-    r2bind (ls, cb, remoteCmd);
+    r2bind(ls, cb, remoteCmd);
   },
 
   /* spawn + raw fd pipe (faster method) */
-  pipe: function(file, opts, cb) {
+  pipe: function (file, opts, cb) {
     if (typeof opts === 'function') {
       cb = opts;
       opts = this.options;
@@ -339,10 +345,10 @@ var r2node = {
     if (!opts) opts = this.options;
     const args = ['-q0'].concat(opts).concat(file);
     var ls = proc.spawn(this.r2bin, args);
-    r2bind (ls, cb, 'pipe');
+    r2bind(ls, cb, 'pipe');
   },
 
-  lpipe: function(cb) {
+  lpipe: function (cb) {
     var ls;
 
     if (os.platform() === 'win32') {
@@ -351,7 +357,7 @@ var r2node = {
         stdin: client,
         stdout: client,
         stderr: null,
-        kill: function() {
+        kill: function () {
           process.exit(0);
         }
       };
@@ -359,38 +365,38 @@ var r2node = {
     // OS: linux/sunos/osx
     } else {
       ls = {
-        stdin: fs.createWriteStream (null, {
+        stdin: fs.createWriteStream(null, {
           fd: OUT
         }),
-        stdout: fs.createReadStream (null, {
+        stdout: fs.createReadStream(null, {
           fd: IN
         }),
         stderr: null,
-        kill: function() {
+        kill: function () {
           process.exit(0);
         }
       };
     }
 
-    r2bind (ls, cb, 'lpipe');
+    r2bind(ls, cb, 'lpipe');
   },
 
-  pipeSync: function(file, opts) {
+  pipeSync: function (file, opts) {
     var pipe, syspipe;
     try {
       syspipe = require('syspipe');
       pipe = syspipe.pipe();
     } catch (e) {
-      throw 'ERROR: Cannot find "syspipe" npm module';
+      throw new Error('ERROR: Cannot find "syspipe" npm module');
     }
     if (typeof opts !== 'object') {
       opts = this.options;
     }
-    var proc_options = {
+    var procOptions = {
       stdio: ['pipe', pipe.write, 'ignore']
     };
     var ls = proc.spawn(this.r2bin,
-      ["-q0"].concat(opts).concat(file), proc_options);
+      ['-q0'].concat(opts).concat(file), procOptions);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
     ls.syncStdout = pipe.read;
@@ -398,12 +404,12 @@ var r2node = {
     return sync.r2bind(ls, 'pipe');
   },
 
-  lpipeSync: function() {
+  lpipeSync: function () {
     var ls = {
       syncStdin: OUT,
       syncStdout: IN,
       stderr: null,
-      kill: function() {
+      kill: function () {
         process.exit(0);
       }
     };
@@ -411,17 +417,17 @@ var r2node = {
     return sync.r2bind(ls, 'lpipe');
   },
 
-  listen: function(file, cb) {
+  listen: function (file, cb) {
     // TODO
   },
 
-  ioplugin: function(cb) {
-    var fs = require ('fs');
+  ioplugin: function (cb) {
+    var fs = require('fs');
     var nfd_in = +process.env.R2PIPE_IN;
     var nfd_out = +process.env.R2PIPE_OUT;
 
     if (!nfd_in || !nfd_out) {
-      throw 'This script needs to run from radare2 with r2pipe://';
+      throw new Error('This script needs to run from radare2 with r2pipe://');
     }
 
     var fd_in = fs.createReadStream(null, {
@@ -433,22 +439,22 @@ var r2node = {
 
     console.log('[+] Running r2pipe io');
 
-    fd_in.on('end', function() {
+    fd_in.on('end', function () {
       console.log('[-] r2pipe-io is over');
     });
-    function send(obj) {
-      //console.log ("Send Object To R2",obj);
-      fd_out.write (JSON.stringify (obj || {}) + '\x00');
+    function send (obj) {
+      // console.log ("Send Object To R2",obj);
+      fd_out.write(JSON.stringify(obj || {}) + '\x00');
     }
 
-    fd_in.on('data', function(data) {
-      data = data.slice (0, -1);
-      var obj_in = JSON.parse (data);
+    fd_in.on('data', function (data) {
+      data = data.slice(0, -1);
+      var obj_in = JSON.parse(data);
       if (cb) {
         var me = {
           'send': send
         };
-        cb (me, obj_in);
+        cb(me, obj_in);
       }
     });
   }
