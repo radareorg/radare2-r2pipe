@@ -437,10 +437,10 @@ var r2node = {
       fd: nfd_out
     });
 
-    console.log('[+] Running r2pipe io');
+    console.error('[+] Running r2pipe io');
 
     fd_in.on('end', function () {
-      console.log('[-] r2pipe-io is over');
+      console.error('[-] r2pipe-io is over');
     });
     function send (obj) {
       // console.log ("Send Object To R2",obj);
