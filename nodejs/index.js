@@ -442,14 +442,18 @@ var r2node = {
     fd_in.on('end', function () {
       console.error('[-] r2pipe-io is over');
     });
+    /* send initial byte to initialize the r2pipe stream */
+    /* this thing can change in the future. and should be */
+    /* enforced to bring better errors to the user */
+//    fd_out.write('\x00');
     function send (obj) {
-      // console.log ("Send Object To R2",obj);
+      // console.error ("Send Object To R2",obj);
       fd_out.write(JSON.stringify(obj || {}) + '\x00');
     }
 
     fd_in.on('data', function (data) {
-      data = data.slice(0, -1);
-      var obj_in = JSON.parse(data);
+      var trimmedData = data.slice(0, -1).toString().trim();
+      var obj_in = JSON.parse(trimmedData);
       if (cb) {
         var me = {
           'send': send
