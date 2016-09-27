@@ -1,0 +1,7 @@
+name = "r2pipe"
+version = "@@VERSION@@"
+description = "OCaml binding of R2PIPE"
+requires = "yojson"
+archive(byte) = "r2pipe.cmo"
+archive(native) = "r2pipe.cmx"
+archive(native,plugin) = "r2pipe.cmxs"
