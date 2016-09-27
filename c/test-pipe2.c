@@ -9,7 +9,7 @@ static void r2cmd(R2Pipe *r2, const char *cmd) {
 }
 
 int main() {
-// XXX	R2Pipe *r2 = r2p_open ("/bin/ls");
+	// R2Pipe *r2 = r2p_open ("/bin/ls");
 	R2Pipe *r2 = r2p_open ("r2 -q0 /bin/ls");
 	if (r2) {
 		r2cmd (r2, "?e Hello World");
