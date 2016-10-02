@@ -17,7 +17,7 @@ public class R2Pipe {
 	}
 
 	public void spawnProcess (String file) throws Exception {
-		process = Runtime.getRuntime ().exec("/usr/bin/r2 -q0 "+file);
+		process = Runtime.getRuntime ().exec("r2 -q0 "+file);
 		stdin = process.getOutputStream ();
 		stdout = process.getInputStream ();
 		byte[] b = new byte[1];
