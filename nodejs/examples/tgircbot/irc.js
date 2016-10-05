@@ -110,6 +110,9 @@ module.exports.bind = function(endpoint) {
     }
 
     irc.on('privmsg', function(from, to, msg) {
+      if (msg.indexOf(nick) !== -1) {
+        irc.privmsg(channel, 'I am just a bot, please mention the nick after me.');
+      }
       function tailRun(o) {
         if (o != null && o != '') {
           if (o.split('\n').length < limit) {
