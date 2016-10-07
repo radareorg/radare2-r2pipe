@@ -47,22 +47,26 @@ The most supported languages are:
 
 But there is r2pipe for:
 
-  * C / C++ / Qt
-  * Go
-  * Java
-  * Nim
-  * D programming language
-  * ERlang
-  * Haskell
-  * C# / F# / .NET
-  * Python
-  * Ruby
-  * Java / Groovy
-  * OCaml
-  * Rust
-  * Swift
-  * Perl
-  * Lisp / NewLisp
-  * Vala
+	          pipe spawn async http tcp rap json plug
+	C           x     x     -    x    x   x    x    x
+	C++/Qt      x     x     -    -    -   -    x    -
+	D           x     -     -    -    -   -    x    -
+	NodeJS      x     x     x    x    x   -    x    x
+	Python      x     x     x    x    x   x    x    x
+	Perl        x     x     -    x    x   -    x    -
+	Nim         -     -     -    x    -   -    -    -
+	Swift       x     x     x    x    -   -    x    -
+	C# / F#     x     x     x    x    -   -    -    -
+	Haskell     x     x     -    x    -   -    x    -
+	Java/Groovy -     x     -    x    -   -    -    -
+	Go          x     x     -    -    -   -    x    -
+	Ruby        x     x     -    -    -   -    x    -
+	Rust        x     x     -    -    -   -    x    -
+	Vala        -     x     x    -    -   -    -    -
+	Erlang      x     x     -    -    -   -    -    -
+	Lisp        -     x     -    -    -   -    x    -
+	NewLisp     x     -     -    -    -   -    -    -
+	Dlang       x     -     -    -    -   -    x    -
+	Ocaml       -     x     -    -    -   -    x    -
 
 --pancake
