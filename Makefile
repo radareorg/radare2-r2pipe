@@ -1,18 +1,31 @@
-all:
-	@echo Run `make sync` to clone code from Go and Rust repos
+VERSION=1.0.0
 
-sync:
-	rm -rf r2pipe.rs r2pipe.go r2pipe_erl
-	git clone https://github.com/radare/r2pipe.rs
-	git clone https://github.com/radare/r2pipe.go
-	git clone https://github.com/radare/r2pipe_erl
-	rm -rf rust/*
-	rm -rf go/*
-	rm -rf erlang
-	mkdir -p rust go erlang
-	cp -rf r2pipe_erl/* erlang/
-	cp -rf r2pipe.rs/* rust/
-	cp -rf r2pipe.go/* go/
-	rm -rf r2pipe.rs r2pipe.go
-	git add rust go erlang
-	git commit -m "update external r2pipe bindings from git"
+REMOTE=ocaml go rust erlang
+DISTDIR=radare2-r2pipe-$(VERSION)
+ORIGIN=$(shell cat "$@/ORIGIN" 2> /dev/null)
+
+all:
+	@echo Nothing to do.
+
+clean:
+	for a in */Makefile ; do $(MAKE) -C $$a ; done
+	-rm -rf */node_modules
+
+dist:
+	git clone . $(DISTDIR)
+	$(MAKE) -C $(DISTDIR) rsync
+	rm -rf $(DISTDIR)/.git
+	tar czvf $(DISTDIR).tar.gz $(DISTDIR)
+	rm -rf $(DISTDIR)
+
+$(REMOTE):
+	git clone "$(ORIGIN)" "$@.git"
+	mv "$@/ORIGIN" .
+	rm -rf "$@/"*
+	cp -rf "$@.git/"* "$@/"
+	rm -rf $@.git
+	mv ORIGIN "$@"
+
+sync: $(REMOTE)
+
+.PHONY: sync rsync clean all $(REMOTE)
