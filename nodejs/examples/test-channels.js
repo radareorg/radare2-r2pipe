@@ -4,14 +4,14 @@
 var r2pipe = require ("../");
 
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
 
-  r2.cmdj ("aij entry0+2", function(o) {
+  r2.cmdj ("aij entry0+2", function(err, o) {
     console.log (o);
   });
 
-  r2.cmd ('af @ entry0', function(o) {
-    r2.cmd ("pdf @ entry0", function(o) {
+  r2.cmd ('af @ entry0', function(err, o) {
+    r2.cmd ("pdf @ entry0", function(err, o) {
       console.log (o);
       r2.quit ()
     });
