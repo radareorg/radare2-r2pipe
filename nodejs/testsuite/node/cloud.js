@@ -5,21 +5,21 @@ var ts = require('..');
 
 function testCloud(fin) {
   try {
-    r2p.connect('http://cloud.radare.org/cmd/', (r2) => {
-      r2.cmd('?e hello world', function(res) {
+    r2p.connect('http://cloud.radare.org/cmd/', (err, r2) => {
+      r2.cmd('?e hello world', function(err, res) {
         fin(res);
         r2.quit();
       });
     });
-  } catch ( e ) {
+  } catch (e) {
     fin(e.toString());
   }
 }
 
 function testCloudOK(fin) {
   try {
-    r2p.connect('http://cloud.rada.re/cmd/', function(r2) {
-      r2.cmd('?e hello world', function(res) {
+    r2p.connect('http://cloud.rada.re/cmd/', function(err, r2) {
+      r2.cmd('?e hello world', function(err, res) {
         fin(res);
         r2.quit();
       });

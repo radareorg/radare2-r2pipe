@@ -20,18 +20,11 @@ try {
   /* do nothing */
 }
 
-function mergeArrays (a, b) {
-  let c = a.concat(b);
-  return c.filter((i, p) => {
-    return c.indexOf(i) === p;
-  });
-}
-
 /*
  * CMD handlers for different connection methods
  */
 function syscmd (command, childOpts, cb) {
-  const childopt = {};
+  let childopt = {};
   switch (typeof childOpts) {
     case 'object':
       childopt = childOpts;
@@ -111,14 +104,14 @@ function pipeCmd (proc, cmd, cb) {
 
 function pipeCmdOutput (proc, data, cb) {
   var len = data.length;
-  var response;
 
   if (pipeQueue.length < 1) {
     return cb(new Error('r2pipe error: No pending commands for incomming data'));
   }
 
   if (data[len - 1] !== 0x00) {
-    return pipeQueue[0].result += data.toString();
+    pipeQueue[0].result += data.toString();
+    return pipeQueue[0].result;
   }
 
   pipeQueue[0].result += data.toString().substr(0, len - 1);
@@ -139,7 +132,6 @@ function parseJSON (func, cmd, callback) {
       callback(null, JSON.parse(res));
     } catch (e) {
       callback(e);
-    } finally {
     }
   });
 }
@@ -149,30 +141,41 @@ function parseJSON (func, cmd, callback) {
  */
 
 function r2bind (ls, cb, r2cmd) {
-  var running = false;
+  let running = false;
 
   const r2 = {
 
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
-      s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
         cb2 = function () {};
       }
-      if (typeof r2cmd === 'string') {
-        pipeCmd(ls, s, cb2);
-      } else if (typeof r2cmd === 'function') {
-        r2cmd(ls.cmdparm, s, cb2);
+      try {
+        s = util.cleanCmd(s);
+        switch (typeof r2cmd) {
+          case 'string':
+            pipeCmd(ls, s, cb2);
+            break;
+          case 'function':
+            r2cmd(ls.cmdparm, s, cb2);
+            break;
+        }
+      } catch (e) {
+        cb2(e);
       }
     },
 
     /* Run cmd and return JSON output */
     cmdj: function (s, cb2) {
-      s = util.cleanCmd(s);
       if (typeof cb2 !== 'function') {
         cb2 = function () {};
       }
-      parseJSON(r2.cmd, s, cb2);
+      try {
+        s = util.cleanCmd(s);
+        parseJSON(r2.cmd, s, cb2);
+      } catch (e) {
+        cb2(e);
+      }
     },
 
     /* Run system cmd */
@@ -181,7 +184,7 @@ function r2bind (ls, cb, r2cmd) {
 
     /* Quit CMD */
     quit: function () {
-      if (ls.stdin && ls.stdin.end) {
+      if (typeof ls.stdin === 'object' && typeof ls.stdin.end === 'function') {
         ls.stdin.end();
       }
       ls.kill('SIGINT');
@@ -419,43 +422,38 @@ const r2node = {
   },
 
   ioplugin: function (cb) {
-    var fs = require('fs');
-    var nfd_in = +process.env.R2PIPE_IN;
-    var nfd_out = +process.env.R2PIPE_OUT;
+    const nfdIn = +process.env.R2PIPE_IN;
+    const nfdOut = +process.env.R2PIPE_OUT;
 
-    if (!nfd_in || !nfd_out) {
+    if (!nfdIn || !nfdOut) {
       throw new Error('This script needs to run from radare2 with r2pipe://');
     }
 
-    var fd_in = fs.createReadStream(null, {
-      fd: nfd_in
+    var fdIn = fs.createReadStream(null, {
+      fd: nfdIn
     });
-    var fd_out = fs.createWriteStream(null, {
-      fd: nfd_out
+    var fdOut = fs.createWriteStream(null, {
+      fd: nfdOut
     });
 
     console.error('[+] Running r2pipe io');
 
-    fd_in.on('end', function () {
+    fdIn.on('end', function () {
       console.error('[-] r2pipe-io is over');
     });
     /* send initial byte to initialize the r2pipe stream */
     /* this thing can change in the future. and should be */
     /* enforced to bring better errors to the user */
-//    fd_out.write('\x00');
+//    fdOut.write('\x00');
     function send (obj) {
       // console.error ("Send Object To R2",obj);
-      fd_out.write(JSON.stringify(obj || {}) + '\x00');
+      fdOut.write(JSON.stringify(obj || {}) + '\x00');
     }
 
-    fd_in.on('data', function (data) {
-      var trimmedData = data.slice(0, -1).toString().trim();
-      var obj_in = JSON.parse(trimmedData);
+    fdIn.on('data', function (data) {
+      const trimmedData = data.slice(0, -1).toString().trim();
       if (cb) {
-        var me = {
-          'send': send
-        };
-        cb(me, obj_in);
+        cb({ send: send }, JSON.parse(trimmedData));
       }
     });
   }

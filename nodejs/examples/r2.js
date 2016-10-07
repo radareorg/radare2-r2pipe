@@ -1,1 +1,0 @@
-/usr/share/radare2/last/www/t/r2.js

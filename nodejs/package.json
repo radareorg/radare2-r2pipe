@@ -4,7 +4,8 @@
   "description": "pipe bindings for radare2",
   "main": "index.js",
   "scripts": {
-    "test": "node examples/test-channels.js"
+    "test": "node examples/test-channels.js",
+    "semi": "semistandard"
   },
   "engineStrict": true,
   "engines": {

@@ -7,12 +7,12 @@ function testAsync5(fin) {
   let result = '';
   try {
     var count = 5;
-    r2pipe.open('../b/ls', function(r2) {
+    r2pipe.open('../b/ls', function(err, r2) {
       var intrv = setInterval(function() {
         if (count == 0) {
           r2.quit();
         } else {
-          r2.cmd('?e a', (x) => {
+          r2.cmd('?e a', (err, x) => {
             result += x;
             count--;
             if (count == 0) {
@@ -34,12 +34,12 @@ function testAsyncFor5(fin) {
   let result = '';
   try {
     var count = 5;
-    r2pipe.open('../b/ls', function(r2) {
+    r2pipe.open('../b/ls', function(err, r2) {
       for (let i = 0; i < 5; i++) {
         if (count == 0) {
           r2.quit();
         } else {
-          r2.cmd('?e a', (x) => {
+          r2.cmd('?e a', (err, x) => {
             result += x;
             count--;
             if (count == 0) {
