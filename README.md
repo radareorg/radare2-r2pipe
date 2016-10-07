@@ -21,7 +21,8 @@ to care about freeing the resulting string.
 This directory contains different implementations of the r2pipe API for different
 languages which could handle different communication backends:
 
-  * Fork r2 -q0 and communicate with pipe(2)
+  * Grab R2PIPE{_IN|_OUT} environment variables
+  * Spawn r2 -q0 and communicate with pipe(2)
   * Plain TCP connection
   * HTTP queries (connecting to a remote webserver)
   * RAP protocol (r2 own's remote protocol)
@@ -44,29 +45,30 @@ The most supported languages are:
 
   * NodeJS
   * Python
+  * Swift
+  * C/Nim/Vala/C++
 
 But there is r2pipe for:
 
 	          pipe spawn async http tcp rap json plug
 	C           x     x     -    x    x   x    x    x
 	C++/Qt      x     x     -    -    -   -    x    -
-	D           x     -     -    -    -   -    x    -
-	NodeJS      x     x     x    x    x   -    x    x
-	Python      x     x     x    x    x   x    x    x
-	Perl        x     x     -    x    x   -    x    -
-	Nim         -     -     -    x    -   -    -    -
-	Swift       x     x     x    x    -   -    x    -
 	C# / F#     x     x     x    x    -   -    -    -
+	D           x     -     -    -    -   -    x    -
+	Erlang      x     x     -    -    -   -    -    -
+	Go          x     x     -    -    -   -    x    -
 	Haskell     x     x     -    x    -   -    x    -
 	Java/Groovy -     x     -    x    -   -    -    -
-	Go          x     x     -    -    -   -    x    -
-	Ruby        x     x     -    -    -   -    x    -
-	Rust        x     x     -    -    -   -    x    -
-	Vala        -     x     x    -    -   -    -    -
-	Erlang      x     x     -    -    -   -    -    -
 	Lisp        -     x     -    -    -   -    x    -
 	NewLisp     x     -     -    -    -   -    -    -
-	Dlang       x     -     -    -    -   -    x    -
+	Nim         -     -     -    x    -   -    -    -
+	NodeJS      x     x     x    x    x   -    x    x
 	Ocaml       -     x     -    -    -   -    x    -
+	Perl        x     x     -    x    x   -    x    -
+	Python      x     x     x    x    x   x    x    x
+	Ruby        x     x     -    -    -   -    x    -
+	Rust        x     x     -    -    -   -    x    -
+	Swift       x     x     x    x    -   -    x    -
+	Vala        -     x     x    -    -   -    -    -
 
 --pancake
