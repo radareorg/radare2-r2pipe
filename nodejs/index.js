@@ -150,6 +150,7 @@ function r2bind (ls, cb, r2cmd) {
       if (typeof cb2 !== 'function') {
         cb2 = function () {};
       }
+console.error("LOOK AT ME");
       try {
         s = util.cleanCmd(s);
         switch (typeof r2cmd) {
@@ -161,6 +162,7 @@ function r2bind (ls, cb, r2cmd) {
             break;
         }
       } catch (e) {
+console.error("LOOK AT ME", e);
         cb2(e);
       }
     },
@@ -251,7 +253,7 @@ function r2bind (ls, cb, r2cmd) {
   }
 }
 
-function ispath (text) {
+function isPath (text) {
   return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
 }
 
@@ -266,7 +268,10 @@ const r2node = {
         return me.lpipeSync();
       },
       function (me, arg) {
-        if (ispath(arg[0])) {
+        if (typeof (arg[0]) === 'function') {
+          return me.lpipe(arg[0]);
+        }
+        if (isPath(arg[0])) {
           return me.pipeSync(arg[0]);
         }
         return me.lpipe(arg[0]);
@@ -350,7 +355,7 @@ const r2node = {
   },
 
   lpipe: function (cb) {
-    var ls;
+    let ls;
 
     if (os.platform() === 'win32') {
       const client = net.connect('\\\\.\\pipe\\' + R2PIPE_PATH);
@@ -382,7 +387,7 @@ const r2node = {
   },
 
   pipeSync: function (file, opts) {
-    var pipe, syspipe;
+    let pipe, syspipe;
     try {
       syspipe = require('syspipe');
       pipe = syspipe.pipe();
@@ -392,10 +397,10 @@ const r2node = {
     if (typeof opts !== 'object') {
       opts = this.options;
     }
-    var procOptions = {
+    const procOptions = {
       stdio: ['pipe', pipe.write, 'ignore']
     };
-    var ls = proc.spawn(this.r2bin,
+    const ls = proc.spawn(this.r2bin,
       ['-q0'].concat(opts).concat(file), procOptions);
 
     ls.syncStdin = ls.stdin['_handle'].fd;
@@ -429,10 +434,10 @@ const r2node = {
       throw new Error('This script needs to run from radare2 with r2pipe://');
     }
 
-    var fdIn = fs.createReadStream(null, {
+    const fdIn = fs.createReadStream(null, {
       fd: nfdIn
     });
-    var fdOut = fs.createWriteStream(null, {
+    const fdOut = fs.createWriteStream(null, {
       fd: nfdOut
     });
 
@@ -444,7 +449,7 @@ const r2node = {
     /* send initial byte to initialize the r2pipe stream */
     /* this thing can change in the future. and should be */
     /* enforced to bring better errors to the user */
-//    fdOut.write('\x00');
+    fdOut.write('\x00\x00');
     function send (obj) {
       // console.error ("Send Object To R2",obj);
       fdOut.write(JSON.stringify(obj || {}) + '\x00');

@@ -10,7 +10,11 @@ function runCmdSync (ls, cmd) {
   let result = '';
   let buf = new Buffer(BUFLEN);
   let bread = 0;
-
+/*
+  if (typeof ls.syncStdin !== 'number' || isNaN(ls.syncStdin)) {
+    throw new Error('This must run from inside radare2.');
+  }
+*/
   fs.writeSync(ls.syncStdin, cmd + '\n');
   while ((bread = fs.readSync(ls.syncStdout, buf, 0, BUFLEN, null)) > 0) {
     /* check for cmd end */

@@ -1,16 +1,21 @@
 /*  Small tests for r2pipe */
 // return true;
 
-var r2pipe = require ("./../");
+const r2pipe = require ('..');
 
+try {
 
-var r2 = r2pipe.lpipeSync ();
-var res = r2.cmd('pd 4');
-var resj = r2.cmdj('pdj 4');
+  const r2 = r2pipe.lpipeSync ();
+  const res = r2.cmd('pd 4');
+  const resj = r2.cmdj('pdj 4');
 
-console.log('Normal output');
-console.log(res);
+  console.log('Normal output');
+  console.log(res);
 
-console.log('JSON output');
-console.log(resj);
-r2.quit();
+  console.log('JSON output');
+  console.log(resj);
+  r2.quit();
+} catch (e) {
+  console.error(e.toString());
+  process.exit(1);
+}

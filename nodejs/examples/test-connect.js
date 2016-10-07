@@ -8,8 +8,11 @@
 /* require the nodejs api */
 var r2pipe = require ("../");
 
-function doSomeStuff(r2) {
-  r2.cmd('pd 4', function(res) {
+function doSomeStuff(err, r2) {
+  if (err) {
+    return console.error(err.toString());
+  }
+  r2.cmd('pd 4', function(err, res) {
     console.log(res);
   });
 }
