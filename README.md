@@ -1,7 +1,7 @@
 r2pipe
 ======
 
-![r2pipe logo](http://lolcathost.org/b/r2pipe.png)
+![r2pipe logo](https://raw.githubusercontent.com/radare/radare2-r2pipe/master/r2pipe.png)
 
 The r2pipe APIs are based on a single r2 primitive found behind `r_core_cmd_str()`
 which is a function that accepts a string parameter describing the r2 command to
@@ -33,15 +33,36 @@ instances or connections to different r2 sessions at the same time.
   * Syncronous
   * Asyncronous
 
-Target languages for this API are the following:
+In addition, r2pipe scripts can be used to write plugins for radare2 or extend current functionalities:
+
+  * Assembler/Disassembler plugin for RAsm
+  * RIO plugin to abstract read/write/system operations
+  * Syscall handler for the ESIL emulator
+  * ...
+
+The most supported languages are:
 
   * NodeJS
+  * Python
+
+But there is r2pipe for:
+
+  * C / C++ / Qt
   * Go
-  * C# / .NET
+  * Java
+  * Nim
+  * D programming language
+  * ERlang
+  * Haskell
+  * C# / F# / .NET
   * Python
   * Ruby
-  * Java
+  * Java / Groovy
+  * OCaml
+  * Rust
+  * Swift
   * Perl
-
+  * Lisp / NewLisp
+  * Vala
 
 --pancake
