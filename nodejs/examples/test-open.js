@@ -14,7 +14,13 @@ try {
     r2p.quit();
   } else {
     r2pipe.open((err, r2p) => {
+      if (err) {
+        throw err;
+      }
       r2p.cmdj('ij', (err, res) => {
+        if (err) {
+          throw err;
+        }
         console.log(res);
         r2p.quit();
       });

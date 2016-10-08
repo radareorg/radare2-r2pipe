@@ -150,7 +150,6 @@ function r2bind (ls, cb, r2cmd) {
       if (typeof cb2 !== 'function') {
         cb2 = function () {};
       }
-console.error("LOOK AT ME");
       try {
         s = util.cleanCmd(s);
         switch (typeof r2cmd) {
@@ -162,7 +161,6 @@ console.error("LOOK AT ME");
             break;
         }
       } catch (e) {
-console.error("LOOK AT ME", e);
         cb2(e);
       }
     },
@@ -369,6 +367,9 @@ const r2node = {
       };
     } else {
       /* OS: linux/sunos/osx */
+      if (!IN || !OUT) {
+        throw new Error('This script needs to run from radare2 with r2pipe://');
+      }
       ls = {
         stdin: fs.createWriteStream(null, {
           fd: OUT
@@ -410,6 +411,9 @@ const r2node = {
   },
 
   lpipeSync: function () {
+    if (!IN || !OUT) {
+      throw new Error('This script needs to run from radare2 with r2pipe://');
+    }
     var ls = {
       syncStdin: OUT,
       syncStdout: IN,
