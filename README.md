@@ -65,6 +65,7 @@ But there is r2pipe for:
 	NodeJS      x     x     x    x    x   -    x    x
 	Ocaml       -     x     -    -    -   -    x    -
 	Perl        x     x     -    x    x   -    x    -
+	PHP         -     x     -    -    -   -    -    -
 	Python      x     x     x    x    x   x    x    x
 	Ruby        x     x     -    -    -   -    x    -
 	Rust        x     x     -    -    -   -    x    -
