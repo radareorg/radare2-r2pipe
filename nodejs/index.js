@@ -332,8 +332,8 @@ const r2node = {
       cb = opts;
       opts = this.options;
     }
-    var port = (4000 + (Math.random() * 4000)) | 0;
-    var ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
+    const port = (4000 + (Math.random() * 4000)) | 0;
+    const ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
     ls.cmdparm = port;
     r2bind(ls, cb, remoteCmd);
   },

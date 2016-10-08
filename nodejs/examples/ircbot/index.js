@@ -54,7 +54,7 @@ process.on ('SIGTERM', finalize);
 print (Chi, "[=>] Initializing r2 core...", Cend);
 r2p.launch("/bin/ls", startIrcBot);
 
-function startIrcBot(r2) {
+function startIrcBot(error, r2) {
 	r2.cmd("e cfg.sandbox=true");
 	r2.cmd("e scr.color=false");
 	r2.cmd("e scr.interactive=false");
@@ -140,9 +140,9 @@ function startIrcBot(r2) {
 					o = "graphs cant be seen here.";
 				else {
 					o = '';
-					r2.cmd (msg, function(o) {
-						print ('=', msg)
-						print (o);
+					r2.cmd (msg, (err, o) => {
+						print('=', msg)
+						print(o);
 						tailRun(o);
 					});
 				}

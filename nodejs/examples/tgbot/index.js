@@ -150,6 +150,12 @@ function launchTelegramBot(r2) {
     }
 
     function onMessage(from, chat, text) {
+      function replyCommand(err, txt) {
+        if (err) {
+          throw err;
+        }
+        sendMessage (from, chat, txt);
+      }
       function replyMessage(txt) {
         sendMessage (from, chat, txt);
       }
@@ -210,20 +216,20 @@ function launchTelegramBot(r2) {
               text += addr;
             }
             console.log ('[r2cmd]', text);
-            r2.cmd(filtercmd(text), replyMessage);
+            r2.cmd(filtercmd(text), replyCommand);
           }
           return;
         } else if (text.substring(0,3) == '/r2') {
           let sp = text.indexOf(' ');
           if (sp != -1) {
             text = text.substring (sp).trim();
-            r2.cmd(filtercmd(text), replyMessage);
+            r2.cmd(filtercmd(text), replyCommand);
           }
           return;
         } else if (text.indexOf ('/cmd') == 0) {
           if (text.length > 4) {
             text = text.substring (5).trim();
-            r2.cmd(filtercmd(text), replyMessage);
+            r2.cmd(filtercmd(text), replyCommand);
           }
           return;
         } else if (text.indexOf ('/asm') == 0) {
@@ -257,7 +263,7 @@ function launchTelegramBot(r2) {
               text += addr;
             }
             console.log ("===========> " + text);
-            r2.cmd(filtercmd(text), replyMessage);
+            r2.cmd(filtercmd(text), replyCommand);
           }
           return;
         }
