@@ -71,5 +71,6 @@ But there is r2pipe for:
 	Rust        x     x     -    -    -   -    x    -
 	Swift       x     x     x    x    -   -    x    -
 	Vala        -     x     x    -    -   -    -    -
+    Clojure     x     x     -    -    -   -    -    -
 
 --pancake
