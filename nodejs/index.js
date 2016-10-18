@@ -275,14 +275,15 @@ const r2node = {
         return me.lpipe(arg[0]);
       },
       function (me, arg) {
-        if (ispath(arg[0])) {
+        if (isPath(arg[0])) {
           me.pipe(arg[0], arg[1]);
         } else if (arg[0].startsWith('http://')) {
           me.connect(arg[0], arg[1]);
         } else if (arg[0].startsWith('io://')) {
           me.connect(arg[0], arg[1]);
         } else {
-          throw new Error('Unknown URI');
+          me.pipe(arg[0], arg[1]);
+          //throw new Error('Unknown URI');
         }
       }
     ];
@@ -298,7 +299,7 @@ const r2node = {
       case 0:
         return this.lpipeSync();
       case 1:
-        if (ispath(arguments[0])) {
+        if (isPath(arguments[0])) {
           return this.pipeSync(arguments[0]);
         } else if (arguments.indexOf('http://') === 0) {
           msg = 'httpsync not supported';
