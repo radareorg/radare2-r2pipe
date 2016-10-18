@@ -16,6 +16,7 @@ endif
 
 all: $(R2P_LIB) examples
 	ln -fs r2pipe/bin/Release/r2pipe.dll r2pipe.dll
+	ln -fs r2pipe/bin/Debug/r2pipe.dll r2pipeDebug.dll
 
 $(R2P_LIB): 
 ifneq ($(KEYFILE),)

@@ -37,7 +37,9 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
+<!--
     <AssemblyOriginatorKeyFile>r2pipe.snk</AssemblyOriginatorKeyFile>
+-->
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->

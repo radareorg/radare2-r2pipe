@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+#if HAVE_PIPES
+
+using System.IO.Pipes;
 #if __MonoCS__
 using Mono.Unix;
 #endif
@@ -62,10 +65,9 @@ namespace r2pipe
             while (true)
             {
                 char buffer = (char)reader.Read();
-
-                if (buffer == 0x00)
+                if (buffer == 0x00) {
                     break;
-
+                }
                 sb.Append(buffer);
             }
             return sb.ToString().Trim();
@@ -119,3 +121,36 @@ namespace r2pipe
         }
     }
 }
+
+#else // HAVE_PIPES
+
+namespace r2pipe
+{
+    public class RlangPipe : IR2Pipe
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RlangPipe"/> class.
+        /// </summary>
+        public RlangPipe()
+        {
+            throw new ArgumentException("RLangPipe: Unsupported r2pipe backend");
+        }
+
+        public string RunCommand(string command)
+        {
+             return null;
+        }
+
+        public async Task<string> RunCommandAsync(string command)
+        {
+             return null;
+        }
+
+        public void Dispose()
+        {
+             /* do nothing */
+        }
+     }
+}
+
+#endif
