@@ -1,11 +1,29 @@
 /* pancake - 2016 - radare project */
 
 const r2pipe = require('..');
-const net = require('net');
 const fs = require('fs');
 
 
 const buf = fs.readFileSync('/bin/ls');
+
+r2pipe.openBuffer(buf, (err, r2) => {
+  if (err) {
+    throw err;
+  }
+  r2.cmd('pd 20', (err, res) => {
+    if (err) {
+      throw err;
+    }
+    console.log(res);
+    r2.quit();
+  });
+});
+
+/*
+
+PoC
+
+const net = require('net');
 
 const server = net.createServer(client => {
   client.write(buf, null, _ => {
@@ -26,20 +44,4 @@ server.listen(0, _ => {
     });
   });
 });
-
-
-/*
-API design proposal:
-====================
-
-r2pipe.openBuffer(buf, (err, r2) => {
-  if (err) {
-    throw err;
-  }
-  r2.cmd('pd 20', (err, res) => {
-    console.log(res);
-    r2.quit();
-  });
-});
 */
-

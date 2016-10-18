@@ -95,7 +95,7 @@ function pipeCmd (proc, cmd, cb) {
     cmd: cmd,
     cb: cb,
     result: '',
-    error: false
+    error: null
   });
   if (pipeQueue.length === 1) {
     proc.stdin.write(cmd + '\n');
@@ -315,6 +315,19 @@ const r2node = {
     if (typeof msg !== 'undefined') {
       throw new Error(msg);
     }
+  },
+
+  openBuffer: function (buf, cb) {
+    const server = net.createServer(client => {
+      client.write(buf, null, _ => {
+        client.destroy();
+        server.close();
+      });
+    });
+    server.listen(0, _ => {
+      const port = server.address().port;
+      this.pipe('tcp://127.0.0.1:' + port, cb);
+    });
   },
 
   connect: function (uri, cb) {
