@@ -151,8 +151,10 @@ function r2bind (ls, cb, r2cmd) {
         client.on('data', data => {
           dataBuffer = Buffer.concat([dataBuffer, data]);
         });
-        client.on('end', data => {
+        client.on('end', _ => {
           cb(null, dataBuffer);
+          client.destroy();
+          server.close();
         });
         client.on('error', err => {
           cb(err);
@@ -160,7 +162,8 @@ function r2bind (ls, cb, r2cmd) {
       });
       server.listen(0, _ => {
         const port = server.address().port;
-        r2.cmd('wts 127.0.0.1:' + port + ' ' + size + '@ ' + addr);
+        const command = 'wts 127.0.0.1:' + port + ' ' + size + '@ ' + addr;
+        r2.cmd(command);
       });
     },
 
