@@ -50,27 +50,27 @@ The most supported languages are:
 
 But there is r2pipe for:
 
-	          pipe spawn async http tcp rap json plug
-	C           x     x     -    x    x   x    x    x
-	C++/Qt      x     x     -    -    -   -    x    -
-	C# / F#     x     x     x    x    -   -    -    -
-	D           x     -     -    -    -   -    x    -
-	Erlang      x     x     -    -    -   -    -    -
-	Go          x     x     -    -    -   -    x    -
-	Haskell     x     x     -    x    -   -    x    -
-	Java/Groovy -     x     -    x    -   -    -    -
-	Lisp        -     x     -    -    -   -    x    -
-	NewLisp     x     -     -    -    -   -    -    -
-	Nim         -     -     -    x    -   -    -    -
-	NodeJS      x     x     x    x    x   -    x    x
-	Ocaml       -     x     -    -    -   -    x    -
-	Perl        x     x     -    x    x   -    x    -
-	PHP         -     x     -    -    -   -    -    -
-	Python      x     x     x    x    x   x    x    x
-	Ruby        x     x     -    -    -   -    x    -
-	Rust        x     x     -    -    -   -    x    -
-	Swift       x     x     x    x    -   -    x    -
-	Vala        -     x     x    -    -   -    -    -
-    Clojure     x     x     -    -    -   -    -    -
+	          pipe spawn async http tcp rap json plug dll buff
+	C           X     X     -    X    X   X    X    X   X   X
+	C++/Qt      X     X     -    -    -   -    X    -   X   -
+	C# / F#     X     X     X    X    -   -    -    -   X   -
+	D           X     -     -    -    -   -    X    -   -   -
+	Erlang      X     X     -    -    -   -    -    -   -   -
+	Go          X     X     -    -    -   -    X    -   -   -
+	Haskell     X     X     -    X    -   -    X    -   -   -
+	Java/Groovy -     X     -    X    -   -    -    -   -   -
+	Lisp        -     X     -    -    -   -    X    -   -   -
+	NewLisp     X     -     -    -    -   -    -    -   -   -
+	Nim         -     -     -    X    -   -    -    -   X   -
+	NodeJS      X     X     X    X    X   -    X    X   -   X
+	Ocaml       -     X     -    -    -   -    X    -   -   -
+	Perl        X     X     -    X    X   -    X    -   -   -
+	PHP         -     X     -    -    -   -    -    -   -   -
+	Python      X     X     X    X    X   X    X    X   X   -
+	Ruby        X     X     -    -    -   -    X    -   -   -
+	Rust        X     X     -    -    -   -    X    -   -   -
+	Swift       X     X     X    X    -   -    X    -   X   -
+	Vala        -     X     X    -    -   -    -    -   -   -
+	Clojure     X     X     -    -    -   -    -    -   -   -
 
 --pancake
