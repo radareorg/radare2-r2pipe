@@ -145,6 +145,25 @@ function r2bind (ls, cb, r2cmd) {
 
   const r2 = {
 
+    getBuffer: function (addr, size, cb) {
+      let dataBuffer = new Buffer([]);
+      const server = net.createServer(client => {
+        client.on('data', data => {
+          dataBuffer = Buffer.concat([dataBuffer, data]);
+        });
+        client.on('end', data => {
+          cb(null, dataBuffer);
+        });
+        client.on('error', err => {
+          cb(err);
+        });
+      });
+      server.listen(0, _ => {
+        const port = server.address().port;
+        r2.cmd('wts 127.0.0.1:' + port + ' ' + size + '@ ' + addr);
+      });
+    },
+
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
       if (typeof cb2 !== 'function') {
