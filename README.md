@@ -58,10 +58,10 @@ But there is r2pipe for:
 	Erlang      X     X     -    -    -   -    -    -   -   -
 	Go          X     X     -    -    -   -    X    -   -   -
 	Haskell     X     X     -    X    -   -    X    -   -   -
-	Java/Groovy -     X     -    X    -   -    -    -   -   -
+	Java/Groovy -     X     -    X    -   -    -    -   X   -
 	Lisp        -     X     -    -    -   -    X    -   -   -
 	NewLisp     X     -     -    -    -   -    -    -   -   -
-	Nim         -     -     -    X    -   -    -    -   X   -
+	Nim         -     -     -    X    -   -    X    -   X   -
 	NodeJS      X     X     X    X    X   -    X    X   -   X
 	Ocaml       -     X     -    -    -   -    X    -   -   -
 	Perl        X     X     -    X    X   -    X    -   -   -
