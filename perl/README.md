@@ -1,15 +1,15 @@
-# Pwn::r2pipe
+# Radare::r2pipe
 
-    use Pwn::r2pipe;
+    use Radre::r2pipe;
 
-    my $r2 = Pwn::r2pipe->new('/bin/ls');
+    my $r2 = Radare::r2pipe->new('/bin/ls');
     my $result = $r2->cmd('iI');
     my $ds = $r2->cmdj('ij');
     print "Architecture: " . $ds->{bin}->{machine} . "\n";
     $r2->quit();
 
     # Other stuff
-    $r2 = Pwn::r2pipe->new;
+    $r2 = Radare::r2pipe->new;
     $r2->open('http://localhost:9090');
     $r2->cmd('pi 5');
     $r2->close(); # Same as quit()
