@@ -1,5 +1,5 @@
 # Declare namespace
-package Pwn::r2pipe;
+package Radare::r2pipe;
 
 # Declare dependencies
 use strict;
@@ -210,7 +210,7 @@ __END__
 
 =head1 NAME
 
-Pwn::r2pipe - Interface with radare2
+Radare::r2pipe - Interface with radare2
 
 =head1 VERSION
 
@@ -218,15 +218,15 @@ version 0.1
 
 =head1 SYNOPSIS
 
-    use Pwn::r2pipe;
+    use Radare::r2pipe;
 
-    my $r2 = Pwn::r2pipe->new('/bin/ls');
+    my $r2 = Radare::r2pipe->new('/bin/ls');
     $r2->cmd('iI');
     $r2->cmdj('ij');
     $r2->quit();
 
     # Other stuff
-    $r2 = Pwn::r2pipe->new;
+    $r2 = Radare::r2pipe->new;
     $r2->open('/bin/ls');
     $r2->cmd('pi 5');
     $r2->close(); # Same as quit()
