@@ -6,25 +6,32 @@ import java.net.*;
 public class R2Pipe {
 	private boolean viaHttp;
 	private String file;
-
 	Process process;
 	InputStream stdout;
 	OutputStream stdin;
+	private String r2path = "radare2";
 
 	public R2Pipe(String file) throws Exception {
-		// spawn process here
+		spawnProcess(file);
+	}
+
+	public R2Pipe(String file, String r2path, boolean viaHTTP) throws Exception {
+		this.r2path = r2path;
+		this.viaHttp = viaHttp;
 		spawnProcess(file);
 	}
 
 	public void spawnProcess (String file) throws Exception {
-		process = Runtime.getRuntime ().exec("r2 -q0 "+file);
+		final String cmd = r2path + " -q0 " + file;
+		process = Runtime.getRuntime ().exec(cmd);
 		stdin = process.getOutputStream ();
 		stdout = process.getInputStream ();
 		byte[] b = new byte[1];
-// read until \0 is found
+		// read until \0 is found
 		while (stdout.read (b) == 1) {
-			if (b[0] == '\0')
+			if (b[0] == '\0') {
 				break;
+			}
 		}
 	}
 
@@ -38,16 +45,17 @@ public class R2Pipe {
 	}
 
 	public String cmd(String str) throws Exception {
-		if (this.viaHttp)
+		if (this.viaHttp) {
 			return httpCmd (str);
-
-		stdin.write ((str+"\n").getBytes());
+		}
+		stdin.write ((str + "\n").getBytes());
 		stdin.flush();
 		StringBuffer sb = new StringBuffer();
 		byte[] b = new byte[1];
 		while (stdout.read (b) == 1) {
-			if (b[0] == 0)
+			if (b[0] == 0) {
 				break;
+			}
 			sb.append ((char)b[0]);
 		}
 		return sb.toString();
@@ -79,7 +87,8 @@ public class R2Pipe {
 	}
 
 	public void quit() throws Exception {
-		if (!viaHttp)
+		if (!viaHttp) {
 			cmd ("q");
+		}
 	}
 }
