@@ -28,7 +28,3 @@
 ((define (r2pipe-http:cmdj u x)
 	(json-parse (get-url (string u "/" x))))
 )
-
-(set 'url "http://cloud.radare.org/cmd")
-(println (r2pipe-http:cmd url "?V"))
-(println (r2pipe-http:cmdj url "ij"))
