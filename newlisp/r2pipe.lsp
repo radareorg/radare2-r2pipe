@@ -1,5 +1,7 @@
 #!/usr/bin/env newlisp
 
+;;; r2 -i
+
 (context 'r2pipe)
 
 (define (r2pipe:cmd x)
@@ -14,3 +16,19 @@
 	(set 'i (r2pipe:cmd x))
 	(json-parse i)
 )
+
+;;; http
+
+(context 'r2pipe-http)
+
+((define (r2pipe-http:cmd u x)
+	(get-url (string u "/" x)))
+)
+
+((define (r2pipe-http:cmdj u x)
+	(json-parse (get-url (string u "/" x))))
+)
+
+(set 'url "http://cloud.radare.org/cmd")
+(println (r2pipe-http:cmd url "?V"))
+(println (r2pipe-http:cmdj url "ij"))
