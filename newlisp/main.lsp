@@ -10,5 +10,6 @@
 (set 'opinfo (aoj "entry0"))
 (println (lookup "opcode" opinfo))
 (println (lookup "esil" opinfo))
+
 ; (println opinfo)
-(exit)
+(exit 0)

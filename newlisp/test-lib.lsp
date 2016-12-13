@@ -1,0 +1,10 @@
+;; native r2pipe api example
+(load "r2pipe.lsp")
+(context 'r2pipe-lib)
+(let (r2 (r2pipe-lib:new))
+	(print (cmd r2 "o /bin/ls"))
+	(print (cmd r2 "?V"))
+	(print (cmdj r2 "ij"))
+	(quit r2)
+)
+(exit)
