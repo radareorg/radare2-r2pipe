@@ -50,7 +50,7 @@ The most supported languages are:
 
 But there is r2pipe for:
 
-	          pipe spawn async http tcp rap json plug dll buff
+	          pipe spawn async http tcp rap json plug lib buff
 	C           X     X     -    X    X   X    X    X   X   X
 	C++/Qt      X     X     -    -    -   -    X    -   X   -
 	C# / F#     X     X     X    X    -   -    -    -   X   -
@@ -60,7 +60,7 @@ But there is r2pipe for:
 	Haskell     X     X     -    X    -   -    X    -   -   -
 	Java/Groovy -     X     -    X    -   -    -    -   X   -
 	Lisp        -     X     -    -    -   -    X    -   -   -
-	NewLisp     X     -     -    -    -   -    -    -   -   -
+	NewLisp     X     X     -    X    -   -    X    -   X   -
 	Nim         -     -     -    X    -   -    X    -   X   -
 	NodeJS      X     X     X    X    X   -    X    X   -   X
 	Ocaml       -     X     -    -    -   -    X    -   -   -

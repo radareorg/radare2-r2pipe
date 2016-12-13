@@ -30,6 +30,39 @@
 	(json-parse (cmd u x))
 )
 
+;;; spawn
+
+(context 'r2pipe-spawn)
+
+(define (r2pipe-spawn:new filePath r2path)
+	(map set '(myin bcout) (pipe))
+	(map set '(bcin myout) (pipe))
+	(if (not r2path) (set 'r2path (first (exec "which r2"))))
+	(set 'pid (process (string r2path " -q0 " filePath) bcin bcout))
+	;; XXX is this a bug in newLisp? process never returns -1
+	; (if (= -1 pid) (throw-error "Cannot spawn r2"))
+	(read myin buf 1)
+	(list myin myout pid)
+)
+
+(define (cmd core x)
+	(print (string "pre " x "\x00"))
+	(write (core 1) (string x "\n\x00"))
+	;; TODO: read until \x00 instead of the whole 999 buffer
+	(read (core 0) buf 9999)
+	(chop buf)
+)
+
+(define (cmdj core x)
+	(json-parse (cmd core x))
+)
+
+(define (quit core)
+	(close (core 0))
+	(close (core 1))
+	(destroy (core 2))
+)
+
 ;;; native
 
 (context 'r2pipe-lib)
@@ -73,3 +106,5 @@
 (define (quit core)
 	(r_core_free core)
 )
+
+(context MAIN)
