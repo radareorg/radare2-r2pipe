@@ -30,7 +30,7 @@ function syscall_linux_x86_32(r2p,regs) {
 }
 
 // it works using r2pipe, connecting to r2 session
-r2pipe.lpipe(function (r2p) {
+r2pipe.lpipe(function (err, r2p) {
 	var syscall = syscall_linux_x86_32;
 	switch (sn) {
 	case 3: // same as INT3
@@ -41,9 +41,10 @@ r2pipe.lpipe(function (r2p) {
 	case 0x80: // INT 0x80
 		/* linux */
 		console.error ("[SYSCALL] number:", sn);
-		r2p.cmdj ("arj", function(regs) {
-			if (syscall (r2p,regs))
+		r2p.cmdj ("arj", function(err, regs) {
+			if (syscall (r2p,regs)) {
 				process.exit (0);
+			}
 		});
 		break;
 	default:
