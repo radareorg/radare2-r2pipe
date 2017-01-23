@@ -1,0 +1,86 @@
+<html>
+<head>
+<title>r2.asm.js shell</title>
+  <link rel="stylesheet" type="text/css" href="../style.css">
+<meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=false" />
+</head>
+<script src="./radare2.tiny.js">
+</script>
+<script>
+var r2 = {};
+r2.cmd = Module.cwrap('r2_asmjs_cmd', 'string', ['string']);
+r2.openurl = Module.cwrap('r2_asmjs_openurl', 'void', ['string']);
+r2.cmd("e scr.html=true");
+r2.cmd("e scr.color=false");
+
+function runCommand(cmd) {
+	var input = document.getElementById('input');
+	var output = document.getElementById('output');
+	output.innerText = r2.cmd (input.value);
+	input.value = '';
+}
+
+function openURL() {
+	var url = document.getElementById('url');
+	r2.openurl(url.value);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+	var run = document.getElementById('run');
+	run.addEventListener('click', runCommand);
+	var input = document.getElementById('input');
+	input.onkeypress = function(e){
+		if (e.keyCode == 13) {
+			runCommand();
+		}
+        }
+	var open = document.getElementById('open');
+	open.addEventListener('click', openURL);
+	var url = document.getElementById('url');
+	url.onkeypress = function(e){
+		if (e.keyCode == 13) {
+			openURL();
+		}
+        }
+});
+</script>
+
+<style>
+div {
+	font-family: monospace !important;
+	display: block !important;
+	white-space: pre;
+	background-color:black;
+	color:white;
+}
+input {
+	background-color:black;
+	color:white;
+	border: solid 1px gray;
+}
+body {
+	font-family:Verdana;
+	background-color:black;
+	color:gray;
+}
+
+</style>
+
+<body>
+URL
+<input id="url" value="http://cloud.rada.re/asmjs/ls" style="width:70%">
+</input>
+<input id="open" type="button" value="open">
+</input>
+<br />
+CMD
+<input id="input" value="?V" style="width:70%">
+</input>
+
+<input id="run" type="button" value="run">
+</input>
+
+<div id="output">
+</div>
+</body>
+</html>
