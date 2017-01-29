@@ -13,7 +13,13 @@ Notice that compilation line at the end of the build:
 
 Then uglify it
 
+	npm install uglify-js
 	node --max-old-space-size=4096 $(npm bin)/uglifyjs < radare2.js > radare2.tiny.js
+
+or
+
+	npm -g install closurecompiler
+	ccjs radare2.js > radare2.tiny.js
 
 or get it from:
 

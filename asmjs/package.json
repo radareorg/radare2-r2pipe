@@ -1,0 +1,31 @@
+{
+  "name": "r2pipe-asmjs",
+  "version": "1.2.0",
+  "description": "emscripten build of radare2 with an r2pipe api",
+  "main": "index.js",
+  "dependencies": {
+    "closurecompiler": "^1.6.1",
+    "uglify-js": "^2.4.24"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.3.3"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radare2/radare2-r2pipe.git"
+  },
+  "keywords": [
+    "radare2",
+    "r2pipe",
+    "emscripten"
+  ],
+  "author": "pancake <pancake@nopcode.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/radare2/radare2-r2pipe/issues"
+  },
+  "homepage": "https://github.com/radare2/radare2-r2pipe#readme"
+}
