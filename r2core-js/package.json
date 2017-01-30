@@ -1,14 +1,12 @@
 {
   "name": "r2core",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "emscripten build of radare2 with an r2pipe api",
   "main": "index.js",
-  "dependencies": {
+  "devDependencies": {
+    "coffee-script": "^1.3.3",
     "closurecompiler": "^1.6.1",
     "uglify-js": "^2.4.24"
-  },
-  "devDependencies": {
-    "coffee-script": "^1.3.3"
   },
   "scripts": {
     "test": "node test.js"

@@ -3,36 +3,40 @@ r2core.js
 
 This is the NodeJS module and Browser ready emscripten builds of radare2.
 
-```js
-const r2core = require('r2core');
-const c = new r2core();
-console.log(c.cmd('?E Hello World'));
-```
+	$ npm install r2core
 
-```
-$ node
-> console.log(new require('r2core')().cmd('?E Hello World'))
- .--.     .-------------.
- | _|     |             |
- | O O   <  Hello World |
- |  |  |  |             |
- || | /   `-------------'
- |`-'|
- `---'
-```
+And now you can run things like that:
 
-You can create multiple instances of RCore and you can open external resources too:
+	$ node -e "console.log(new require('r2core')().cmd('?E Hello World'))"
+	 .--.     .-------------.
+	 | _|     |             |
+	 | O O   <  Hello World |
+	 |  |  |  |             |
+	 || | /   `-------------'
+	 |`-'|
+	 `---'
 
-```js
-c.open('/bin/ls');
-```
-
+API
+---
 The API provided is similar to the r2pipe one, so you can reuse the same scripts.
 
 * .open() - opens a file from an external resource (vfs/net)
 * .cmd() - run a command in r2 and return the string
 * .cmdj() - same as above but parsing the output as JSON
 * .free() - destroy the instance
+
+Example
+-------
+
+You can create multiple instances of RCore and you can open external resources too:
+
+```js
+const R2Core = require('r2core');
+const c = new R2Core();
+const c2 = new R2Core();
+console.log(c.cmd('wv 123'));
+console.log(c2.cmd('p8 4'));
+```
 
 Testing
 -------
