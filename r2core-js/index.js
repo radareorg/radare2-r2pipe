@@ -16,6 +16,9 @@ module.exports = function () {
 		cmd: function(c) {
 			return coreCmd(r2i, c);
 		},
+		cmdj: function(c) {
+			return JSON.parse(cmd(c));
+		},
 		free: function() {
 			coreFree(r2i);
 			r2i = 0;
