@@ -1,6 +1,6 @@
 {
-  "name": "r2pipe-asmjs",
-  "version": "1.2.0",
+  "name": "r2core",
+  "version": "1.2.1",
   "description": "emscripten build of radare2 with an r2pipe api",
   "main": "index.js",
   "dependencies": {

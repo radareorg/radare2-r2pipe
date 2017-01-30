@@ -1,25 +1,25 @@
-r2pipe.asmjs
-============
+r2core.js
+=========
 
-Build radare2.tiny.js with radare2-release
+This is the NodeJS module and Browser ready emscripten builds of radare2.
+
+	const r2core = require('r2core');
+	const c = new r2core();
+	console.log(c.cmd('?E Hello World'));
+
+You can create multiple instances of RCore and you can open external resources too:
+
+	c.open('/bin/ls');
+
+Building
+--------
+
+Build radare2.js with radare2-release
 
 	r2pm -r r2rls docker_asmjs
 
-Notice that compilation line at the end of the build:
-
-	$ make EMSCRIPTEN=1 COMPILER=emscripten  ANDROID=1
-	emcc -pie -s EXPORTED_FUNCTIONS='["_r2_asmjs_cmd","_r2_asmjs_openurl"]'  -MD
-	...
-
-Then uglify it
-
-	npm install uglify-js
-	node --max-old-space-size=4096 $(npm bin)/uglifyjs < radare2.js > radare2.tiny.js
-
-or
-
-	npm -g install closurecompiler
-	ccjs radare2.js > radare2.tiny.js
+Now you may run `make` to minify the radare2.js and generating r2core.js.
+This process is using uglifyjs and closurejs
 
 or get it from:
 
@@ -29,4 +29,15 @@ You can now use this file from nodejs or the browser
 
 	open webtest.html
 
-	node nodetest.js
+	node test.js
+
+Future
+------
+
+* Integration with brotli (Compression goes from 16MB to 1.8MB)
+* Open Buffers instead of fs/network resources
+
+Author
+------
+
+* pancake <pancake@nopcode.org>
