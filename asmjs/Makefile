@@ -1,4 +1,4 @@
-FILES= Makefile README.md package.json index.js r2core.js test.js
+FILES= Makefile README.md package.json index.js r2core.js test.js webtest.html
 
 all: r2core.js
 

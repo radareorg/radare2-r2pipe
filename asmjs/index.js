@@ -1,3 +1,4 @@
+/* pancake @ nopcode.org - 2017 */
 const r2core = require("./r2core")
 
 // ffi

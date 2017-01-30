@@ -4,28 +4,28 @@
   <link rel="stylesheet" type="text/css" href="../style.css">
 <meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=false" />
 </head>
-<script src="./radare2.tiny.js">
+<script src="./r2core.js">
 </script>
 <script>
 var r2 = {};
-r2.cmd = Module.cwrap('r2_asmjs_cmd', 'string', ['string']);
-r2.openurl = Module.cwrap('r2_asmjs_openurl', 'void', ['string']);
-r2.cmd("e scr.html=true");
-r2.cmd("e scr.color=false");
+r2.cmd = Module.cwrap('r2_asmjs_cmd', 'string', ['number', 'string']);
+r2.openurl = Module.cwrap('r2_asmjs_openurl', 'void', ['number', 'string']);
 
 function runCommand(cmd) {
 	var input = document.getElementById('input');
 	var output = document.getElementById('output');
-	output.innerText = r2.cmd (input.value);
+	output.innerText = r2.cmd (0, input.value);
 	input.value = '';
 }
 
 function openURL() {
 	var url = document.getElementById('url');
-	r2.openurl(url.value);
+	r2.openurl(0, url.value);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+	r2.cmd(0, "e scr.html=true");
+	r2.cmd(0, "e scr.color=false");
 	var run = document.getElementById('run');
 	run.addEventListener('click', runCommand);
 	var input = document.getElementById('input');
