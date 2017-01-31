@@ -1,0 +1,39 @@
+.txt {
+	background-color: #d0d0d0;
+	padding:5px;
+	border-radius: 5px;
+	color:#202020;
+	font-size: 0.8em;
+	width: 80%;
+}
+
+.prompt {
+	position: fixed;
+	top: 0px;
+	padding-top:5px;
+	padding-left:10px;
+	padding-bottom: 5px;
+	left:0px;
+	border:15px;
+	width:100%;
+	background-color: #303030;
+}
+.shell {
+	margin-top: 7em;
+	font-family: monospace !important;
+	line-height: 90%;
+	display: block !important;
+	white-space: pre;
+	background-color:black;
+	color:white;
+}
+input {
+	background-color:black;
+	color:white;
+	border: solid 1px gray;
+}
+body {
+	font-family:Verdana;
+	background-color:black;
+	color:gray;
+}
