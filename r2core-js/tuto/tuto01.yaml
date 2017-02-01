@@ -1,0 +1,26 @@
+#
+#
+# This is a config file for a tutorial for r2core.js
+#
+#
+- title: Press &lt;enter&gt; in the input box to open the crackme
+  expect:
+          input: o crackme
+- title: To start we must learn the '?' Command that will show the list of root commands.
+  expect:
+          input: ?
+- title: Some commands are used to interact with the user like the echo. Try ?e hello
+  expect:
+          output: hello
+- title: We can get the help and list of subcommands by appending the question mark at the end of any command.
+  expect:
+          inputEndsWith: ?
+- title: r2 is a block based hexadecimal editor. This means that you will only see a portion of the data. You the 'b' comamnd to change the block size and run 'px' to print the block.
+  expect:
+          input: px
+- title: You can also specify the block size as an argument to 'px'. As long as 'px' is too long, r2 provides a short for it: 'x'
+  expect:
+          input: x
+- title: Numeric arguments in r2 can be complex math expressions using numbers in any base. Let's try to evaluate a math expression that computes to 6 using the ?v command.
+  expect:
+          output: 0x6

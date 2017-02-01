@@ -1,4 +1,5 @@
 var level = 0;
+/*
 const tutorial = [
 	{
 		"title": "To start we must learn the '?' Command that will show the list of root commands.",
@@ -17,6 +18,7 @@ const tutorial = [
 		}
 	}
 ];
+*/
 
 String.prototype.endsWith = String.prototype.endsWith || function(suffix) {
 	return this.indexOf(suffix, this.length - suffix.length) >= 0;
