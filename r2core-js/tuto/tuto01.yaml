@@ -3,10 +3,10 @@
 # This is a config file for a tutorial for r2core.js
 #
 #
-- title: Press &lt;enter&gt; in the input box to open the crackme
+- title: Welcome to the radare2 web tutorial! Press 'enter' in the input box to open the crackme
   expect:
           input: o crackme
-- title: To start we must learn the '?' Command that will show the list of root commands.
+- title: To start we must learn the question mark ('?') Command that will show the list of root commands.
   expect:
           input: ?
 - title: Some commands are used to interact with the user like the echo. Try ?e hello

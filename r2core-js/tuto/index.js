@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	r2.cmd(0, "e scr.color=false");
 	var txt = document.getElementById('txt');
 	txt.innerHTML = levelMessage();
+	speak (txt.innerHTML);
 	var add = document.getElementById('add');
 	add.addEventListener('click', addCommand);
 	var run = document.getElementById('run');
