@@ -76,6 +76,7 @@ function histDown() {
 document.addEventListener('DOMContentLoaded', function () {
 	r2.cmd(0, "e scr.html=true");
 	r2.cmd(0, "e scr.utf8=true");
+	r2.cmd(0, "e scr.interactive=false");
 	r2.cmd(0, "e scr.color=false");
 	var txt = document.getElementById('txt');
 	txt.innerHTML = levelMessage();

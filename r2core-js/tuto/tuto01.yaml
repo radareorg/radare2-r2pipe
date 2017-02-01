@@ -15,7 +15,7 @@
 - title: We can get the help and list of subcommands by appending the question mark at the end of any command.
   expect:
           inputEndsWith: ?
-- title: r2 is a block based hexadecimal editor. This means that you will only see a portion of the data. You the 'b' comamnd to change the block size and run 'px' to print the block.
+- title: r2 is a block based hexadecimal editor. This means that you will only see a portion of the data. Use the 'b' comamnd to change the block size and run 'px' to print the block.
   expect:
           input: px
 - title: You can also specify the block size as an argument to 'px'. As long as 'px' is too long, r2 provides a short for it: 'x'
