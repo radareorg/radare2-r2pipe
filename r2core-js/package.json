@@ -1,6 +1,6 @@
 {
   "name": "r2core",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "emscripten build of radare2 with an r2pipe api",
   "main": "index.js",
   "devDependencies": {
