@@ -24,3 +24,6 @@
 - title: Numeric arguments in r2 can be complex math expressions using numbers in any base. Let's try to evaluate a math expression that computes to 6 using the ?v command.
   expect:
           output: 0x6
+- title: Thanks for playing! This is a very early implementation. Feel free to submit PRs to extend the tutorials
+  expect:
+          input: restart
