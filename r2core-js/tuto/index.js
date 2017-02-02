@@ -21,7 +21,7 @@ function runCommand() {
 	var res = '';
 	if (cmd.substring(0, 2) === 'o ') {
 		var url = cmd.substring(2);
-		if (url.startsWith('http://')) {
+		if (url.indexOf('http://') !== -1) {
 			r2.openurl(0, url);
 		} else {
 			r2.openurl(0, document.URL + url);
