@@ -53,8 +53,12 @@ Runs different connection methods depending on the uri and the number of argumen
 ```js
 var r2pipe = require('r2pipe');
 
-function doStuff (r2p) {
-  console.log (r2p.cmdj('ij'));
+function doStuff (err, r2p) {
+  if (!err) {
+    console.log (r2p.cmdj('ij'));
+  } else  {
+    console.log(`Error: ${err.message}`)
+  }
   r2p.quit();
 }
 
@@ -109,7 +113,7 @@ Spawns a new process and comunicate with it through standard stdin, stdout, stde
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
    ...
 }
 
@@ -123,7 +127,7 @@ This method is intended to be used while running scripts from the r2 console
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
    ...
 }
 
@@ -155,7 +159,7 @@ Launch radare2 and listen for cmds through a tcp port
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
    ...
 }
 
@@ -169,7 +173,7 @@ Callback for the libr/io/r2pipe plugin interface to write IO plugins using the r
 ```js
 var r2pipe = require('r2pipe');
 
-r2pipe.ioplugin(function (io, msg) {
+r2pipe.ioplugin(function (err, io, msg) {
   switch (msg.op) {
     case 'read':
       var obj = {
@@ -203,7 +207,7 @@ r2 -C http://localhost:8182/cmd/
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
    ...
 }
 
@@ -223,8 +227,8 @@ Runs a radare2 command
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
-   r2.cmd ("iS", function(output) {
+function doSomeStuff(err, r2) {
+   r2.cmd ("iS", function(err, output) {
     console.log (output);
   });
 }
@@ -242,8 +246,8 @@ Note that this will only work with commands producing JSON output.
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
-   r2.cmdj ("iSj", function(output) {
+function doSomeStuff(err, r2) {
+   r2.cmdj ("iSj", function(err, output) {
     if (output !== null)
        console.log (output);
     else
@@ -263,8 +267,8 @@ Runs a system command, used mainly to access radare companion tools such as rabi
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
-   r2.syscmd ("rabin2 -S /bin/true", function(output) {
+function doSomeStuff(err, r2) {
+   r2.syscmd ("rabin2 -S /bin/true", function(err, output) {
     console.log (output);
   });
 }
@@ -282,8 +286,8 @@ Note that this will only work with commands producing JSON output.
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
-   r2.syscmdj ("rabin2 -j -S /bin/true", function(output) {
+function doSomeStuff(err, r2) {
+   r2.syscmdj ("rabin2 -j -S /bin/true", function(err, output) {
     console.log (output);
   });
 }
@@ -301,7 +305,7 @@ Close the connection, kill the radare spawned process or terminate the lpipe scr
 ```js
 var r2pipe = require('r2pipe');
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
    r2.quit();
 }
 
@@ -323,14 +327,14 @@ This is a small example using the pipe connection method for standalone scripts.
 ```js
 var r2pipe = require ("r2pipe");
 
-function doSomeStuff(r2) {
+function doSomeStuff(err, r2) {
 
-  r2.cmdj ("aij entry0+2", function(o) {
+  r2.cmdj ("aij entry0+2", function(err, o) {
     console.log (o);
   });
 
-  r2.cmd ('af @ entry0', function(o) {
-    r2.cmd ("pdf @ entry0", function(o) {
+  r2.cmd ('af @ entry0', function(err, o) {
+    r2.cmd ("pdf @ entry0", function(err, o) {
       console.log (o);
       r2.quit ()
     });
@@ -395,4 +399,3 @@ function doSomeStuff(r2) {
 
 r2pipe.pipe ("/tmp/mlwre/sample", doSomeStuff);
 ```
-
