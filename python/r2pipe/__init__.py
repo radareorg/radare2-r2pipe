@@ -43,7 +43,7 @@ try:
 except:
 	has_native = False
 
-VERSION="0.8.8"
+VERSION="0.8.9"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -190,12 +190,12 @@ class open:
 			os.write (self.pipe[1], cmd)
 			while True:
 				res = os.read (self.pipe[0], 4096)
-				# chop in last
-				if (len(res)<1):
+				if res[-1] == b'\x00':
+					res = res[0:-1]
+				if (len(res) < 1):
 					break
 				out += res
-				if res[-1] == b'\x00':
-					out = out[0:-1]
+				if (len(res) < 4096):
 					break
 		return out.decode('utf-8')
 

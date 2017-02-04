@@ -11,6 +11,12 @@ function clearCommands() {
 	cmds = [];
 }
 
+function loadR2Core() {
+	var script = document.getElementById('r2core');
+	var url = URL.createObjectURL(e.target.files[0]);  
+	script.setAttribute('src', url);
+}
+
 function runCommand() {
 	var input = document.getElementById('input');
 	var output = document.getElementById('output');
