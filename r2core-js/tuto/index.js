@@ -13,9 +13,21 @@ function clearCommands() {
 
 function loadR2Core() {
 	var script = document.getElementById('r2core');
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'blob:http%3A//radare.org/r/index.html', true);
+xhr.responseType = 'blob';
+xhr.onload = function(e) {
+  if (this.status == 200) {
+    var myBlob = this.response;
+    // myBlob is now the blob that the object URL pointed to.
+  }
+};
+xhr.send();
 	var url = URL.createObjectURL(e.target.files[0]);  
 	script.setAttribute('src', url);
 }
+
+// loadR2Core();
 
 function runCommand() {
 	var input = document.getElementById('input');

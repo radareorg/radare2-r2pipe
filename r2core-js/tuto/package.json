@@ -1,0 +1,14 @@
+{
+  "name": "r2core-webtutorial",
+  "version": "1.0.0",
+  "description": "radare2 web tutorial in asmjs",
+  "main": "webserver.js",
+  "scripts": {
+    "make": "node make.js > tuto01.js"
+  },
+  "author": "pancake@nopcode.org",
+  "license": "MIT",
+  "dependencies": {
+    "yamljs": "*"
+  }
+}
