@@ -1,7 +1,5 @@
 
 var r2 = {};
-r2.cmd = Module.cwrap('r2_asmjs_cmd', 'string', ['number', 'string']);
-r2.openurl = Module.cwrap('r2_asmjs_openurl', 'void', ['number', 'string']);
 
 var cmds = new Array();
 var hist = new Array();
@@ -12,22 +10,35 @@ function clearCommands() {
 }
 
 function loadR2Core() {
-	var script = document.getElementById('r2core');
+
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'blob:http%3A//radare.org/r/index.html', true);
-xhr.responseType = 'blob';
+xhr.open('GET', 'r2core.js.gz', true);
+//xhr.responseType = 'blob';
+xhr.responseType = 'arraybuffer';
 xhr.onload = function(e) {
   if (this.status == 200) {
     var myBlob = this.response;
-    // myBlob is now the blob that the object URL pointed to.
+    alert(myBlob);
+    var res = pako.inflate(myBlob);
+    var
+      binaryString = '',
+      bytes = new Uint8Array(res),
+      length = bytes.length;
+    for (var i = 0; i < length; i++) {
+      binaryString += String.fromCharCode(bytes[i]);
+    }
+
+    var script = document.createElement('script');
+    script.innerText = binaryString;
+    document.head.appendChild(script);
+    setTimeout (ready , 100);
   }
 };
 xhr.send();
-	var url = URL.createObjectURL(e.target.files[0]);  
-	script.setAttribute('src', url);
+	//var url = URL.createObjectURL(e.target.files[0]);  
+	// script.setAttribute('src', url);
 }
 
-// loadR2Core();
 
 function runCommand() {
 	var input = document.getElementById('input');
@@ -92,6 +103,12 @@ function histDown() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+	loadR2Core();
+});
+
+function ready() {
+	r2.cmd = Module.cwrap('r2_asmjs_cmd', 'string', ['number', 'string']);
+	r2.openurl = Module.cwrap('r2_asmjs_openurl', 'void', ['number', 'string']);
 	r2.cmd(0, "e scr.html=true");
 	r2.cmd(0, "e scr.utf8=true");
 	r2.cmd(0, "e scr.interactive=false");
@@ -124,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
         }
 */
-});
+}
 
 // say a message
 function speak(text, callback) {
