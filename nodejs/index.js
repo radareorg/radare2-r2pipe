@@ -274,9 +274,6 @@ function r2bind (ls, cb, r2cmd) {
 }
 
 function isPath (text) {
-  if (!text) {
-    return false;
-  }
   return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
 }
 
@@ -300,6 +297,9 @@ const r2node = {
         return me.lpipe(arg[0]);
       },
       function (me, arg) {
+        if (!arg[0]) {
+          throw new Error('Invalid path');
+        }
         if (isPath(arg[0])) {
           me.pipe(arg[0], arg[1]);
         } else if (arg[0].startsWith('http://')) {
@@ -308,7 +308,7 @@ const r2node = {
           me.connect(arg[0], arg[1]);
         } else {
           me.pipe(arg[0], arg[1]);
-          //throw new Error('Unknown URI');
+          // throw new Error('Unknown URI');
         }
       }
     ];
