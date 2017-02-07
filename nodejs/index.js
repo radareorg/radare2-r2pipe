@@ -274,6 +274,9 @@ function r2bind (ls, cb, r2cmd) {
 }
 
 function isPath (text) {
+  if (!text) {
+    return false;
+  }
   return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
 }
 
