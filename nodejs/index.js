@@ -260,7 +260,7 @@ function r2bind (ls, cb, r2cmd) {
     ls.on('close', function (code) {
       running = false;
       if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
-        console.log('r2pipe: child process exited with code ' + code);
+        cb(new Error('Cannot spawn children with code ' + code));
       }
     });
   }
