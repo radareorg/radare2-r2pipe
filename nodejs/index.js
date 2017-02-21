@@ -119,7 +119,11 @@ function pipeCmdOutput (proc, data, cb) {
   pipeQueue.splice(0, 1);
 
   if (pipeQueue.length > 0) {
-    proc.stdin.write(pipeQueue[0].cmd + '\n');
+    try {
+      proc.stdin.write(pipeQueue[0].cmd + '\n');
+    } catch (e) {
+      return cb(e);
+    }
   }
 }
 
