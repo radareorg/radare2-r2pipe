@@ -146,7 +146,7 @@ class open:
 			cmd = ["radare2", "-q0", filename]
 			cmd = cmd[:1] + flags + cmd[1:]
 			try:
-				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1) # Reads initial \x00
