@@ -46,9 +46,9 @@ module.exports.launch = function(endpoint) {
     console.log(gChatId, chatId);
     //bot.sendMessage(chatId, 'hello world');
     try {
-      var name = msg.chat.username || msg.chat.first_name;
+      var name = msg.from.username || msg.from.first_name;
       if (!name) {
-        name = msg.from.username || msg.from.first_name;
+        name = msg.chat.username || msg.chat.first_name;
       }
     } catch (e) {
       if (!name) {
