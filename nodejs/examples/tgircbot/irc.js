@@ -3,36 +3,34 @@
 /* IRC */
 const IRC = require('irc.js');
 var irc = null;
-var bot = null;
 var channel = null;
 
-module.exports.bridgeMessage = function(name, text) {
+module.exports.bridgeMessage = function (name, text) {
   if (irc === null) {
-    console.error("irc instance not yet defined");
+    console.error('irc instance not yet defined');
     return false;
   }
-  var lines = text.replace('@r2tgircBot', '').split("\n");
+  var lines = text.replace('@r2tgircBot', '').split('\n');
   var count = 10;
   const who = '<' + name + '> ';
   for (var line of lines) {
-    console.log("LINE", line);
+    console.log('LINE', line);
     if (count-- < 1) {
       irc.privmsg(channel, who + '...');
       break;
     }
     irc.privmsg(channel, who + line.trim());
   }
-}
+};
 
-module.exports.bind = function(endpoint) {
+module.exports.bind = function (endpoint) {
   /* config */
-  const msgtimeout = 1000;
   const Chi = '\x1b[32m';
   const Cend = '\x1b[0m';
   const print = console.log;
 
-  function finalize() {
-    //if (irc) irc.privmsg (channel, "byebye");
+  function finalize () {
+    // if (irc) irc.privmsg (channel, "byebye");
     print('^C :D');
     process.exit(0);
   }
@@ -43,34 +41,31 @@ module.exports.bind = function(endpoint) {
   /* r2 stuff */
   print(Chi, '[=>] Initializing r2 core...', Cend);
 
-  function startIrcBot(OPT) {
+  function startIrcBot (OPT) {
     /* parse commandline options */
     var nick = OPT.nick || 'r2tg';
     channel = OPT.channel || '#radare';
     var host = OPT.host || 'irc.freenode.net';
     var port = OPT.port || 6667;
-    var owner = OPT.owner || 'pancake';
-    var file = OPT.file || '/bin/ls';
-    var limit = OPT.limit || 10;
-    if (channel[0] != '#') {
+    if (channel[0] !== '#') {
       channel = '#' + channel;
     }
 
     if (OPT.help || OPT.h) {
       print('r2tgirc.js [--ssl] [--host host] [--port port] [--file program]');
-      print('    [--nick nick] [--channel chan] [--owner nick] [--limit num]');
+      print('    [--nick nick] [--channel chan] [--owner nick]');
       process.exit(0);
     }
 
     if (OPT.ssl) {
       const sslport = 9000 + (100 * Math.random());
       const cmd = 'socat TCP4-LISTEN:' + sslport + ' OPENSSL:' + host + ':' + port + ',verify=0';
-      //print ("SPAWN ("+cmd+")")
+      // print ("SPAWN ("+cmd+")")
       require('child_process')
         .spawn('/bin/sh', ['-c', cmd], {
           stdio: 'pipe'
         })
-        .on('exit', function() {
+        .on('exit', function () {
           print('socat closed');
         });
       host = '127.0.0.1';
@@ -84,17 +79,17 @@ module.exports.bind = function(endpoint) {
 
     irc = new IRC(host, port);
 
-    irc.on('disconnected', function(data) {
+    irc.on('disconnected', function (data) {
       print('Disconnected from the IRC');
       irc.connect(nick, 'radare-telegram-irc-bridge');
     });
 
-    irc.on('raw', function(data) {
+    irc.on('raw', function (data) {
       print('raw', data);
     });
-    irc.on('connected', function(s) {
+    irc.on('connected', function (s) {
       irc.nick(nick);
-      irc.join(channel, function(x) {
+      irc.join(channel, function (x) {
         irc.privmsg(channel, 'hi');
         if (endpoint && endpoint.launch) {
           endpoint.launch(module.exports);
@@ -103,23 +98,19 @@ module.exports.bind = function(endpoint) {
       print('connected');
     });
 
-    if (typeof String.prototype.startsWith != 'function') {
-      String.prototype.startsWith = function(str) {
-        return this.slice(0, str.length) == str;
-      };
-    }
-
-    irc.on('privmsg', function(from, to, msg) {
+    irc.on('privmsg', function (from, to, msg) {
       if (msg.indexOf(nick) !== -1) {
         irc.privmsg(channel, 'I am just a bot, please mention the nick after me.');
       }
-      function tailRun(o) {
-        if (o != null && o != '') {
+/*
+  const msgtimeout = 1000;
+  var limit = OPT.limit || 10;
+      function tailRun (o) {
+        if (o != null && o !== '') {
           if (o.split('\n').length < limit) {
-            (function() {
-              var a = o.split(o.indexOf('\r') != -1 ?
-                '\r' : '\n');
-              var timedmsg = function(x) {
+            (function () {
+              var a = o.split(o.indexOf('\r') !== -1 ? '\r' : '\n');
+              var timedmsg = function (x) {
                 irc.privmsg(to, a[0]);
                 a = a.slice(1);
                 if (a.length > 0) {
@@ -133,6 +124,7 @@ module.exports.bind = function(endpoint) {
           }
         }
       }
+*/
       print('<' + from + '> to ' + to + ' ' + msg);
       if (endpoint.bridgeMessage !== null) {
         endpoint.bridgeMessage(from, msg);
@@ -148,6 +140,5 @@ module.exports.bind = function(endpoint) {
   }
   return {
     start: startIrcBot
-  }
-  return irc;
-}
+  };
+};
