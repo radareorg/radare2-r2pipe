@@ -1,7 +1,7 @@
 {
   "name": "r2pipe",
-  "version": "2.2.0",
-  "description": "pipe bindings for radare2",
+  "version": "2.2.1",
+  "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
   "scripts": {
     "test": "node examples/test-channels.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/radare/radare2-bindings.git"
+    "url": "https://github.com/radare/radare2-r2pipe.git"
   },
   "files": [
     "README.md",
@@ -53,11 +53,14 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/radare/radare2-bindings/issues"
+    "url": "https://github.com/radare/radare2-r2pipe/issues"
   },
   "homepage": "http://www.radare.org",
   "devDependencies": {
-    "semistandard": "*"
+    "semistandard": "10.0.0"
+  },
+  "dependencies": {
+    "redolent": "^1.0.1"
   },
   "optionalDependencies": {
     "syspipe": "^0.1.4"

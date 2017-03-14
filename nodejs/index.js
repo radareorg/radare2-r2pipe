@@ -209,11 +209,12 @@ function r2bind (ls, cb, r2cmd) {
     syscmdj: syscmdj,
 
     /* Quit CMD */
-    quit: function () {
+    quit: function (callback) {
       if (typeof ls.stdin === 'object' && typeof ls.stdin.end === 'function') {
         ls.stdin.end();
       }
       ls.kill('SIGINT');
+      callback();
     },
 
     /* Custom promises */
