@@ -219,6 +219,26 @@ function r2bind (ls, cb, r2cmd) {
     /* Custom promises */
     promise: function (func, cmd, callback) {
       return new promise.Promise(func, cmd, callback);
+    },
+
+    promisify: function() {
+      function makePromise(fcn) {
+        return function (x) {
+          return new Promise((resolve, reject) => {
+            fcn(x, (err, result) => {
+              if (err) {
+                return reject(err);
+              }
+              resolve(result);
+            });
+          });
+        };
+      }
+      return {
+        cmd: makePromise(r2.cmd),
+        cmdj: makePromise(r2.cmdj),
+        quit: makePromise(r2.quit)
+      };
     }
   };
 
