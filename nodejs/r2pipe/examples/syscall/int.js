@@ -5,21 +5,20 @@ var sn = +process.argv[2];
 // runs some code emulating each syscall
 console.log('Running NodeJS powered syscall handler', sn);
 
-function syscall_linux_x86_32 (r2p, regs) {
+function syscallLinuxX8632 (r2p, regs) {
   console.log('REGS', regs);
   switch (regs.eax) {
     case 1: // exit() syscall
       console.log('[SYSCALL] exit code ', regs.ebx);
       break;
     case 4: // write() syscall,
-      console.log('[SYSCALL] write fd:', regs.ebx);
-      console.log('[SYSCALL] write data:', regs.ecx);
-      console.log('[SYSCALL] write len:', regs.edx);
-      mustexit = false;
-      var a0 = regs.ebx; // fd
-      var a2 = regs.ecx; // data
-      var a3 = regs.edx; // len
-      r2p.cmd('psz ' + a3 + '@' + a2, function (out) {
+      const a0 = regs.ebx; // fd
+      const a1 = regs.ecx; // data
+      const a2 = regs.edx; // len
+      console.log('[SYSCALL] write fd:', a0);
+      console.log('[SYSCALL] write data:', a1);
+      console.log('[SYSCALL] write len:', a2);
+      r2p.cmd('psz ' + a2 + '@' + a1, function (out) {
         console.log(out);
         process.exit(0);
       });
@@ -31,7 +30,10 @@ function syscall_linux_x86_32 (r2p, regs) {
 
 // it works using r2pipe, connecting to r2 session
 r2pipe.lpipe(function (err, r2p) {
-  var syscall = syscall_linux_x86_32;
+  if (err) {
+    throw err;
+  }
+  const syscall = syscallLinuxX8632;
   switch (sn) {
     case 3: // same as INT3
       console.error('[INT3] Breakpoint trap');
@@ -39,9 +41,10 @@ r2pipe.lpipe(function (err, r2p) {
       break;
     case 128:
     case 0x80: // INT 0x80
-		/* linux */
+      /* linux */
       console.error('[SYSCALL] number:', sn);
       r2p.cmdj('arj', function (err, regs) {
+        if (err) throw err;
         if (syscall(r2p, regs)) {
           process.exit(0);
         }

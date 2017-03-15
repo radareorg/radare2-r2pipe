@@ -1,6 +1,9 @@
 const r2pipe = require('../');
 
 r2pipe.syscmd('ls', { cwd: '/' }, (err, x) => {
+  if (err) {
+    throw err;
+  }
   console.log(x);
 });
 r2pipe.options = ['-n'];

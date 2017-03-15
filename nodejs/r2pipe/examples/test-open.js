@@ -4,7 +4,7 @@
 
 var r2pipe = require('../');
 
-const syncMode = process.argv[2] == '-s';
+const syncMode = process.argv[2] === '-s';
 
 /* sync example */
 try {

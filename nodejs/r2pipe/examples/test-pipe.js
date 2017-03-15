@@ -11,13 +11,12 @@ function assert (a, b) {
 
 const r2p = require('../');
 r2p.pipe('target-bin', ['-nw'], (error, r2) => {
-  if (error) {
-    console.error('pipe error', error);
-    process.exit(1);
-  }
+  assert(error, null);
   r2.cmd('wx 90;p8 1', (error, result) => {
+    assert(error, null);
     assert(result.trim(), '90');
     r2.cmd('wx 90', (error, result) => {
+      assert(error, null);
       r2.quit();
       console.log('done');
     });

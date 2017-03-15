@@ -13,7 +13,9 @@ function doSomeStuff (err, r2) {
     return console.error(err.toString());
   }
   r2.cmd('pd 4', function (err, res) {
+    if (err) throw err;
     console.log(res);
+    r2.quit();
   });
 }
 

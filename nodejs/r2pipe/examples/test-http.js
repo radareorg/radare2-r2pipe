@@ -11,11 +11,9 @@ function assert (a, b) {
 
 const r2p = require('../');
 r2p.open('http://cloud.rada.re/cmd/', (error, r2) => {
-  if (error) {
-    console.error('pipe error', error);
-    process.exit(1);
-  }
+  assert(error, null);
   r2.cmd('p8 1 @ entry0', (error, result) => {
+    assert(error, null);
     assert(result.trim(), '31');
     r2.quit();
     console.log('done');

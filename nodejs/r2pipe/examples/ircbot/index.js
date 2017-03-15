@@ -25,7 +25,9 @@ function finalize () {
   print('^C :D');
   process.exit(0);
 }
-if (channel[0] != '#')	{ channel = '#' + channel; }
+if (channel[0] !== '#') {
+  channel = '#' + channel;
+}
 
 if (OPT.help || OPT.h) {
   print('r2irc.js [--ssl] [--host host] [--port port] [--file program]');
@@ -36,10 +38,10 @@ if (OPT.help || OPT.h) {
 if (OPT.ssl) {
   var sslport = 9000 + (100 * Math.random());
   var cmd = 'socat TCP4-LISTEN:' + sslport + ' OPENSSL:' + host + ':' + port + ',verify=0';
-	// print ("SPAWN ("+cmd+")")
+  // print ("SPAWN ("+cmd+")")
   require('child_process')
-		.spawn('/bin/sh', ['-c', cmd], { stdio: 'pipe' })
-			.on('exit', function () { print('socat closed'); });
+  .spawn('/bin/sh', ['-c', cmd], { stdio: 'pipe' })
+  .on('exit', function () { print('socat closed'); });
   host = '127.0.0.1';
   port = sslport;
 }
@@ -49,11 +51,19 @@ process.on('SIGTERM', finalize);
 
 // setTimeout (goirc, 3000);
 
+function startsWith (str) {
+  return this.slice(0, str.length) === str;
+}
+
 /* r2 stuff */
 print(Chi, '[=>] Initializing r2 core...', Cend);
-r2p.launch('/bin/ls', startIrcBot);
+r2p.launch(file, startIrcBot);
 
-function startIrcBot (error, r2) {
+function startIrcBot (err, r2) {
+  if (err) {
+    console.error(err);
+    return;
+  }
   r2.cmd('e cfg.sandbox=true');
   r2.cmd('e scr.color=false');
   r2.cmd('e scr.interactive=false');
@@ -79,52 +89,67 @@ function startIrcBot (error, r2) {
     print('connected');
   });
 
-  if (typeof String.prototype.startsWith !== 'function') {
-    String.prototype.startsWith = function (str) {
-      return this.slice(0, str.length) == str;
-    };
-  }
-
   irc.on('privmsg', function (from, to, msg) {
     function tailRun (o) {
-      if (o != null && o != '') {
+      if (o !== null && o !== '') {
         if (o.split('\n').length < limit) {
           (function () {
-						 var a = o.split(o.indexOf('\r') != -1
-							? '\r' : '\n');
-						 var timedmsg = function (x) {
-							 irc.privmsg(to, a[0]);
-							 a = a.slice(1);
-							 if (a.length > 0)							 { setTimeout(timedmsg, msgtimeout); }
-						 };
-						 setTimeout(timedmsg, msgtimeout);
+            var a = o.split(o.indexOf('\r') !== -1
+? '\r' : '\n');
+            var timedmsg = function (x) {
+              irc.privmsg(to, a[0]);
+              a = a.slice(1);
+              if (a.length > 0) { setTimeout(timedmsg, msgtimeout); }
+            };
+            setTimeout(timedmsg, msgtimeout);
           })();
         } else irc.privmsg(to, 'Output limited to ' + limit + ' lines');
       }
     }
     print('<' + from + '> to ' + to + ': ' + msg);
-    if (to[0] != '#' && from == owner) {
-      if (msg.startsWith('nick '))				{ irc.nick(msg.slice(5)); } else if (msg.startsWith('join '))				{ irc.join(msg.slice(5)); } else if (msg.startsWith('part '))				{ irc.part(msg.slice(5)); } else irc.privmsg(channel, msg);
-    } else		{
+    if (to[0] !== '#' && from === owner) {
+      if (startsWith('nick ').bind(msg)) {
+        irc.nick(msg.slice(5));
+      } else if (startsWith('join ').bind(msg)) {
+        irc.join(msg.slice(5));
+      } else if (startsWith('part ').bind(msg)) {
+        irc.part(msg.slice(5));
+      } else {
+        irc.privmsg(channel, msg);
+      }
+    } else {
       switch (to) {
         case channel:
         default:
-          if (!msg.startsWith('!')) return;
+          if (!startsWith('!').bind(msg)) {
+            return;
+          }
           var o = '';
           msg = msg.substring(1);
-			// msg = msg.replace (/>/g, "");
-			// msg = msg.replace (/|/g, "");
-			// msg = msg.replace (/!/g, "");
-			// msg = msg.replace (/`/g, "");
+          // msg = msg.replace (/>/g, "");
+          // msg = msg.replace (/|/g, "");
+          // msg = msg.replace (/!/g, "");
+          // msg = msg.replace (/`/g, "");
           msg = msg.replace(/\t/g, '   ');
           msg = msg.trim();
           var cmds = msg.split(';');
           for (var i in cmds) {
             msg = cmds[i];
-            msg = msg.replace(/^\ */, '');
-            if (msg.startsWith('q'))					{ o = 'not now'; } else if (msg.startsWith('o') && msg.length > 1)					{ o = 'no open allowed'; } else if (msg.startsWith('V'))					{ o = 'i cant do visuals on irc :('; } else if (msg.startsWith('ag'))					{ o = 'graphs cant be seen here.'; } else {
+            msg = msg.replace(/^ */, '');
+            if (startsWith('q').bind(msg)) {
+              o = 'not now';
+            } else if (startsWith('o').bind(msg) && msg.length > 1) {
+              o = 'no open allowed';
+            } else if (startsWith('V').bind(msg)) {
+              o = 'i cant do visuals on irc :(';
+            } else if (startsWith('ag').bind(msg)) {
+              o = 'graphs cant be seen here.';
+            } else {
               o = '';
               r2.cmd(msg, (err, o) => {
+                if (err) {
+                  throw err;
+                }
                 print('=', msg);
                 print(o);
                 tailRun(o);

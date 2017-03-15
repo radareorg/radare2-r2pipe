@@ -30,10 +30,10 @@ r2node.launch('/bin/ls', doSomeStuff);
 /*
 r2node.connect ("http://cloud.rada.re/cmd/", doSomeStuff);
 r2node.launch ("/bin/ls", function (r) {
-	var r2 = require (r2jsapi)(r);
-	r2.cmd (["?v $s", "p8 10", "pi 3"], function(res) {
-		console.log (res);
-		r.quit ();
-	});
+  var r2 = require (r2jsapi)(r);
+  r2.cmd (["?v $s", "p8 10", "pi 3"], function(res) {
+    console.log (res);
+    r.quit ();
+  });
 });
 */

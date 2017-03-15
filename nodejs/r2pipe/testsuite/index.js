@@ -1,6 +1,6 @@
 'use strict';
 
-var colors = require('colors');
+require('colors');
 
 var stack = [];
 function queue (cb) {
@@ -34,7 +34,7 @@ module.exports.addTest = function (n, a, b, opt) {
     process.stdout.write('[  ]' + msg);
     a((c) => {
       process.stdout.write('\x1b[2K');
-      if (c == b) {
+      if (c === b) {
         console.log('\r[OK]'.green + msg);
       } else {
         if (opt && opt.broken) {

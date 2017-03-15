@@ -5,7 +5,6 @@ var ts = require('..');
 
 function testSync (fin) {
   try {
-    var count = 5;
     var r2 = r2pipe.open('../b/ls'); // async open with no callback
     // var r2 = r2pipe.openSync('../b/ls'); // async open with no callback
     if (r2) {

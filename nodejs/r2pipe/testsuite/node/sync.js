@@ -5,7 +5,6 @@ var ts = require('..');
 
 function testSync (fin) {
   try {
-    var count = 5;
     var r2 = r2pipe.openSync('../b/ls');
     if (r2) {
       fin(r2.cmd('?e hello world'));

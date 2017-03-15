@@ -2,8 +2,6 @@
 
 /* nodejs r2 telegram bot */
 
-var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
 var qs = require('querystring');
 var https = require('https');
 var r2p = require('r2pipe');
@@ -35,10 +33,6 @@ function slurp (file, assert) {
 
 var TGAPIURL = 'https://api.telegram.org/';
 
-function jlog (x) {
-  console.log(JSON.stringify(JSON.parse(x), null, '  '));
-}
-
 function TelegramBot (apiurl, cb) {
   var bot = {
     query: function (q, args, cb) {
@@ -60,7 +54,7 @@ function TelegramBot (apiurl, cb) {
           data += chunk;
         });
         res.on('end', function () {
-          //		console.log(data);
+          // console.log(data);
           try {
             cb(JSON.parse(data));
           } catch (e) {
@@ -85,7 +79,7 @@ function TelegramBot (apiurl, cb) {
 function filtercmd (x) {
   for (const token of ';|') {
     const pos = x.indexOf(token);
-    if (pos != -1) x = x.substring(0, pos);
+    if (pos !== -1) x = x.substring(0, pos);
   }
   return x;
 }
@@ -132,7 +126,7 @@ function launchTelegramBot (r2) {
         }
         if (config.markdown === true) {
           args['parse_mode'] = 'Markdown';
-	  args.text = filterMarkdown(args.text);
+          args.text = filterMarkdown(args.text);
         }
         bot.query('sendMessage', args, function (data) {
           if (!data) {
@@ -160,13 +154,13 @@ function launchTelegramBot (r2) {
         sendMessage(from, chat, txt);
       }
       console.log(text);
-      if (text.substring(0, 7) == '@r2bot ') {
+      if (text.substring(0, 7) === '@r2bot ') {
         text = text.substring(7);
       }
       text = text.trim();
       console.log('<' + from.first_name + '>', text);
       var owned = false;
-      if (OWNER && from.username == OWNER) {
+      if (OWNER && from.username === OWNER) {
         owned = true;
         switch (text) {
           case 'help':
@@ -182,80 +176,76 @@ function launchTelegramBot (r2) {
       }
       if (owned) {
       /* do nothing here */
-      } else if (text.indexOf('http://') != -1 || text.indexOf('https://') != -1) {
+      } else if (text.indexOf('http://') !== -1 || text.indexOf('https://') !== -1) {
         replyMessage('@' + from.first_name + ' too old!');
       } else {
-        if (text.indexOf('/dis') == 0) {
-          var line = 'pad ';
-          var bits = 0;
-          var arch = 0;
+        if (text.indexOf('/dis') === 0) {
+          let arch = 0;
           if (text.length > 4) {
             text = text.substring(4).trim();
           }
           const off = text.indexOf('@');
-          var addr = '';
-          if (off != -1) {
+          let addr = '';
+          if (off !== -1) {
             addr = text.substring(off);
             text = text.substring(0, off);
           }
-          var words = text.split(' ');
-          var idx = 0;
-          if (words[0] == '/dis') {
+          let words = text.split(' ');
+          let idx = 0;
+          if (words[0] === '/dis') {
             replyMessage('Usage: /dis [-arch:bits] [hexpairs] [@ addr]');
           } else {
-            if (words[0] && words[0][0] == '-') {
+            if (words[0] && words[0][0] === '-') {
               arch = words[0].substring(1);
               idx = 1;
             }
             var bytes = words.slice(idx).join('');
-            var text = 'pad ' + bytes;
+            var cmd = 'pad ' + bytes;
             if (arch) {
-              text += '@a:' + arch;
+              cmd += '@a:' + arch;
             }
             if (addr) {
-              text += addr;
+              cmd += addr;
             }
-            console.log('[r2cmd]', text);
-            r2.cmd(filtercmd(text), replyCommand);
+            console.log('[r2cmd]', cmd);
+            r2.cmd(filtercmd(cmd), replyCommand);
           }
           return;
-        } else if (text.substring(0, 3) == '/r2') {
+        } else if (text.substring(0, 3) === '/r2') {
           let sp = text.indexOf(' ');
-          if (sp != -1) {
+          if (sp !== -1) {
             text = text.substring(sp).trim();
             r2.cmd(filtercmd(text), replyCommand);
           }
           return;
-        } else if (text.indexOf('/cmd') == 0) {
+        } else if (text.indexOf('/cmd') === 0) {
           if (text.length > 4) {
             text = text.substring(5).trim();
             r2.cmd(filtercmd(text), replyCommand);
           }
           return;
-        } else if (text.indexOf('/asm') == 0) {
-          var line = 'pa ';
-          var bits = 0;
-          var arch = 0;
+        } else if (text.indexOf('/asm') === 0) {
+          let arch = 0;
           if (text.length > 4) {
             text = text.substring(5).trim();
           }
-          var off = text.indexOf('@');
-          var addr = '';
-          if (off != -1) {
+          let off = text.indexOf('@');
+          let addr = '';
+          if (off !== -1) {
             addr = text.substring(off);
             text = text.substring(0, off);
           }
-          var words = text.split(' ');
-          var idx = 0;
-          if (words[0] == '/asm') {
+          let words = text.split(' ');
+          let idx = 0;
+          if (words[0] === '/asm') {
             replyMessage('Usage: /asm [-arch:bits] [instruction] [@ addr]');
           } else {
-            if (words[0] && words[0][0] == '-') {
+            if (words[0] && words[0][0] === '-') {
               arch = words[0].substring(1);
               idx = 1;
             }
-            var bytes = words.slice(idx).join(' ');
-            var text = 'pa ' + bytes;
+            let bytes = words.slice(idx).join(' ');
+            let text = 'pa ' + bytes;
             if (arch) {
               text += '@a:' + arch;
             }
@@ -290,6 +280,7 @@ function launchTelegramBot (r2) {
               'I am a random radare2 shell.\n' +
               "Type '?' to get a quick help for all the commands.\n" +
               'See http://www.radare.org for more details.\n --@pancake');
+            break;
           case '/help':
             sendMessage(from, chat,
               'r2bot accepts r2 commands and /start /help /list /asm /dis');
@@ -307,21 +298,18 @@ function launchTelegramBot (r2) {
       }
     }
     console.log('Logged in', msg);
-    var last_update_id = 0;
+    var lastUpdateId = 0;
     function queryUpdates () {
-      if (last_update_id) {
-        var args = {
-          'offset': last_update_id
-        };
-      } else {
-        var args = {};
+      var args = {};
+      if (lastUpdateId) {
+        args.offset = lastUpdateId;
       }
       bot.query('getUpdates', args, function (data) {
         if (data && data.ok) {
-          //	console.log(data);
+          // console.log(data);
           for (var i in data.result) {
             var item = data.result[i];
-            last_update_id = item.update_id + 1;
+            lastUpdateId = item.update_id + 1;
             console.log('updates', i, item.update_id, item.message);
             var msg = item.message;
             onMessage(msg.from, msg.chat, msg.text);
@@ -335,5 +323,6 @@ function launchTelegramBot (r2) {
   });
 }
 
-((x) => { return (x.indexOf('http') == 0) ? r2p.connect : r2p.launch; })
-(config.target)(config.target, launchTelegramBot);
+(x => {
+  return (x.indexOf('http') === 0) ? r2p.connect : r2p.launch;
+})(config.target)(config.target, launchTelegramBot);
