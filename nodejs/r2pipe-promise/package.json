@@ -1,0 +1,46 @@
+{
+  "name": "r2pipe-promise",
+  "version": "1.0.0",
+  "description": "promisified r2pipe api",
+  "main": "index.js",
+  "scripts": {
+    "semi": "semistandard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/radare/radare2-r2pipe.git"
+  },
+  "files": [
+    "README.md",
+    "index.js",
+    "simple.js",
+    "test.js"
+  ],
+  "keywords": [
+    "radare",
+    "radare2",
+    "r2",
+    "r2pipe",
+    "reversing",
+    "disassembler",
+    "hexadecimal",
+    "editor",
+    "exploit",
+    "exploiting"
+  ],
+  "author": {
+    "name": "pancake",
+    "email": "pancake@nopcode.org"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/radare/radare2-r2pipe/issues"
+  },
+  "homepage": "http://www.radare.org",
+  "devDependencies": {
+    "semistandard": "10.0.0"
+  },
+  "dependencies": {
+    "r2pipe": "*"
+  }
+}
