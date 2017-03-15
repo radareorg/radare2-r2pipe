@@ -1,10 +1,11 @@
 {
   "name": "r2pipe-promise",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "promisified r2pipe api",
   "main": "index.js",
   "scripts": {
-    "semi": "semistandard"
+    "test": "semistandard",
+    "fix": "semistandard --fix"
   },
   "repository": {
     "type": "git",

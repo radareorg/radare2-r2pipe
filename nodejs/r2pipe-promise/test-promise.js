@@ -1,5 +1,5 @@
 
-const r2promise = require('./'); //r2pipe-promise');
+const r2promise = require('./'); // r2pipe-promise');
 r2promise.open('/bin/ls')
 .then(r2 => {
   r2.cmd('?E hello world')

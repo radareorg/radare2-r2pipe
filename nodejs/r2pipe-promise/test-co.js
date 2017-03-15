@@ -1,7 +1,7 @@
 const r2promise = require('./');
 const co = require('co');
 
-function work(file) {
+function work (file) {
   return co(function * () {
     const r2 = yield r2promise.open(file);
     return [r2, yield r2.cmd('o')];

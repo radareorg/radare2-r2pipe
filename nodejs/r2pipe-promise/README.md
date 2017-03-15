@@ -10,7 +10,7 @@ making the whole logic.
 
 This is an example:
 
-```
+```js
 const r2promise = require('r2pipe-promise');
 r2promise.open('/bin/ls')
 .then(r2 => {
@@ -27,7 +27,7 @@ r2promise.open('/bin/ls')
 
 Another example using the `co` module:
 
-```
+```js
 const r2promise = require('r2pipe-promise');
 const co = require('co');
 
@@ -41,4 +41,24 @@ co(function * () {
     process.exit(1);
   }
 });
+```
+
+You can achieve the same using `bluebird` in exchange of having
+more dependencies and verboser code.
+
+```js
+const Promise = require('bluebird');
+const r2pipe = Promise.promisifyAll(require('r2pipe'));
+
+r2pipe.openAsync('/bin/ls').then(r => {
+  const r2 = Promise.promisifyAll(r);
+  r2.cmdAsync('?E hello').then(msg => {
+    console.log(msg);
+    r2.quitAsync();
+  });
+})
+.catch(err => {
+  console.error(err.message);
+});
+~
 ```
