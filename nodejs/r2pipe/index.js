@@ -214,7 +214,9 @@ function r2bind (ls, cb, r2cmd) {
         ls.stdin.end();
       }
       ls.kill('SIGINT');
-      callback();
+      if (typeof callback === 'function') {
+        callback();
+      }
     },
 
     /* Custom promises */
