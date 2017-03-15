@@ -9,13 +9,13 @@ function testAsync5 (fin) {
     var count = 5;
     r2pipe.open('../b/ls', function (err, r2) {
       var intrv = setInterval(function () {
-        if (count == 0) {
+        if (count === 0) {
           r2.quit();
         } else {
           r2.cmd('?e a', (err, x) => {
             result += x;
             count--;
-            if (count == 0) {
+            if (count === 0) {
               clearInterval(intrv);
               r2.quit();
               fin(result);
@@ -36,13 +36,13 @@ function testAsyncFor5 (fin) {
     var count = 5;
     r2pipe.open('../b/ls', function (err, r2) {
       for (let i = 0; i < 5; i++) {
-        if (count == 0) {
+        if (count === 0) {
           r2.quit();
         } else {
           r2.cmd('?e a', (err, x) => {
             result += x;
             count--;
-            if (count == 0) {
+            if (count === 0) {
               r2.quit();
               fin(result);
             }
