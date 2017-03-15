@@ -7,7 +7,6 @@ const http = require('http');
 const sync = require('./sync.js');
 const util = require('./util');
 const proc = require('child_process');
-const promise = require('./promise.js');
 const pipeQueue = [];
 
 var IN, OUT, R2PIPE_PATH;
@@ -217,31 +216,6 @@ function r2bind (ls, cb, r2cmd) {
       if (typeof callback === 'function') {
         callback();
       }
-    },
-
-    /* Custom promises */
-    promise: function (func, cmd, callback) {
-      return new promise.Promise(func, cmd, callback);
-    },
-
-    promisify: function() {
-      function makePromise(fcn) {
-        return function (x) {
-          return new Promise((resolve, reject) => {
-            fcn(x, (err, result) => {
-              if (err) {
-                return reject(err);
-              }
-              resolve(result);
-            });
-          });
-        };
-      }
-      return {
-        cmd: makePromise(r2.cmd),
-        cmdj: makePromise(r2.cmdj),
-        quit: makePromise(r2.quit)
-      };
     }
   };
 

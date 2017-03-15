@@ -3,7 +3,6 @@
 const r2pipe = require('..');
 const fs = require('fs');
 
-
 const buf = fs.readFileSync('/bin/ls');
 
 r2pipe.openBuffer(buf, (err, r2) => {

@@ -3,8 +3,7 @@
 const r2pipe = require('..');
 const fs = require('fs');
 
-
-const buf = new Buffer([1,2,3,4]);
+const buf = new Buffer([1, 2, 3, 4]);
 
 r2pipe.open('malloc://1024', (err, r2) => {
   if (err) {

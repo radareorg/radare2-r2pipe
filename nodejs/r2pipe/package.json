@@ -1,11 +1,12 @@
 {
   "name": "r2pipe",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
   "scripts": {
     "test": "node examples/test-channels.js",
-    "semi": "semistandard"
+    "semi": "semistandard",
+    "fix": "semistandard --fix"
   },
   "engineStrict": true,
   "engines": {
@@ -58,9 +59,6 @@
   "homepage": "http://www.radare.org",
   "devDependencies": {
     "semistandard": "10.0.0"
-  },
-  "dependencies": {
-    "redolent": "^1.0.1"
   },
   "optionalDependencies": {
     "syspipe": "^0.1.4"

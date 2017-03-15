@@ -1,6 +1,5 @@
-var r2pipe = require ('r2pipe');
+var r2pipe = require('r2pipe');
 
-r2pipe.open(function(err, r2) {
-   console.log(r2.cmd('?e hello world'));
+r2pipe.open(function (err, r2) {
+  console.log(r2.cmd('?e hello world'));
 });
-

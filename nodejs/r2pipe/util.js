@@ -21,4 +21,3 @@ function cleanCmd (cmd) {
 }
 
 module.exports.cleanCmd = cleanCmd;
-

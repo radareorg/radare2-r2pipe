@@ -1,11 +1,10 @@
 /*  Small tests for r2pipe */
 // return true;
 
-const r2pipe = require ('..');
+const r2pipe = require('..');
 
 try {
-
-  const r2 = r2pipe.lpipeSync ();
+  const r2 = r2pipe.lpipeSync();
   const res = r2.cmd('pd 4');
   const resj = r2.cmdj('pdj 4');
 

@@ -1,4 +1,4 @@
-const r2pipe = require ('../');
+const r2pipe = require('../');
 
 r2pipe.syscmd('ls', { cwd: '/' }, (err, x) => {
   console.log(x);

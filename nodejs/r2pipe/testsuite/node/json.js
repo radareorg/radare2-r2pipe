@@ -3,7 +3,7 @@
 var r2pipe = require('../..');
 var ts = require('..');
 
-ts.addTest('testJSON', function(fin) {
+ts.addTest('testJSON', function (fin) {
   try {
     var count = 5;
     var r2 = r2pipe.openSync('../b/ls');
@@ -11,7 +11,7 @@ ts.addTest('testJSON', function(fin) {
       fin(r2.cmdj('ij').core.file);
       r2.quit();
     }
-  } catch ( e ) {
+  } catch (e) {
     fin(e.toString());
   }
 }, '../b/ls');

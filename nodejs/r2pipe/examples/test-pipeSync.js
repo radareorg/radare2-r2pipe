@@ -1,10 +1,9 @@
 /*  Small tests for r2pipe */
 // return true;
 
-var r2pipe = require ("./../");
+var r2pipe = require('./../');
 
-
-var r2 = r2pipe.pipeSync ("/bin/ls");
+var r2 = r2pipe.pipeSync('/bin/ls');
 var res = r2.cmd('pd 4');
 var resj = r2.cmdj('pdj 4');
 

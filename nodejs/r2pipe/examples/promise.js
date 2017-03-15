@@ -6,7 +6,7 @@ r2pipe.open('/bin/ls', (err, r2) => {
     throw err;
   }
   const r2p = r2.promisify();
-  co(function *() {
+  co(function * () {
     try {
       const hello = yield r2p.cmd('?E Hello');
       console.log(hello);

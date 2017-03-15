@@ -6,16 +6,15 @@
    that run in the shell, the web or inside r2 */
 
 /* require the nodejs api */
-var r2pipe = require ("../");
+var r2pipe = require('../');
 
-function doSomeStuff(err, r2) {
+function doSomeStuff (err, r2) {
   if (err) {
     return console.error(err.toString());
   }
-  r2.cmd('pd 4', function(err, res) {
+  r2.cmd('pd 4', function (err, res) {
     console.log(res);
   });
 }
 
-r2pipe.connect ("http://cloud.rada.re/cmd/", doSomeStuff);
-
+r2pipe.connect('http://cloud.rada.re/cmd/', doSomeStuff);

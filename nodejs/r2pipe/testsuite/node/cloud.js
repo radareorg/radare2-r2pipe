@@ -3,10 +3,10 @@
 var r2p = require('../..');
 var ts = require('..');
 
-function testCloud(fin) {
+function testCloud (fin) {
   try {
     r2p.connect('http://cloud.radare.org/cmd/', (err, r2) => {
-      r2.cmd('?e hello world', function(err, res) {
+      r2.cmd('?e hello world', function (err, res) {
         fin(res);
         r2.quit();
       });
@@ -16,15 +16,15 @@ function testCloud(fin) {
   }
 }
 
-function testCloudOK(fin) {
+function testCloudOK (fin) {
   try {
-    r2p.connect('http://cloud.rada.re/cmd/', function(err, r2) {
-      r2.cmd('?e hello world', function(err, res) {
+    r2p.connect('http://cloud.rada.re/cmd/', function (err, r2) {
+      r2.cmd('?e hello world', function (err, res) {
         fin(res);
         r2.quit();
       });
     });
-  } catch ( e ) {
+  } catch (e) {
     fin(e.toString());
   }
 }
@@ -34,5 +34,5 @@ ts.addTest('testCloud', testCloud, 'hello world\n', {
 });
 ts.addTest('testCloudOK', testCloudOK, 'hello world\n');
 
-//ts.inSerial();
+// ts.inSerial();
 ts.inParalel();

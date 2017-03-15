@@ -1,6 +1,6 @@
 'use strict';
 
-function assert(a, b) {
+function assert (a, b) {
   if (a === b) {
     console.error('test passes ok');
   } else {

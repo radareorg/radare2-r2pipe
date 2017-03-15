@@ -2,7 +2,7 @@
   Test open and openSync lpipe protocols
 */
 
-var r2pipe = require ('../');
+var r2pipe = require('../');
 
 const syncMode = process.argv[2] == '-s';
 
@@ -27,5 +27,5 @@ try {
     });
   }
 } catch (e) {
-  console.error (e); //.toString());
+  console.error(e); // .toString());
 }

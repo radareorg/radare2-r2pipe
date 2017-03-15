@@ -3,12 +3,12 @@
 var r2pipe = require('../..');
 var TestSuite = require('..');
 
-function testAsync5(fin) {
+function testAsync5 (fin) {
   let result = '';
   try {
     var count = 5;
-    r2pipe.open('../b/ls', function(err, r2) {
-      var intrv = setInterval(function() {
+    r2pipe.open('../b/ls', function (err, r2) {
+      var intrv = setInterval(function () {
         if (count == 0) {
           r2.quit();
         } else {
@@ -24,17 +24,17 @@ function testAsync5(fin) {
         }
       }, 10);
     });
-  } catch ( e ) {
-    console.error("XXX", e);
+  } catch (e) {
+    console.error('XXX', e);
   }
   return result;
 }
 
-function testAsyncFor5(fin) {
+function testAsyncFor5 (fin) {
   let result = '';
   try {
     var count = 5;
-    r2pipe.open('../b/ls', function(err, r2) {
+    r2pipe.open('../b/ls', function (err, r2) {
       for (let i = 0; i < 5; i++) {
         if (count == 0) {
           r2.quit();
@@ -50,7 +50,7 @@ function testAsyncFor5(fin) {
         }
       }
     });
-  } catch ( e ) {
+  } catch (e) {
     console.error('error', e);
   }
   return result;
