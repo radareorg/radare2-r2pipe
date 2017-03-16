@@ -15,18 +15,67 @@ module.exports = {
   }
 };
 
+class TimeoutError extends Error {
+  constructor () {
+    super(...arguments);
+    this.name = 'TimeoutError';
+  }
+}
+
+function R2Promise (obj, method, args) {
+  let myReject = null;
+  let timer = null;
+  let finished = false;
+
+  let stopTimer = function () {
+    finished = true;
+    if (timer !== null) {
+      timer.close();
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+  let self = new Promise((resolve, reject) => {
+    myReject = reject;
+    args.push((err, res) => {
+      if (finished) {
+        console.log('timeout was executed before the execution');
+        resolve(res);
+        return;
+      }
+      stopTimer();
+      if (err) {
+        return reject(err);
+      }
+      resolve(res);
+    });
+    try {
+      obj[method](...args);
+    } catch (e) {
+      stopTimer();
+      reject(e);
+    }
+  });
+
+  self.name = method + args[0];
+
+  self.timeout = (ns) => {
+    timer = setTimeout(function promiseTimeout () {
+      if (!finished) {
+        const msg = `Timeout on r2.${method}(${args[0]})`;
+        myReject(new TimeoutError(msg));
+        finished = true;
+      }
+      timer = null;
+    }, ns);
+    return self;
+  };
+  return self;
+}
+
 function makePromise (obj, method) {
   return function cb () {
-    const args = [...arguments];
-    return new Promise(function (resolve, reject) {
-      args.push(function (err, res) {
-        if (err) {
-          return reject(err);
-        }
-        resolve(res);
-      });
-      obj[method](...args);
-    });
+    return new R2Promise(obj, method, [...arguments]);
   };
 }
 
