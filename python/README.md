@@ -10,6 +10,11 @@ that communicate with local or remote r2 via pipe, tcp or http.
 $ pip install r2pipe
 ```
 
+or
+
+```
+$ pip3 install r2pipe
+```
 
 ### Usage example:
 
