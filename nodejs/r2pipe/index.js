@@ -7,7 +7,6 @@ const http = require('http');
 const sync = require('./sync.js');
 const util = require('./util');
 const proc = require('child_process');
-const pipeQueue = [];
 
 var IN, OUT, R2PIPE_PATH;
 
@@ -90,13 +89,13 @@ function httpCmd (uri, cmd, cb) {
 }
 
 function pipeCmd (proc, cmd, cb) {
-  pipeQueue.push({
+  this.pipeQueue.push({
     cmd: cmd,
     cb: cb,
     result: '',
     error: null
   });
-  if (pipeQueue.length === 1) {
+  if (this.pipeQueue.length === 1) {
     proc.stdin.write(cmd + '\n');
   }
 }
@@ -104,22 +103,22 @@ function pipeCmd (proc, cmd, cb) {
 function pipeCmdOutput (proc, data, cb) {
   var len = data.length;
 
-  if (pipeQueue.length < 1) {
+  if (this.pipeQueue.length < 1) {
     return cb(new Error('r2pipe error: No pending commands for incomming data'));
   }
 
   if (data[len - 1] !== 0x00) {
-    pipeQueue[0].result += data.toString();
-    return pipeQueue[0].result;
+    this.pipeQueue[0].result += data.toString();
+    return this.pipeQueue[0].result;
   }
 
-  pipeQueue[0].result += data.toString().substr(0, len - 1);
-  pipeQueue[0].cb(pipeQueue[0].error, pipeQueue[0].result);
-  pipeQueue.splice(0, 1);
+  this.pipeQueue[0].result += data.toString().substr(0, len - 1);
+  this.pipeQueue[0].cb(this.pipeQueue[0].error, this.pipeQueue[0].result);
+  this.pipeQueue.splice(0, 1);
 
-  if (pipeQueue.length > 0) {
+  if (this.pipeQueue.length > 0) {
     try {
-      proc.stdin.write(pipeQueue[0].cmd + '\n');
+      proc.stdin.write(this.pipeQueue[0].cmd + '\n');
     } catch (e) {
       return cb(e);
     }
@@ -147,6 +146,7 @@ function r2bind (ls, cb, r2cmd) {
   let running = false;
 
   const r2 = {
+    pipeQueue: [],
 
     getBuffer: function (addr, size, cb) {
       let dataBuffer = new Buffer([]);
@@ -179,7 +179,7 @@ function r2bind (ls, cb, r2cmd) {
         s = util.cleanCmd(s);
         switch (typeof r2cmd) {
           case 'string':
-            pipeCmd(ls, s, cb2);
+            pipeCmd.bind(r2)(ls, s, cb2)
             break;
           case 'function':
             r2cmd(ls.cmdparm, s, cb2);
@@ -236,11 +236,11 @@ function r2bind (ls, cb, r2cmd) {
 
   /* handle STDOUT nessages */
   if (ls.stdout !== null) {
-    ls.stdout.on('data', function (data) {
+    ls.stdout.on('data', data => {
       /* Set as running for pipe method */
       if (running) {
         if (typeof r2cmd === 'string') {
-          pipeCmdOutput(ls, data, cb);
+          pipeCmdOutput.bind(r2)(ls, data, cb);
         }
       } else {
         running = true;
