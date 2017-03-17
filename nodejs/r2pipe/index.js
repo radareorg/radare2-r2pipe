@@ -130,9 +130,14 @@ function parseJSON (func, cmd, callback) {
     if (error) {
       return callback(error);
     }
+    if (res.trim() === '') {
+      return callback(null, {});
+    }
     try {
       callback(null, JSON.parse(res));
     } catch (e) {
+      e.res = res;
+      e.cmd = cmd;
       callback(e);
     }
   });
