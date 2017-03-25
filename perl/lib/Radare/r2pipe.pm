@@ -129,7 +129,9 @@ sub cmd {
 
 sub cmdj {
     my $self = shift;
-    return decode_json($self->cmd(@_));
+    my $cmd_result = $self->cmd(@_);
+    $cmd_result = "{}" if ! $cmd_result;
+    return decode_json($cmd_result);
 }
 
 sub cmd_http {
