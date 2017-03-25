@@ -1,6 +1,6 @@
 # Radare::r2pipe
 
-    use Radre::r2pipe;
+    use Radare::r2pipe;
 
     my $r2 = Radare::r2pipe->new('/bin/ls');
     my $result = $r2->cmd('iI');
