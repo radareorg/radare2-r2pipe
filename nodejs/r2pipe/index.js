@@ -22,10 +22,12 @@ try {
  * CMD handlers for different connection methods
  */
 function syscmd (command, childOpts, cb) {
-  let childopt = {};
+  let childOpt = {
+    maxBuffer: 1024 * 1024 * 2 // 2MB as limit by default
+  };
   switch (typeof childOpts) {
     case 'object':
-      childopt = childOpts;
+      childOpt = childOpts;
       break;
     case 'function':
       cb = childOpts;
@@ -38,9 +40,9 @@ function syscmd (command, childOpts, cb) {
     cb(err, stdout);
   };
   if (typeof command === 'string') {
-    proc.exec(command, childopt, callback);
+    proc.exec(command, childOpt, callback);
   } else if (typeof command === 'object' && command.length > 0) {
-    proc.execFile(command[0], command.slice(1), childopt, callback);
+    proc.execFile(command[0], command.slice(1), childOpt, callback);
   } else {
     cb(new Error('r2pipe.js: Invalid command type in syscmd'));
   }
