@@ -6,15 +6,16 @@ TESTS=test-pipe test-pipe2 test-spawn
 all: $(TESTS)
 
 test-pipe:
-	$(CC) -o test-pipe $(CFLAGS) $(LDFLAGS) test-pipe.c
+	$(CC) -o test-pipe test-pipe.c $(CFLAGS) $(LDFLAGS)
 	r2 -q -c '#!pipe ./test-pipe' /bin/ls
 
 test-pipe2:
-	$(CC) -o test-pipe2 $(CFLAGS) $(LDFLAGS) test-pipe2.c
-	r2 -q -c '#!pipe ./test-pipe2' /bin/ls
+	$(CC) -o test-pipe2 test-pipe2.c $(CFLAGS) $(LDFLAGS)
+	#r2 -q -c '#!pipe ./test-pipe2' /bin/ls
+	./test-pipe2
 
 test-spawn:
-	$(CC) -o test-spawn $(CFLAGS) $(LDFLAGS) test-spawn.c
+	$(CC) -o test-spawn test-spawn.c $(CFLAGS) $(LDFLAGS)
 	./test-spawn
 
 clean:
