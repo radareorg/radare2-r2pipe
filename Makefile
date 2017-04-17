@@ -1,4 +1,4 @@
-VERSION=1.3.0
+VERSION=1.4.0
 
 REMOTE=ocaml go rust erlang
 DISTDIR=radare2-r2pipe-$(VERSION)
