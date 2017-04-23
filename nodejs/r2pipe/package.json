@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
   "scripts": {

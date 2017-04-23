@@ -291,6 +291,7 @@ const r2node = {
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function () {
+    // XXX shrink this spaguetti somehow
     const modes = [
       function (me, arg) {
         return me.lpipeSync();
@@ -318,12 +319,27 @@ const r2node = {
           me.pipe(arg[0], arg[1]);
           // throw new Error('Unknown URI');
         }
+      },
+      function (me, arg) {
+        if (!arg[0]) {
+          throw new Error('Invalid path');
+        }
+        if (isPath(arg[0])) {
+          me.pipe(arg[0], arg[1], arg[2]);
+        } else if (arg[0].startsWith('http://')) {
+          me.connect(arg[0], arg[1], arg[2]);
+        } else if (arg[0].startsWith('io://')) {
+          me.connect(arg[0], arg[1], arg[2]);
+        } else {
+          me.pipe(arg[0], arg[1], arg[2]);
+          // throw new Error('Unknown URI');
+        }
       }
     ];
     if (arguments.length < modes.length) {
       return modes[arguments.length](this, arguments);
     } else {
-      throw new Error('Invalid parameters');
+      throw new Error('Invalid parameters'+ arguments.length);
     }
   },
   openSync: function () {
@@ -380,7 +396,7 @@ const r2node = {
       opts = this.options;
     }
     const port = (4000 + (Math.random() * 4000)) | 0;
-    const ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(opts).concat(file));
+    const ls = proc.spawn(this.r2bin, ['-qc.:' + port].concat(...opts).concat(file));
     ls.cmdparm = port;
     r2bind(ls, cb, remoteCmd);
   },
