@@ -132,8 +132,9 @@ function parseJSON (func, cmd, callback) {
     if (error) {
       return callback(error);
     }
-    if (res.trim() === '') {
-      return callback(null, {});
+    res = res.replace(/\u0000$/,'').trim();
+    if (res === '') {
+      res = '{}';
     }
     try {
       callback(null, JSON.parse(res));
