@@ -43,7 +43,7 @@ try:
 except:
 	has_native = False
 
-VERSION="0.8.9"
+VERSION="0.9.0"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -97,7 +97,7 @@ class open:
 		Returns:
 			Returns an object with methods to interact with r2 via commands
 		"""
-		if in_rlang():
+		if not filename and in_rlang():
 			self._cmd = self._cmd_rlang
 			return
 		try:
