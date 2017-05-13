@@ -81,7 +81,7 @@ def in_rlang():
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
 	"""
-	def __init__(self, filename='', flags=[]):
+	def __init__(self, filename='', flags=[], verbose=True):
 		"""Open a new r2 pipe
 		The 'filename' can be one of the following:
 
@@ -145,8 +145,9 @@ class open:
 			self._cmd = self._cmd_process
 			cmd = ["radare2", "-q0", filename]
 			cmd = cmd[:1] + flags + cmd[1:]
+			fd = sys.stderr.fileno() if verbose else PIPE
 			try:
-				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=fd)
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1) # Reads initial \x00
