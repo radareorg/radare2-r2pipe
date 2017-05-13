@@ -211,7 +211,7 @@ class OpenBase(object):
 		try:
 			data = json.loads(self.cmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write("r2pipe.cmdj.Error: %s\n" % e)
+			sys.stderr.write("r2pipe.cmdj.Error: %s (are you using a command that outputs JSON?)\n" % e)
 			data = None
 		return data
 
@@ -236,6 +236,6 @@ class OpenBase(object):
 		try:
 			data = json.loads(self.syscmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write("r2pipe.syscmdj.Error %s\n" % (e))
+			sys.stderr.write("r2pipe.syscmdj.Error: %s (are you using a command that outputs JSON?)\n" % (e))
 			data = None
 		return data
