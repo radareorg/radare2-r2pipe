@@ -33,6 +33,12 @@ class WrappedRMethod(object):
 				self.method.argtypes = [eval(x.strip()) for x in self.args.split(',')]
 			self.method.restype = eval(self.ret) if self.ret else None
 			self.args_set = True
+		a = list(a)
+		for i, argt in enumerate(self.method.argtypes):
+			if argt is c_char_p:
+				a[i] = a[i].encode()
+		if self.method.restype is c_char_p:
+			return self.method(*a).decode()
 		return self.method(*a)
 
 class WrappedApiMethod(object):
@@ -45,7 +51,10 @@ class WrappedApiMethod(object):
 	def __call__(self, *a):
 		result = self.method(self._o, *a)
 		if self.ret2:
-			result = eval(self.ret2)(result)
+			if self.ret2 == 'c_char_p':
+				return result
+			else:
+				result = eval(self.ret2)(result)
 		if self.last:
 			return getattr(result, self.last)
 		return result
@@ -84,9 +93,9 @@ class RCore(Structure): #1
 	cmd_str, r_core_cmd_str = register('r_core_cmd_str','c_void_p, c_char_p','c_char_p')
 	free, r_core_free = register('r_core_free','c_void_p', 'c_void_p')
 
-#c = RCore()
-#c.cmd_str("o /bin/ls")
-#print c
-#print c.cmd_str("s entry0;pd 20");
-#c.free();
+#  c = RCore()
+#  c.cmd_str("o /bin/ls")
+#  print(c)
+#  print(c.cmd_str("s entry0;pd 20"))
+#  c.free();
 
