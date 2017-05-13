@@ -38,7 +38,7 @@ except:
 	r2lang = None
 
 try:
-	import native
+	from .native import RCore
 	has_native = True
 except:
 	has_native = False
@@ -203,7 +203,7 @@ class open:
 		if not has_native:
 			raise Exception('No native ctypes connector available')
 		if not hasattr(self, 'native'):
-			self.native = native.RCore()
+			self.native = RCore()
 			self.native.cmd_str("o "+self.uri)
 		return self.native.cmd_str(cmd)
 
