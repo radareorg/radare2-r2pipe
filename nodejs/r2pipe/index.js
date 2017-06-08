@@ -132,7 +132,7 @@ function parseJSON (func, cmd, callback) {
     if (error) {
       return callback(error);
     }
-    res = res.replace(/\u0000$/,'').trim();
+    res = res.replace(/\u0000$/, '').trim();
     if (res === '') {
       res = '{}';
     }
@@ -187,7 +187,7 @@ function r2bind (ls, cb, r2cmd) {
         s = util.cleanCmd(s);
         switch (typeof r2cmd) {
           case 'string':
-            pipeCmd.bind(r2)(ls, s, cb2)
+            pipeCmd.bind(r2)(ls, s, cb2);
             break;
           case 'function':
             r2cmd(ls.cmdparm, s, cb2);
@@ -218,7 +218,7 @@ function r2bind (ls, cb, r2cmd) {
     /* Quit CMD */
     quit: function (callback) {
       if (typeof ls.stdin === 'object' && typeof ls.stdin.end === 'function') {
-        ls.stdin.end();
+        ls.stdin.end(); // i think this can be removed
       }
       ls.kill('SIGINT');
       if (typeof callback === 'function') {
@@ -340,7 +340,7 @@ const r2node = {
     if (arguments.length < modes.length) {
       return modes[arguments.length](this, arguments);
     } else {
-      throw new Error('Invalid parameters'+ arguments.length);
+      throw new Error('Invalid parameters' + arguments.length);
     }
   },
   openSync: function () {
@@ -426,6 +426,8 @@ const r2node = {
         stdout: client,
         stderr: null,
         kill: function () {
+          ls.stdin.destroy();
+          ls.stdout.destroy();
           process.exit(0);
         }
       };
