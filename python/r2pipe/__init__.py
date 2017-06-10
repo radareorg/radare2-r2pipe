@@ -43,7 +43,7 @@ try:
 except:
 	has_native = False
 
-VERSION="0.9.1"
+VERSION="0.9.2"
 
 if sys.version_info >= (3,0):
 	import urllib.request
@@ -152,6 +152,7 @@ class open:
 			self.process.stdout.read(1) # Reads initial \x00
 
 	def _cmd_process(self, cmd):
+		cmd = cmd.strip().replace("\n", ";")
 		if sys.version_info >= (3,0):
 			self.process.stdin.write(bytes(cmd+'\n','utf-8'))
 		else:
@@ -162,7 +163,7 @@ class open:
 			foo = self.process.stdout.read(1)
 			if foo == b'\x00':
 				break
-			if len(foo)<1:
+			if len(foo) < 1:
 				return None
 			out += foo
 		return out.decode('utf-8')
@@ -178,6 +179,7 @@ class open:
 
 	def _cmd_pipe(self, cmd):
 		out = ''
+		cmd = cmd.strip().replace("\n", ";")
 		if os.name=="nt":
 			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None)
 			while True:
@@ -200,6 +202,7 @@ class open:
 		return out.decode('utf-8')
 
 	def _cmd_native(self, cmd):
+		cmd = cmd.strip().replace("\n", ";")
 		if not has_native:
 			raise Exception('No native ctypes connector available')
 		if not hasattr(self, 'native'):
