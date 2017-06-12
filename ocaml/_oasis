@@ -10,7 +10,7 @@ License:       BSD-3-clause
 OCamlVersion:  >= 4.03.0
 AlphaFeatures: ocamlbuild_more_args
 Plugins:       META (0.4), DevFiles (0.4)
-BuildTools:    ocamlbuild
+BuildTools:    ocamlbuild, ocamldoc
 
 Description:
   Interact with radare2 from within OCaml.
@@ -37,3 +37,14 @@ SourceRepository master
   Type:     git
   Location: https://github.com/fxfactorial/ocaml-radare2.git
   Browser:  https://github.com/fxfactorial/ocaml-radare2
+
+Document api
+  Title:              Documentation and API reference for radare2
+  Type:               ocamlbuild (0.4)
+  InstallDir:         $htmldir/radare2
+  PostCommand:        cp docs/style.css api.docdir && cp api.docdir/* docs
+  XOCamlbuildPath:    docs
+  XOCamlbuildModules: src/R2
+  Install:            true
+  XOCamlbuildExtraArgs:
+    "-docflags '-colorize-code -charset utf-8 -hide R2 -hide Pervasives'"

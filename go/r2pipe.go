@@ -9,7 +9,7 @@ look like the following snippet:
 	import (
 		"fmt"
 
-		"github.com/radare/radare2-bindings/r2pipe/go/r2pipe"
+		"github.com/radare/r2pipe-go"
 	)
 
 	func main() {
