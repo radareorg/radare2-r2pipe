@@ -61,7 +61,7 @@
     "semistandard": "10.0.0"
   },
   "optionalDependencies": {
-    "syspipe": "^0.1.4"
+    "syspipe": "^0.1.5"
   },
   "dependencies": {
     "tern": "^0.21.0"

@@ -137,7 +137,7 @@ function parseJSON (func, cmd, callback) {
       res = '{}';
     }
     try {
-      callback(null, JSON.parse(res));
+      callback(null, r2node.jsonParse(res));
     } catch (e) {
       e.res = res;
       e.cmd = cmd;
@@ -289,6 +289,7 @@ function isPath (text) {
 const r2node = {
   r2bin: 'radare2',
   options: [],
+  jsonParse: JSON.parse,
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function () {
@@ -528,7 +529,7 @@ const r2node = {
     fdIn.on('data', function (data) {
       const trimmedData = data.slice(0, -1).toString().trim();
       if (cb) {
-        cb({ send: send }, JSON.parse(trimmedData));
+        cb({ send: send }, r2node.jsonParse(trimmedData));
       }
     });
   }
