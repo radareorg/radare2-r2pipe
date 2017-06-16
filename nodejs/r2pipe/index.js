@@ -82,8 +82,8 @@ function httpCmd (uri, cmd, cb) {
     res.on('data', function (res) {
       text += res;
     });
-  }).on('error', function (res) {
-    cb(new Error('http ' + res.statusCode));
+  }).on('error', function (err) {
+    cb(err);
   });
   req.on('close', function (e) {
     cb(null, text);
