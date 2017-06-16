@@ -157,7 +157,7 @@ function r2bind (ls, cb, r2cmd) {
     pipeQueue: [],
 
     getBuffer: function (addr, size, cb) {
-      let dataBuffer = new Buffer([]);
+      let dataBuffer = Buffer.from([]);
       const server = net.createServer(client => {
         client.on('data', data => {
           dataBuffer = Buffer.concat([dataBuffer, data]);
@@ -529,7 +529,7 @@ const r2node = {
     fdIn.on('data', function (data) {
       const trimmedData = data.slice(0, -1).toString().trim();
       if (cb) {
-        cb({ send: send }, r2node.jsonParse(trimmedData));
+        cb({ 'send': send }, r2node.jsonParse(trimmedData));
       }
     });
   }

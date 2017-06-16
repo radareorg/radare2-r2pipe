@@ -1,6 +1,6 @@
 /*
 
-r2 r2pipe://"node test-io.js"
+r2 r2pipe://"node test-r2io-plugin.js"
 
 */
 
