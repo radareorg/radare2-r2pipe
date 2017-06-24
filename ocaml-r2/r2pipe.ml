@@ -1,5 +1,5 @@
-(* 
- * R2PIPE 
+(*
+ * R2PIPE
  *
  * This module provides an API to interact with the radare2
  * commandline interface from OCaml using a pipe.
@@ -15,7 +15,7 @@ let bytes_startswith s sub =
   if sublen>slen then false
   else if String.sub s 0 sublen = sub then true
   else false
-                                  
+
 let ropen f =
   if bytes_startswith f "http://" = false
   then let cmd_str = Printf.sprintf "r2 -q0 %s" f in (* -q0 : be quite and print zero *)
@@ -38,14 +38,14 @@ let takeUntil cha ch =
 
 let cmd ctx c =
   match ctx with
-  | Local (cout, cin, cerr) -> 
+  | Local (cout, cin, cerr) ->
      let cmd_str = Printf.sprintf "%s\n" c in
      let () = output_string cin cmd_str in
      let () = flush_all () in
      takeUntil cout '\x00'
   | _ -> ""
 
-let cmdj ctx c = 
+let cmdj ctx c =
   Yojson.Safe.from_string (cmd ctx c)
 
 (* ------------ UNIT TEST -------------- *)
@@ -53,7 +53,7 @@ let cmdj ctx c =
 let opt_get = function
   | Some x -> x
   | None -> raise (Invalid_argument "Opt_get")
-                  
+
 let () =
   let ctx = opt_get (ropen "/bin/ls") in
   let output = cmd ctx "pd 2" in
