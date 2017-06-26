@@ -1,7 +1,7 @@
 import Foundation
 
 
-private func log (a:String, b:String) {
+private func log (_ a:String, _ b:String) {
 	let Color = "\u{001b}[32m"
 	let Reset = "\u{001b}[0m"
 	print (Color+"\(a)("+Reset+"\n\(b)"+Color+")"+Reset)
@@ -11,18 +11,18 @@ private func log (a:String, b:String) {
 
 private func testSpawn () {
 	print ("Testing r2pipe spawn method");
-	if let r2p = R2Pipe(url:"/bin/ls") {
+	if let r2p = R2Pipe("/bin/ls") {
 		if let str = r2p.cmdSync ("?V") {
-			log("spawn-sync", b:str)
+			log("spawn-sync", str)
 		} else {
 			print ("ERROR: spawnCmdSync");
 		}
 		r2p.cmd("pd 5 @ entry0", closure:{
 			(str:String?)->() in
 			if let s = str {
-				log("spawn-async", b:s)
+				log("spawn-async", s)
 			} else {
-				log("Error", b:"Network error");
+				log("Error", "Network error");
 			}
 		});
 	} else {
@@ -40,18 +40,18 @@ private func testSpawn () {
 
 private func testHttp() {
 	print ("Testing r2pipe HTTP method");
-	if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
+	if let r2p = R2Pipe("http://cloud.radare.org/cmd/") {
 		if let str = r2p.cmdSync ("?V") {
-			log("http-sync", b:str)
+			log("http-sync", str)
 		} else {
 			print ("ERROR: HTTP Sync Call failed");
 		}
 		r2p.cmd("pi 5 @ entry0", closure:{
 			(str:String?)->() in
 			if let s = str {
-				log ("http-async", b: s);
+				log ("http-async", s);
 			} else {
-				log ("error", b: "network");
+				log ("error", "network");
 			}
 			exit (0);
 		});
@@ -62,9 +62,9 @@ private func testHttp() {
 
 private func testCcall() {
 	print ("Testing r2pipe Ccall method");
-	if let r2p = R2Pipe(url:"#!ccall") {
+	if let r2p = R2Pipe("#!ccall") {
 		if let str = r2p.cmdSync ("?V") {
-			log("http-sync", b:str)
+			log("http-sync", str)
 		} else {
 			print ("ERROR: Ccall Sync Call failed");
 		}
@@ -72,9 +72,9 @@ private func testCcall() {
 		r2p.cmd("pi 5 @ entry0", closure:{
 			(str:String?)->() in
 			if let s = str {
-				log ("http-async", b: s);
+				log ("http-async", s);
 			} else {
-				log ("error", b: "network");
+				log ("error", "network");
 			}
 			exit (0);
 		});
@@ -91,9 +91,9 @@ print("Hello r2pipe.swift!");
 
 testSpawn();
 testCcall();
-//if let r2p = R2Pipe(url:nil) { //"#!pipe") {
+//if let r2p = R2Pipe() { //"#!pipe") {
 /*
-if let r2p = R2Pipe(url:"#!ccall") { //"#!pipe") {
+if let r2p = R2Pipe("#!ccall") { //"#!pipe") {
 	r2p.cmd ("?V", closure:{
 		(str:String?) in
 		if let s = str {
@@ -114,4 +114,4 @@ if let r2p = R2Pipe(url:"#!ccall") { //"#!pipe") {
 */
 
 /* main loop required for async network requests */
-NSRunLoop.currentRunLoop().run();
+RunLoop.current.run();

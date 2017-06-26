@@ -16,11 +16,12 @@ public enum R2PipeChannel {
 
 extension String {
 	func URLEncodedString() -> String? {
-		let customAllowedSet = NSCharacterSet.URLQueryAllowedCharacterSet()
-		let escapedString = self.stringByAddingPercentEncodingWithAllowedCharacters(customAllowedSet)
+		let customAllowedSet = CharacterSet.urlQueryAllowed;
+		// let escapedString = self.stringByAddingPercentEncodingWithAllowedCharacters(customAllowedSet)
+		let escapedString = self.addingPercentEncoding(withAllowedCharacters:customAllowedSet)
 		return escapedString
 	}
-	func ToR2WebURL(str:String) -> String {
+	func ToR2WebURL(_ str:String) -> String {
 		var ret = self;
 		if !self.hasSuffix ("/") {
 			ret += "/";
@@ -33,12 +34,12 @@ public class R2Pipe {
 	var mode : R2PipeChannel = .Unknown;
 	var path = "";
 #if USE_CCALL
-	var r2c : UnsafeMutablePointer<()> = nil;
+	var r2c : UnsafeMutableRawPointer? = nil;
 #endif
 #if USE_SPAWN
 	var r2p : R2PipeNative? = nil;
 #endif
-	public init?(url: String?) {
+	public init?(_ url: String?) {
 		if url == nil || url == "#!pipe" {
 #if USE_SPAWN
 #if USE_ENV_PIPE
@@ -60,7 +61,7 @@ public class R2Pipe {
 #else
 			return nil;
 #endif
-		} else if url!.rangeOfString("://") != nil {
+		} else if url!.contains("://") {
 			if url!.hasPrefix ("http://")
 			|| url!.hasPrefix ("https://") {
 				mode = .Http
@@ -70,19 +71,19 @@ public class R2Pipe {
 			}
 		} else {
 #if USE_SPAWN
-print("RUNNING ANTIVE SPAWN");
+			print("RUNNING ANTIVE SPAWN");
 			mode = .Native
 			path = url!
 			self.r2p = R2PipeNative(file:url!)
 #else
-print("NO SPAWN");
+			print("NO SPAWN");
 			return nil
 #endif
 		}
 	}
 
 #if USE_CCALL
-	func cmdCcall(str: String, closure:(String?)->()) -> Bool {
+	func cmdCcall(_ str: String, closure:(String?)->()) -> Bool {
 		if let s = cmdCcallSync(str) {
 			closure (s);
 			return true;
@@ -90,12 +91,11 @@ print("NO SPAWN");
 		return false;
 	}
 
-	func cmdCcallSync(str: String) -> String? {
+	func cmdCcallSync(_ str: String) -> String? {
 		if r2c != nil {
-			let s = r_core.r_core_cmd_str(r2c, str);
-			if s != nil {
-				let r = String.fromCString(s);
-	//			r_core.free (s);
+			if let s = r_core.r_core_cmd_str(r2c, str) {
+				let r = String(cString:s);
+		//			r_core.free (s);
 				return r;
 			}
 		}
@@ -103,20 +103,19 @@ print("NO SPAWN");
 	}
 #endif
 
-	func cmdHttp(str: String, closure:(String?)->()) -> Bool {
+	func cmdHttp(_ str: String, closure:@escaping (String?)->()) -> Bool {
 		let urlstr = self.path.ToR2WebURL(str);
-		let url = NSURL(string: urlstr);
-		let request = NSURLRequest(URL: url!)
+		let request = URLRequest(url: URL(string: urlstr)!);
 #if USE_NSURL_SESSION
-		NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler:{
-			(data:NSData?, url:NSURLResponse?, error:NSError?) -> Void in
-			let str = NSString(data: data!, encoding: NSUTF8StringEncoding)
-			closure (str as? String);
+		URLSession.shared.dataTask(with: request, completionHandler:{
+			(data:Data?, url:URLResponse?, error:Error?) -> Void in
+			let str = String(data: data!, encoding: String.Encoding.utf8)
+			closure (str as String?);
 		})
 #else
-		NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
+		URLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
 			if let d = data {
-				let str = NSString(data: d, encoding: NSUTF8StringEncoding)
+				let str = NSString(data: d, encoding: String.Encoding.utf8)
 				closure (str as String?);
 			} else {
 				closure (nil);
@@ -126,20 +125,19 @@ print("NO SPAWN");
 		return true;
 	}
 
-	func cmdHttpSync(str: String) -> String? {
+	func cmdHttpSync(_ str: String) -> String? {
 #if USE_NSURL_SESSION
 		/* not yet supported */
 #endif
 		let urlstr = self.path.ToR2WebURL(str);
-		let url = NSURL(string: urlstr);
-		let request = NSURLRequest(URL: url!)
-		let response:AutoreleasingUnsafeMutablePointer<NSURLResponse?> = nil;
+		let url = URL(string: urlstr);
+		let request = URLRequest(url: url!)
+		let response:AutoreleasingUnsafeMutablePointer<URLResponse?>? = nil;
 		do {
 			let responseData = try NSURLConnection.sendSynchronousRequest(
-					request, returningResponse: response) as NSData;
-			let responseStr = NSString(data:responseData, encoding:NSUTF8StringEncoding);
-			if responseStr != nil {
-				return responseStr! as String;
+					request, returning: response) as Data;
+			if let responseStr = String(data:responseData, encoding: String.Encoding.utf8) {
+				return responseStr;
 			}
 		} catch _ {
 			print ("catch");
@@ -147,7 +145,7 @@ print("NO SPAWN");
 		return nil;
 	}
 
-	public func cmd(str:String, closure:(String?)->()) -> Bool {
+	public func cmd(_ str:String, closure: @escaping (String?)->()) -> Bool {
 		switch (mode) {
 		case .Ccall:
 #if USE_CCALL
@@ -169,7 +167,7 @@ print("NO SPAWN");
 		}
 	}
 
-	public func cmdSync(str:String) -> String? {
+	public func cmdSync(_ str:String) -> String? {
 		switch (mode) {
 		case .Ccall:
 #if USE_CCALL
@@ -193,14 +191,14 @@ print("NO SPAWN");
 
 	/* JSON APIs */
 #if USE_SWIFTY_JSON
-	public func cmdjSync(str:String) -> NSDictionary? {
+	public func cmdjSync(_ str:String) -> NSDictionary? {
 		if let s = cmdSync (str) {
 			return JSON (s)
 		}
 		return nil;
 	}
 
-	public func cmdj(str:String, closure:(NSDictionary)->()) -> Bool {
+	public func cmdj(_ str:String, _ closure:(NSDictionary)->()) -> Bool {
 		cmd (str, closure:{
 			(s:String?)->() in
 			if let js = JSON (obj) {
@@ -210,13 +208,13 @@ print("NO SPAWN");
 		return true;
 	}
 #else
-	func jsonParse(str:String) -> NSDictionary? {
-		if let data = str.dataUsingEncoding(NSUTF8StringEncoding) {
+	func jsonParse(_ str:String) -> NSDictionary? {
+		// f let data = data(usingEncoding:allowLossyConversion:
+		if let data = str.data(using: String.Encoding.utf8, allowLossyConversion: true) {
+		// if let data = str.dataUsingEncoding(String.Encoding.utf8) {
 			do {
-				if let parsedObject: AnyObject? = try NSJSONSerialization.JSONObjectWithData(data,
-						options: NSJSONReadingOptions.AllowFragments) {
-					return parsedObject as? NSDictionary
-				}
+				let parsedObject = try JSONSerialization.jsonObject(with: data, options: .allowFragments);
+				return parsedObject as? NSDictionary
 			} catch _ {
 				return nil;
 			}
@@ -224,7 +222,7 @@ print("NO SPAWN");
 		return nil;
 	}
 
-	public func cmdjSync(str:String) -> NSDictionary? {
+	public func cmdjSync(_ str:String) -> NSDictionary? {
 		if let s = cmdSync (str) {
 			if let obj = self.jsonParse (s) {
 				return obj;
@@ -233,8 +231,8 @@ print("NO SPAWN");
 		return nil;
 	}
 
-	public func cmdj(str:String, closure:(NSDictionary?)->()) -> Bool {
-		cmd (str, closure:{
+	public func cmdj(_ str:String, _ closure: @escaping (NSDictionary?)->()) -> Bool {
+		_ = cmd (str, closure:{
 			(s:String?)->() in
 			if (s != nil) {
 				if let obj = self.jsonParse (s!) {

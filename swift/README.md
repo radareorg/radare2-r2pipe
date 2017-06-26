@@ -26,7 +26,7 @@ Example
 This example shows how to use the sync and async APIs for HTTP:
 
 ```swift
-if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
+if let r2p = R2Pipe("http://cloud.radare.org/cmd/") {
 	if let str = r2p.cmdSync ("?V") {
 		print ("Version: \(str)");
 	} else {
@@ -42,7 +42,7 @@ if let r2p = R2Pipe(url:"http://cloud.radare.org/cmd/") {
 But Swift also supports the R2Pipe Env interface:
 
 ```swift
-if let r2p = R2Pipe(url:"#!pipe") {
+if let r2p = R2Pipe("#!pipe") {
 	r2p.cmd ("?V", closure:{
 		(str:String) in
 		print ("R2PIPE.SWIFT: \(str)");
