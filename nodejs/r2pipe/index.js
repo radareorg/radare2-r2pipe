@@ -261,9 +261,9 @@ function r2bind (ls, cb, r2cmd) {
 
   /* Proccess event handling only for methods using childs */
   if (typeof ls.on === 'function') {
-    ls.on('error', function (code) {
+    ls.on('error', function (err) {
       running = false;
-      console.log('ERROR');
+      console.log(err);
     });
 
     ls.on('close', function (code) {
