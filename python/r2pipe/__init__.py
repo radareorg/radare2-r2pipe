@@ -81,7 +81,7 @@ def in_rlang():
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
 	"""
-	def __init__(self, filename='', flags=[]):
+	def __init__(self, filename='', project='', flags=[]):
 		"""Open a new r2 pipe
 		The 'filename' can be one of the following:
 
@@ -141,7 +141,7 @@ class open:
 			self._cmd = self._cmd_tcp
 			self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.conn.connect((r.group(1), int(r.group(2))))
-		else:
+		elif filename:
 			self._cmd = self._cmd_process
 			cmd = ["radare2", "-q0", filename]
 			cmd = cmd[:1] + flags + cmd[1:]
@@ -150,6 +150,17 @@ class open:
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1) # Reads initial \x00
+		elif project:
+			self._cmd = self._cmd_process
+			cmd = ["radare2", "-q0", "-p", project]
+			cmd = cmd[:1] + flags + cmd[1:]
+			try:
+				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+			except:
+				raise Exception("ERROR: Cannot find radare2 in PATH")
+			self.process.stdout.read(1) # Reads initial \x00
+		else:
+			raise Exception("ERROR: No file or project provided")
 
 	def _cmd_process(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
