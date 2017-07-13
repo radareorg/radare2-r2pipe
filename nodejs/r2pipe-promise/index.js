@@ -5,13 +5,17 @@ const r2pipe = require('r2pipe');
 module.exports = {
   open: function openPromise (file, options) {
     return new Promise(function (resolve, reject) {
-      r2pipe.open(file, options, (err, res) => {
+      r2pipe.open(...[file, options, (err, res) => {
         if (err) {
           return reject(err);
         }
         resolve(r2promise(res));
-      });
+      }].filter(argDefined));
     });
+
+    function argDefined (x) {
+      return x !== undefined;
+    }
   }
 };
 
