@@ -29,6 +29,7 @@ import re
 import sys
 import time
 import json
+import fcntl
 import socket
 import urllib
 from subprocess import Popen, PIPE
@@ -150,6 +151,12 @@ class open:
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1) # Reads initial \x00
+			# make it non-blocking to speedup reading
+			self.nonblocking = True
+			if self.nonblocking:
+				fd = self.process.stdout.fileno()
+				fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+				fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 	def _cmd_process(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
@@ -160,13 +167,18 @@ class open:
 		self.process.stdin.flush()
 		out = b''
 		while True:
-			foo = self.process.stdout.read(1)
-			if foo == b'\x00':
+			if self.nonblocking:
+				try:
+					foo = self.process.stdout.read(4096)
+				except:
+					continue
+			else:
+				foo = self.process.stdout.read(1)
+			if foo[-1] == b'\x00':
+				out += foo[0:-1]
 				break
-			if len(foo) < 1:
-				return None
 			out += foo
-		return out.decode('utf-8')
+		return out #.decode('utf-8')
 
 	def _cmd_tcp(self, cmd):
 		res = b''
@@ -242,7 +254,10 @@ class open:
 		Returns:
 			Returns an string with the results of the command
 		"""
-		return self._cmd(cmd).strip()
+		res = self._cmd(cmd)
+		if res is not None:
+			return res.strip()
+		return None
 
 	def cmdj(self, cmd):
 		"""Same as cmd() but evaluates JSONs and returns an object
