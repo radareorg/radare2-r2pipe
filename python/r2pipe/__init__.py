@@ -29,6 +29,7 @@ import re
 import sys
 import time
 import json
+import fcntl
 import socket
 import urllib
 from io import TextIOWrapper
@@ -153,14 +154,14 @@ class open:
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
 			self.process.stdout.read(1)  # Reads initial \x00
-			# make it non-blocking to speedup reading
+			# make it non-blocking only if fcntl is found
+			#self.nonblocking = True
 			self.nonblocking = False
 			if fcntl is not None:
 				self.nonblocking = True
-				if self.nonblocking:
-					fd = self.process.stdout.fileno()
-					fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-					fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+				fd = self.process.stdout.fileno()
+				fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+				fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 	def _cmd_process(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
@@ -180,15 +181,21 @@ class open:
 			if self.nonblocking:
 				try:
 					foo = r.read(4096)
+					#foo = self.process.stdout.read(4096)
 				except:
 					continue
 			else:
 				foo = r.read(1)
+				#foo = self.process.stdout.read(1)
 			if len(foo) > 0 and foo[-1] == '\x00':
 				out += foo[0:-1]
 				break
+				foo = self.process.stdout.read(1)
+			if foo[-1] == b'\x00':
+				out += foo[0:-1]
+				break
 			out += foo
-		return out
+		return out #.decode('utf-8')
 
 	def _cmd_tcp(self, cmd):
 		res = b''
