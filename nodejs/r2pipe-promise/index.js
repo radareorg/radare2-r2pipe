@@ -5,17 +5,15 @@ const r2pipe = require('r2pipe');
 module.exports = {
   open: function openPromise (file, options) {
     return new Promise(function (resolve, reject) {
-      r2pipe.open(...[file, options, (err, res) => {
+      function cb (err, res) {
         if (err) {
           return reject(err);
         }
         resolve(r2promise(res));
-      }].filter(argDefined));
+      }
+      const args = [file, options, cb].filter(x => x !== undefined);
+      r2pipe.open(...args);
     });
-
-    function argDefined (x) {
-      return x !== undefined;
-    }
   }
 };
 
@@ -26,7 +24,7 @@ class TimeoutError extends Error {
   }
 }
 
-function R2Promise (obj, method, args) {
+function R2Promise (r2, method, args) {
   let myReject = null;
   let timer = null;
   let finished = false;
@@ -39,9 +37,9 @@ function R2Promise (obj, method, args) {
       timer = null;
     }
   };
-  let self = new Promise((resolve, reject) => {
+  let promise = new Promise((resolve, reject) => {
     myReject = reject;
-    args.push((err, res) => {
+    function handler(err, res) {
       if (finished) {
         console.log('timeout was executed before the execution');
         resolve(res);
@@ -52,18 +50,19 @@ function R2Promise (obj, method, args) {
         return reject(err);
       }
       resolve(res);
-    });
+    }
+    args.push(handler);
     try {
-      obj[method](...args);
+      r2[method](...args);
     } catch (e) {
       stopTimer();
       reject(e);
     }
   });
 
-  self.name = method + args[0];
+  promise.name = method + args[0];
 
-  self.timeout = (ns) => {
+  promise.timeout = (ns) => {
     timer = setTimeout(function promiseTimeout () {
       if (!finished) {
         const msg = `Timeout on r2.${method}(${args[0]})`;
@@ -72,15 +71,15 @@ function R2Promise (obj, method, args) {
       }
       timer = null;
     }, ns);
-    return self;
+    return promise;
   };
-  return self;
+  return promise;
 }
 
-function makePromise (obj, method) {
-  return function cb () {
-    return new R2Promise(obj, method, [...arguments]);
-  };
+function makePromise (r2, method) {
+  return function () {
+    return new R2Promise(r2, method, [...arguments]);
+  }
 }
 
 function r2promise (r2) {
