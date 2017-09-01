@@ -266,9 +266,11 @@ function r2bind (ls, cb, r2cmd) {
       console.log(err);
     });
 
-    ls.on('close', function (code) {
+    ls.on('close', function (code, signal) {
       running = false;
-      if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
+      if (signal) {
+        cb(new Error('Child received signal ' + signal));
+      } else if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
         cb(new Error('Cannot spawn children with code ' + code));
       }
     });
