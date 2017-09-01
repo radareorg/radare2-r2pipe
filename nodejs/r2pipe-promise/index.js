@@ -5,11 +5,11 @@ const r2pipe = require('r2pipe');
 module.exports = {
   open: function openPromise (file, options) {
     return new Promise(function (resolve, reject) {
-      function cb (err, res) {
+      function cb (err, r2) {
         if (err) {
           return reject(err);
         }
-        resolve(r2promise(res));
+        resolve(r2promise(r2));
       }
       const args = [file, options, cb].filter(x => x !== undefined);
       r2pipe.open(...args);
@@ -43,6 +43,7 @@ function R2Promise (r2, method, args) {
       if (finished) {
         console.log('timeout was executed before the execution');
         resolve(res);
+        stopTimer();
         return;
       }
       stopTimer();
@@ -65,8 +66,10 @@ function R2Promise (r2, method, args) {
   promise.timeout = (ns) => {
     timer = setTimeout(function promiseTimeout () {
       if (!finished) {
-        const msg = `Timeout on r2.${method}(${args[0]})`;
-        myReject(new TimeoutError(msg));
+        if (myReject !== null) {
+          const msg = `Timeout on r2.${method}(${args[0]})`;
+          myReject(new TimeoutError(msg));
+        }
         finished = true;
       }
       timer = null;
