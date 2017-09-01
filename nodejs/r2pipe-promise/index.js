@@ -2,10 +2,20 @@
 
 const r2pipe = require('r2pipe');
 
+const pendingRejects = new Set();
+
 module.exports = {
   open: function openPromise (file, options) {
     return new Promise(function (resolve, reject) {
+      let cbResolved = false;
       function cb (err, r2) {
+        if (cbResolved && err) {
+          for (const pendingReject of pendingRejects) {
+            pendingReject(err);
+          }
+          return;
+        }
+        cbResolved = true;
         if (err) {
           return reject(err);
         }
@@ -39,7 +49,9 @@ function R2Promise (r2, method, args) {
   };
   let promise = new Promise((resolve, reject) => {
     myReject = reject;
+    pendingRejects.add(reject);
     function handler(err, res) {
+      pendingRejects.delete(reject);
       if (finished) {
         console.log('timeout was executed before the execution');
         resolve(res);
@@ -57,6 +69,7 @@ function R2Promise (r2, method, args) {
       r2[method](...args);
     } catch (e) {
       stopTimer();
+      pendingRejects.delete(reject);
       reject(e);
     }
   });
@@ -67,6 +80,7 @@ function R2Promise (r2, method, args) {
     timer = setTimeout(function promiseTimeout () {
       if (!finished) {
         if (myReject !== null) {
+          pendingRejects.delete(myReject);
           const msg = `Timeout on r2.${method}(${args[0]})`;
           myReject(new TimeoutError(msg));
         }
