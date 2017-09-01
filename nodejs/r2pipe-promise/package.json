@@ -1,6 +1,6 @@
 {
   "name": "r2pipe-promise",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "promisified r2pipe api",
   "main": "index.js",
   "scripts": {
