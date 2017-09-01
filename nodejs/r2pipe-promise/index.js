@@ -10,7 +10,9 @@ module.exports = {
       let cbResolved = false;
       function cb (err, r2) {
         if (cbResolved && err) {
-          for (const pendingReject of pendingRejects) {
+          const toReject = new Set(pendingRejects);
+          pendingRejects.clear();
+          for (const pendingReject of toReject) {
             pendingReject(err);
           }
           return;
