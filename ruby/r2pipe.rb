@@ -13,7 +13,9 @@ class R2Pipe
     if file == nil
       fdIn = ENV['R2PIPE_IN'].to_i
       fdOut = ENV['R2PIPE_OUT'].to_i
-      print "in: ", fdIn, "\nout: ", fdOut, "\n"
+      if fdIn < 1 or fdOut < 1
+        throw 'Cannot find R2PIPE_IN and R2PIPE_OUT environment variables'
+      end
       @read = IO.new(fdIn, 'r')
       @write = IO.new(fdOut, 'w')
       @pid = -1
@@ -53,13 +55,3 @@ class R2Pipe
     end
   end
 end
-
-puts 'r2pipe ruby api demo'
-puts '===================='
-# r2p = R2Pipe.new '/bin/ls'
-r2p = R2Pipe.new
-puts r2p.cmd 'pi 5'
-puts r2p.cmd 'pij 1'
-puts r2p.cmdj 'pij 1'
-puts r2p.cmd 'px 64'
-r2p.quit
