@@ -14,7 +14,7 @@ class R2Pipe
       fdIn = ENV['R2PIPE_IN'].to_i
       fdOut = ENV['R2PIPE_OUT'].to_i
       if fdIn < 1 or fdOut < 1
-        throw 'Cannot find R2PIPE_IN and R2PIPE_OUT environment variables'
+        raise 'Cannot find R2PIPE_IN and R2PIPE_OUT environment variables'
       end
       @read = IO.new(fdIn, 'r')
       @write = IO.new(fdOut, 'w')
