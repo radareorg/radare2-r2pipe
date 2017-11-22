@@ -2,7 +2,7 @@
 
 package main
 
-import "./r2pipe"
+import ".."
 
 func main() {
 	r2p, err := r2pipe.NewPipe("/bin/ls")
