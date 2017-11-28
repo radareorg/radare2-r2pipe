@@ -32,6 +32,7 @@ import json
 import fcntl
 import socket
 import urllib
+from io import TextIOWrapper
 from subprocess import Popen, PIPE
 try:
         import r2lang
@@ -167,20 +168,22 @@ class open:
                 else:
                         self.process.stdin.write(cmd + '\n')
                 self.process.stdin.flush()
-                out = b''
+                # XXX: Use the TextIOWrapper or we can get stuck in an endless loop!
+                r = TextIOWrapper(self.process.stdout, encoding='utf8')
+                out = ''
                 while True:
                         if self.nonblocking:
                                 try:
-                                        foo = self.process.stdout.read(4096)
+                                        foo = r.read(4096)
                                 except:
                                         continue
                         else:
-                                foo = self.process.stdout.read(1)
-                        if foo[-1] == b'\x00':
+                                foo = r.read(1)
+                        if len(foo) > 0 and foo[-1] == '\x00':
                                 out += foo[0:-1]
                                 break
                         out += foo
-                return out  # .decode('utf-8')
+                return out
 
         def _cmd_tcp(self, cmd):
                 res = b''
