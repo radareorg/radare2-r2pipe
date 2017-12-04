@@ -45,7 +45,7 @@ try:
 except:
         has_native = False
 
-VERSION = "0.9.3"
+VERSION = "0.9.4"
 
 if sys.version_info >= (3, 0):
         import urllib.request
