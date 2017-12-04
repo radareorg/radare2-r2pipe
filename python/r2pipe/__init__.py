@@ -165,11 +165,12 @@ class open:
                 cmd = cmd.strip().replace("\n", ";")
                 if sys.version_info >= (3, 0):
                         self.process.stdin.write(bytes(cmd + '\n', 'utf-8'))
+                        # XXX: Use the TextIOWrapper or we can get stuck in an endless loop!
+                        r = TextIOWrapper(self.process.stdout, encoding='utf8')
                 else:
                         self.process.stdin.write(cmd + '\n')
+                        r = self.process.stdout
                 self.process.stdin.flush()
-                # XXX: Use the TextIOWrapper or we can get stuck in an endless loop!
-                r = TextIOWrapper(self.process.stdout, encoding='utf8')
                 out = ''
                 while True:
                         if self.nonblocking:
