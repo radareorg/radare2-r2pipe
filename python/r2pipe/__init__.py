@@ -29,7 +29,6 @@ import re
 import sys
 import time
 import json
-import fcntl
 import socket
 import urllib
 from io import TextIOWrapper
@@ -38,7 +37,10 @@ try:
         import r2lang
 except:
         r2lang = None
-
+try:
+	import fcntl
+except:
+	fcntl = None
 try:
         from .native import RCore
         has_native = True
@@ -155,11 +157,12 @@ class open:
                                 raise Exception("ERROR: Cannot find radare2 in PATH")
                         self.process.stdout.read(1)  # Reads initial \x00
                         # make it non-blocking to speedup reading
-                        self.nonblocking = True
-                        if self.nonblocking:
-                                fd = self.process.stdout.fileno()
-                                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+			if fcntl != None:
+				self.nonblocking = True
+				if self.nonblocking:
+					fd = self.process.stdout.fileno()
+					fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+					fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
         def _cmd_process(self, cmd):
                 cmd = cmd.strip().replace("\n", ";")
