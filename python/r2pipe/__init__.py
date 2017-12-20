@@ -279,7 +279,7 @@ class open:
                         Returns a Python object respresenting the parsed JSON
                 """
                 try:
-                        data = json.loads(self.cmd(cmd).replace('\n', ''))
+                        data = json.loads(self.cmd(cmd).replace('\n', ''), strict=False)
                 except (ValueError, KeyError, TypeError) as e:
                         sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
                         data = None
