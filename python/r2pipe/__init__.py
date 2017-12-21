@@ -157,6 +157,7 @@ class open:
                                 raise Exception("ERROR: Cannot find radare2 in PATH")
                         self.process.stdout.read(1)  # Reads initial \x00
                         # make it non-blocking to speedup reading
+			self.nonblocking = False
                         if fcntl is not None:
                                 self.nonblocking = True
                                 if self.nonblocking:
