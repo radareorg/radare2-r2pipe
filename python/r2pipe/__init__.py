@@ -35,16 +35,16 @@ from io import TextIOWrapper
 from subprocess import Popen, PIPE
 try:
 	import r2lang
-except:
+except ImportError:
 	r2lang = None
 try:
 	import fcntl
-except:
+except ImportError:
 	fcntl = None
 try:
 	from .native import RCore
 	has_native = True
-except:
+except ImportError:
 	has_native = False
 
 VERSION = "0.9.6"
