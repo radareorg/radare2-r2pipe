@@ -47,7 +47,7 @@ try:
 except ImportError:
 	has_native = False
 
-VERSION = "0.9.6"
+VERSION = "0.9.7"
 
 if sys.version_info >= (3, 0):
 	import urllib.request
