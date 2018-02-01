@@ -5,10 +5,14 @@ import sys
 from ctypes import CDLL, Structure, WinDLL, addressof, c_char_p, c_void_p
 from ctypes.util import find_library
 
+lib_name = find_library('r_core')
+if lib_name == None:
+	raise ImportError("No native r_core library")
+
 if sys.platform.startswith('win'):
-	lib = WinDLL(find_library('r_core'))
+	lib = WinDLL(lib_name)
 else:
-	lib = CDLL(find_library('r_core'))
+	lib = CDLL(lib_name)
 
 
 class AddressHolder(object):
