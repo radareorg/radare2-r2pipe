@@ -1,8 +1,9 @@
 {
   "name": "r2pipe",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
+  "types": "r2pipe.d.ts",
   "scripts": {
     "test": "node examples/test-channels.js",
     "semi": "semistandard",
