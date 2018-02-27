@@ -41,13 +41,10 @@ try:
 	import fcntl
 except ImportError:
 	fcntl = None
-try:
-	from .native import RCore
-	has_native = True
-except ImportError:
-	has_native = False
 
-VERSION = "0.9.8"
+has_native = None
+
+VERSION = "0.9.9"
 
 if sys.version_info >= (3, 0):
 	import urllib.request
@@ -228,6 +225,13 @@ class open:
 
 	def _cmd_native(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
+		if has_native is None:
+			try:
+				from native import RCore
+				has_native = True
+			except ImportError, e:
+				# DEBUG IMPORT ERROR ISSUE print(e)
+				has_native = False
 		if not has_native:
 			raise Exception('No native ctypes connector available')
 		if not hasattr(self, 'native'):

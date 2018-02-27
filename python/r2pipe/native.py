@@ -2,8 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from ctypes import CDLL, Structure, WinDLL, addressof, c_char_p, c_void_p
+from ctypes import Structure, addressof, c_char_p, c_void_p
 from ctypes.util import find_library
+
+try:
+	from ctypes import CDLL
+except:
+	pass
+
+try:
+	from ctypes import WinDLL
+except:
+	pass
 
 lib_name = find_library('r_core')
 if lib_name == None:
