@@ -229,7 +229,7 @@ class open:
 			try:
 				from native import RCore
 				has_native = True
-			except ImportError, e:
+			except ImportError:
 				# DEBUG IMPORT ERROR ISSUE print(e)
 				has_native = False
 		if not has_native:
