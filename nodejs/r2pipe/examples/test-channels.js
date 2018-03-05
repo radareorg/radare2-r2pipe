@@ -20,5 +20,5 @@ function doSomeStuff (err, r2) {
 }
 
 r2pipe.pipe('/bin/ls', doSomeStuff);
-r2pipe.launch('/bin/ls', doSomeStuff);
-r2pipe.connect('http://cloud.rada.re/cmd/', doSomeStuff);
+// r2pipe.launch('/bin/ls', doSomeStuff);
+// r2pipe.connect('http://cloud.rada.re/cmd/', doSomeStuff);

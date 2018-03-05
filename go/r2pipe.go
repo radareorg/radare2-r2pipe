@@ -52,7 +52,13 @@ type Pipe struct {
 	r2cmd  *exec.Cmd
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
+	Core   *struct{}
+	cmd    CmdDelegate
+	close  CloseDelegate
 }
+
+type CmdDelegate func(*Pipe, string) (string, error)
+type CloseDelegate func(*Pipe) error
 
 // NewPipe returns a new r2 pipe and initializes an r2 core that will try to
 // load the provided file or URI. If file is an empty string, the env vars
@@ -132,6 +138,12 @@ func (r2p *Pipe) Read(p []byte) (n int, err error) {
 
 // Cmd is a helper that allows to run r2 commands and receive their output.
 func (r2p *Pipe) Cmd(cmd string) (string, error) {
+	if r2p.Core != nil {
+		if r2p.cmd != nil {
+			return r2p.cmd(r2p, cmd)
+		}
+		return "", nil
+	}
 	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
 		return "", err
 	}
@@ -162,6 +174,9 @@ func (r2p *Pipe) Cmdj(cmd string) (interface{}, error) {
 
 // Close shuts down r2, closing the created pipe.
 func (r2p *Pipe) Close() error {
+	if r2p.close != nil {
+		return r2p.close(r2p)
+	}
 	if r2p.File == "" {
 		return nil
 	}

@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """r2pipe
@@ -29,24 +29,24 @@ import re
 import sys
 import time
 import json
-import fcntl
 import socket
 import urllib
+from io import TextIOWrapper
 from subprocess import Popen, PIPE
 try:
 	import r2lang
-except:
+except ImportError:
 	r2lang = None
-
 try:
-	from .native import RCore
-	has_native = True
-except:
-	has_native = False
+	import fcntl
+except ImportError:
+	fcntl = None
 
-VERSION="0.9.2"
+has_native = None
 
-if sys.version_info >= (3,0):
+VERSION = "0.9.9"
+
+if sys.version_info >= (3, 0):
 	import urllib.request
 	urlopen = urllib.request.urlopen
 	import urllib.error
@@ -55,9 +55,8 @@ else:
 	import urllib2
 	urlopen = urllib2.urlopen
 	URLError = urllib2.URLError
-if os.name=="nt":
-	from ctypes import *
-	import msvcrt
+if os.name == "nt":
+	from ctypes import byref, c_ulong, create_string_buffer, windll
 	GENERIC_READ = 0x80000000
 	GENERIC_WRITE = 0x40000000
 	OPEN_EXISTING = 0x3
@@ -71,13 +70,16 @@ if os.name=="nt":
 	cbRead = c_ulong(0)
 	cbWritten = c_ulong(0)
 
+
 def version():
 	"""Return string with the version of the r2pipe library
 	"""
 	return VERSION
 
+
 def in_rlang():
 	return r2lang is not None and r2lang.cmd is not None
+
 
 class open:
 	"""Class representing an r2pipe connection with a running radare2 instance
@@ -102,26 +104,26 @@ class open:
 			self._cmd = self._cmd_rlang
 			return
 		try:
-			if os.name=="nt":
-				mypipename=os.environ['r2pipe_path']
+			if os.name == "nt":
+				mypipename = os.environ['r2pipe_path']
 				while 1:
-					hPipe = windll.kernel32.CreateFileA(szPipename+mypipename, GENERIC_READ |GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
+					hPipe = windll.kernel32.CreateFileA(szPipename + mypipename, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
 					if (hPipe != INVALID_HANDLE_VALUE):
 						break
 					else:
-						print ("Invalid Handle Value")
+						print("Invalid Handle Value")
 					if (windll.kernel32.GetLastError() != ERROR_PIPE_BUSY):
-						print ("Could not open pipe")
+						print("Could not open pipe")
 						return
-					elif ((windll.kernel32.WaitNamedPipeA(szPipename, 20000)) ==0):
-						print ("Could not open pipe\n")
+					elif ((windll.kernel32.WaitNamedPipeA(szPipename, 20000)) == 0):
+						print("Could not open pipe\n")
 						return
-				windll.kernel32.WriteFile(hPipe, "e scr.color=false\n",18, byref(cbWritten), None)
+				windll.kernel32.WriteFile(hPipe, "e scr.color=false\n", 18, byref(cbWritten), None)
 				windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE, byref(cbRead), None)
 				self.pipe = [hPipe, hPipe]
 				self._cmd = self._cmd_pipe
 			else:
-				self.pipe = [ int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT']) ]
+				self.pipe = [int(os.environ['R2PIPE_IN']), int(os.environ['R2PIPE_OUT'])]
 				self._cmd = self._cmd_pipe
 			self.url = "#!pipe"
 			return
@@ -150,35 +152,43 @@ class open:
 				self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
 			except:
 				raise Exception("ERROR: Cannot find radare2 in PATH")
-			self.process.stdout.read(1) # Reads initial \x00
+			self.process.stdout.read(1)  # Reads initial \x00
 			# make it non-blocking to speedup reading
-			self.nonblocking = True
-			if self.nonblocking:
-				fd = self.process.stdout.fileno()
-				fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-				fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+			self.nonblocking = False
+			if fcntl is not None:
+				self.nonblocking = True
+				if self.nonblocking:
+					fd = self.process.stdout.fileno()
+					fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+					fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 	def _cmd_process(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
-		if sys.version_info >= (3,0):
-			self.process.stdin.write(bytes(cmd+'\n','utf-8'))
+		if sys.version_info >= (3, 0):
+			self.process.stdin.write(bytes(cmd + '\n', 'utf-8'))
+			# XXX: Use the TextIOWrapper or we can get stuck in an endless loop!
+			r = getattr(self, '_process_stdout_wrapper', None)
+			if r is None:
+				r = TextIOWrapper(self.process.stdout, encoding='utf8')
+				self._process_stdout_wrapper = r
 		else:
-			self.process.stdin.write(cmd+'\n')
+			self.process.stdin.write(cmd + '\n')
+			r = self.process.stdout
 		self.process.stdin.flush()
-		out = b''
+		out = ''
 		while True:
 			if self.nonblocking:
 				try:
-					foo = self.process.stdout.read(4096)
+					foo = r.read(4096)
 				except:
 					continue
 			else:
-				foo = self.process.stdout.read(1)
-			if foo[-1] == b'\x00':
+				foo = r.read(1)
+			if len(foo) > 0 and foo[-1] == '\x00':
 				out += foo[0:-1]
 				break
 			out += foo
-		return out #.decode('utf-8')
+		return out
 
 	def _cmd_tcp(self, cmd):
 		res = b''
@@ -192,18 +202,18 @@ class open:
 	def _cmd_pipe(self, cmd):
 		out = ''
 		cmd = cmd.strip().replace("\n", ";")
-		if os.name=="nt":
-			fSuccess = windll.kernel32.WriteFile(self.pipe[1],cmd,len(cmd), byref(cbWritten), None)
+		if os.name == "nt":
+			windll.kernel32.WriteFile(self.pipe[1], cmd, len(cmd), byref(cbWritten), None)
 			while True:
-				fSuccess = windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE,byref(cbRead), None)
+				windll.kernel32.ReadFile(self.pipe[1], chBuf, BUFSIZE, byref(cbRead), None)
 				out += chBuf.value
-				if ord(chBuf[cbRead.value-1]) == 0:
+				if ord(chBuf[cbRead.value - 1]) == 0:
 					out = out[0:-1]
 					break
 		else:
-			os.write (self.pipe[1], cmd)
+			os.write(self.pipe[1], cmd)
 			while True:
-				res = os.read (self.pipe[0], 4096)
+				res = os.read(self.pipe[0], 4096)
 				if res[-1] == b'\x00':
 					res = res[0:-1]
 				if (len(res) < 1):
@@ -215,11 +225,18 @@ class open:
 
 	def _cmd_native(self, cmd):
 		cmd = cmd.strip().replace("\n", ";")
+		if has_native is None:
+			try:
+				from native import RCore
+				has_native = True
+			except ImportError:
+				# DEBUG IMPORT ERROR ISSUE print(e)
+				has_native = False
 		if not has_native:
 			raise Exception('No native ctypes connector available')
 		if not hasattr(self, 'native'):
 			self.native = RCore()
-			self.native.cmd_str("o "+self.uri)
+			self.native.cmd_str("o " + self.uri)
 		return self.native.cmd_str(cmd)
 
 	def _cmd_rlang(self, cmd):
@@ -267,9 +284,9 @@ class open:
 			Returns a Python object respresenting the parsed JSON
 		"""
 		try:
-			data = json.loads(self.cmd(cmd))
+			data = json.loads(self.cmd(cmd).replace('\n', ''), strict=False)
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write ("r2pipe.cmdj.Error: %s\n"%(e))
+			sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
 			data = None
 		return data
 
@@ -294,9 +311,10 @@ class open:
 		try:
 			data = json.loads(self.syscmd(cmd))
 		except (ValueError, KeyError, TypeError) as e:
-			sys.stderr.write ("r2pipe.syscmdj.Error %s\n"%(e))
+			sys.stderr.write("r2pipe.syscmdj.Error %s\n" % (e))
 			data = None
 		return data
+
 
 # Hello World
 if __name__ == "__main__":
@@ -309,9 +327,9 @@ if __name__ == "__main__":
 	print("[+] Testing python r2pipe local")
 	rlocal = open("/bin/ls")
 	print(rlocal.cmd("pi 5"))
-	#print rlocal.cmd("pn")
+	# print rlocal.cmd("pn")
 	info = rlocal.cmdj("ij")
-	print ("Architecture: " + info['bin']['machine'])
+	print("Architecture: " + info['bin']['machine'])
 
 	# Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")
 	print("[+] Testing python r2pipe tcp://")
