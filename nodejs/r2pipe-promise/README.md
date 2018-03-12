@@ -62,3 +62,24 @@ r2pipe.openAsync('/bin/ls').then(r => {
 });
 ~
 ```
+
+Since node 7.6 there is default support for Async/Await, so now we
+can use it to write more cleaner and legible code, for example:
+
+```js
+const r2promise = require('r2pipe-promise');
+
+const radare2FTW = async () => {
+  try {
+    const r2 = await r2promise.open('/bin/ls');
+    const msg = await r2.cmd('?E hello world');
+    console.log(msg);
+    return r2.quit();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Call function
+radare2FTW();
+```
