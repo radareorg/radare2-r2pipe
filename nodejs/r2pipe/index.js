@@ -136,6 +136,9 @@ function parseJSON (func, cmd, callback) {
     if (res === '') {
       res = '{}';
     }
+    if (cmd.includes('@@')) {
+      res = res.replace(/\][\n]+\[/g,',');
+    }
     try {
       callback(null, r2node.jsonParse(res));
     } catch (e) {
