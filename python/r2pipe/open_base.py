@@ -23,7 +23,7 @@ except ImportError:
         has_native = False
 
 if os.name == "nt":
-	from ctypes import import byref, c_ulong, create_string_buffer, windll
+	from ctypes import byref, c_ulong, create_string_buffer, windll
         import msvcrt
 	GENERIC_READ = 0x80000000
 	GENERIC_WRITE = 0x40000000
