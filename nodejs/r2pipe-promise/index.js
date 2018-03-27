@@ -10,9 +10,7 @@ module.exports = {
       let cbResolved = false;
       function cb (err, r2) {
         if (cbResolved && err) {
-          const toReject = new Set(pendingRejects);
-          pendingRejects.clear();
-          for (const pendingReject of toReject) {
+          for (const pendingReject of pendingRejects) {
             pendingReject(err);
           }
           return;
@@ -26,7 +24,9 @@ module.exports = {
       const args = [file, options, cb].filter(x => x !== undefined);
       r2pipe.open(...args);
     });
-  }
+  },
+  syscmd: makePromise(r2pipe, 'syscmd'),
+  syscmdj: makePromise(r2pipe, 'syscmdj')
 };
 
 class TimeoutError extends Error {
