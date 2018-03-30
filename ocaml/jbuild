@@ -1,0 +1,7 @@
+(jbuild_version 1)
+(library
+  ((name radare2)
+   (public_name radare2)
+   (wrapped false)
+   (libraries (yojson unix))
+   ))

@@ -47,7 +47,10 @@ let open_file f_name =
     {pid; read_from = out_r; write_to = ins_w}
 
 (* Heavy handed but we ensure that r2 is killed *)
-let close {pid; _} = Unix.kill pid Sys.sigkill
+let close {pid; _} =
+  Unix.kill pid Sys.sigkill;
+  Unix.waitpid [] pid |> ignore;
+  ()
 
 let with_command ~cmd f_name =
   let r2 = open_file f_name in
