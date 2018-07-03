@@ -2,6 +2,7 @@
   "name": "r2pipe-promise",
   "version": "1.3.0",
   "description": "promisified r2pipe api",
+  "types": "r2pipe-promise.d.ts",
   "main": "index.js",
   "scripts": {
     "test": "semistandard",
@@ -42,6 +43,6 @@
     "semistandard": "11.0.0"
   },
   "dependencies": {
-    "r2pipe": "^2.6.0"
+    "r2pipe": "^2.6.2"
   }
 }

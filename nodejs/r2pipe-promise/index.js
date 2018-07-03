@@ -4,30 +4,40 @@ const r2pipe = require('r2pipe');
 
 const pendingRejects = new Set();
 
+class R2Pipe {
+  static open(file, options) {
+    return openPromise(file, options);
+  }
+}
+
 module.exports = {
-  open: function openPromise (file, options) {
-    return new Promise(function (resolve, reject) {
-      let cbResolved = false;
-      function cb (err, r2) {
-        if (cbResolved && err) {
-          for (const pendingReject of pendingRejects) {
-            pendingReject(err);
-          }
-          return;
-        }
-        cbResolved = true;
-        if (err) {
-          return reject(err);
-        }
-        resolve(r2promise(r2));
-      }
-      const args = [file, options, cb].filter(x => x !== undefined);
-      r2pipe.open(...args);
-    });
-  },
+  R2Pipe,
+  open: openPromise,
   syscmd: makePromise(r2pipe, 'syscmd'),
   syscmdj: makePromise(r2pipe, 'syscmdj')
 };
+
+
+ function openPromise (file, options) {
+  return new Promise(function (resolve, reject) {
+    let cbResolved = false;
+    function cb (err, r2) {
+      if (cbResolved && err) {
+        for (const pendingReject of pendingRejects) {
+          pendingReject(err);
+        }
+        return;
+      }
+      cbResolved = true;
+      if (err) {
+        return reject(err);
+      }
+      resolve(r2promise(r2));
+    }
+    const args = [file, options, cb].filter(x => x !== undefined);
+    r2pipe.open(...args);
+  });
+}
 
 class TimeoutError extends Error {
   constructor () {

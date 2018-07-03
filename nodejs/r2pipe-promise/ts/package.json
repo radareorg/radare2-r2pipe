@@ -1,0 +1,18 @@
+{
+  "name": "r2pipe-promise-ts-example",
+  "version": "1.0.0",
+  "description": "just a test",
+  "main": "index.js",
+  "devDependencies": {
+    "typescript": "^2.9.2"
+  },
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@types/node": "^10.5.1",
+    "jshint": "^2.9.5"
+  }
+}
