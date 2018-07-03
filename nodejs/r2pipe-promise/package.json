@@ -1,6 +1,6 @@
 {
   "name": "r2pipe-promise",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "promisified r2pipe api",
   "types": "r2pipe-promise.d.ts",
   "main": "index.js",
@@ -13,10 +13,8 @@
     "url": "https://github.com/radare/radare2-r2pipe.git"
   },
   "files": [
-    "README.md",
     "index.js",
-    "simple.js",
-    "test.js"
+    "r2pipe-promise.d.ts"
   ],
   "keywords": [
     "radare",
