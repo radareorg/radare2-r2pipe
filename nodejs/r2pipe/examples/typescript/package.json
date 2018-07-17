@@ -1,0 +1,14 @@
+{
+  "name": "r2pipe-ts-example",
+  "version": "1.0.0",
+  "description": "just a test",
+  "main": "index.js",
+  "devDependencies": {
+    "typescript": "^2.9.2"
+  },
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "watch": "tsc -w"
+  }
+}
