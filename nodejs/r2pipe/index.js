@@ -152,7 +152,7 @@ function parseJSON (func, cmd, callback) {
 
 function r2bind (ls, cb, r2cmd) {
   let running = false;
-
+let errmsg = '';
   const r2 = {
     pipeQueue: [],
 
@@ -231,6 +231,12 @@ function r2bind (ls, cb, r2cmd) {
   if (ls.stderr !== null) {
     ls.stderr.on('data', function (data) {
       /* Set as running for connect & launch methods */
+      if (typeof errmsg === 'string') {
+        errmsg += data.toString();
+        if (errmsg.length > 1024 * 32) {
+          errmsg = null;
+        }
+      }
       if (!running && (typeof r2cmd !== 'string')) {
         running = true;
         if (typeof cb === 'function') {
@@ -269,7 +275,7 @@ function r2bind (ls, cb, r2cmd) {
     ls.on('close', function (code, signal) {
       running = false;
       if (signal) {
-        cb(new Error('Child received signal ' + signal));
+        cb(new Error('Child received signal ' + signal + '\n' + errmsg? errmsg: ''));
       } else if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
         cb(new Error('Cannot spawn children with code ' + code));
       }
