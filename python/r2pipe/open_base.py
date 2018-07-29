@@ -81,7 +81,7 @@ class OpenBase(object):
                 The 'filename' can be one of the following:
 
                 * absolute or relative path to file
-                * http://<host>:<port>/cmd to connect to an r2 webserver
+                * http://<host>:<port> to connect to an r2 webserver
                 * tcp://<host>:<port> to connect to an r2 tcp server
                 * #!pipe when launching it from r2 via RLang.pipe
 
