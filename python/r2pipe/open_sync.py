@@ -36,7 +36,7 @@ class  open(OpenBase):
                         self._cmd = self._cmd_tcp
                         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         self.conn.connect((r.group(1), int(r.group(2))))
-                else:
+                elif filename:
                         self._cmd = self._cmd_process
                         cmd = ["radare2", "-q0", filename]
                         cmd = cmd[:1] + flags + cmd[1:]

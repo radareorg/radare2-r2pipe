@@ -59,7 +59,7 @@ class open(OpenBase, ContextDecorator):
                         self._host = r.group(1)
                         self._port = r.group(2)
 
-                else:
+                elif filename:
                         
                         self._cmd_coro = self._cmd_process
                          
