@@ -92,6 +92,7 @@ class OpenBase(object):
                 Returns:
                     Returns an object with methods to interact with r2 via commands
                 """
+                self.asyn = False
                 if not filename and in_rlang():
                         self._cmd = self._cmd_rlang
                         return
@@ -126,7 +127,7 @@ class OpenBase(object):
 
 
         def _cmd_pipe(self, cmd):
-                out = ''
+                out = b''
                 cmd = cmd.strip().replace("\n", ";")
                 if os.name == "nt":
                         windll.kernel32.WriteFile(self.pipe[1], cmd, len(cmd), byref(cbWritten), None)
@@ -137,14 +138,15 @@ class OpenBase(object):
                                         out = out[0:-1]
                                         break
                 else:
-                        os.write(self.pipe[1], cmd)
+                        os.write(self.pipe[1], cmd.encode())
                         while True:
                                 res = os.read(self.pipe[0], 4096)
-                                if res[-1] == b'\x00':
-                                        res = res[0:-1]
                                 if (len(res) < 1):
                                         break
-                                out += res
+                                if res[-1] == b'\x00'[0]:
+                                        out += res[0:-1]
+                                else:
+                                        out += res
                                 if (len(res) < 4096):
                                         break
                 return out.decode('utf-8')
@@ -196,7 +198,10 @@ class OpenBase(object):
                 Returns:
                     Returns a Python object respresenting the parsed JSON
                 """
-                result = self.cmd(cmd, **kwargs).result()
+                if self.asyn:
+                        result = self.cmd(cmd, **kwargs).result()
+                else:
+                        result = self.cmd(cmd, **kwargs)
 
                 try:
                         data = json.loads(result)

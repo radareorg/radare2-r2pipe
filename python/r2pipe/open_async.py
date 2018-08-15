@@ -36,7 +36,9 @@ class open(OpenBase, ContextDecorator):
                 self._loop = asyncio.new_event_loop()
 
                 watcher.attach_loop(self._loop)
-                
+
+                self.asyn = True
+
                 if filename.startswith("http"):
                         self._cmd_coro = self._cmd_http
                         self.uri = "/cmd"
@@ -67,6 +69,9 @@ class open(OpenBase, ContextDecorator):
                         cmd = cmd[:1] + flags + cmd[1:]
                         self._process_start_cmd = cmd
                         self._processes = []
+
+                else:
+                        self.asyn = False
                         
 
         def _callback_wrapper(self, future):
