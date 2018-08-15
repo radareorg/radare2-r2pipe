@@ -24,7 +24,7 @@ except ImportError:
 
 if os.name == "nt":
 	from ctypes import byref, c_ulong, create_string_buffer, windll
-        import msvcrt
+	import msvcrt
 	GENERIC_READ = 0x80000000
 	GENERIC_WRITE = 0x40000000
 	OPEN_EXISTING = 0x3
