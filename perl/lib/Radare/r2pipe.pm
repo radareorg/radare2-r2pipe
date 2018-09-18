@@ -44,7 +44,7 @@ sub parse_filename {
         $self->r2pipe_file($filename);
     }
     # So that open() knows if it's already opened a file
-    $self->{opened} = 1; 
+    $self->{opened} = 1;
 }
 
 sub r2pipe_http {
@@ -96,7 +96,7 @@ sub spawn_r2 {
     $self->{r2} = $r2pipe;
 
     # Spawn
-    $self->{r2}->spawn("r2 -q0 $file 2>/dev/null");
+    $self->{r2}->spawn("radare2 -q0 $file 2>/dev/null");
     $self->{r2}->read();
 }
 
@@ -199,7 +199,7 @@ sub quit_http {
     $self->{uri} = undef;
 }
 
-# Just for handiness sake. 
+# Just for handiness sake.
 sub close {
     my $self = shift;
     $self->quit();

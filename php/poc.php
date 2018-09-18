@@ -7,7 +7,7 @@ $descs = array(
 	1 => array("pipe", "w"),  // stdout
 	2 => array("pipe", "w")   // stderr
 );
-$proc = proc_open("r2 -q0 /bin/ls", $descs, $pipes);
+$proc = proc_open("radare2 -q0 /bin/ls", $descs, $pipes);
 if (is_resource($proc)) {
 	 $msg = fread($pipes[1], 1);
 }
