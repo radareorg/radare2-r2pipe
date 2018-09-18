@@ -40,8 +40,8 @@ let open_file f_name =
         (out_r, out_w),
         (_, err_w) = Unix.(pipe (), pipe (), pipe ())
     in
-    let args = [|"r2"; "-2"; "-q0"; f_name|] in
-    let pid = Unix.create_process "r2" args ins_r out_w err_w in
+    let args = [|"radare2"; "-2"; "-q0"; f_name|] in
+    let pid = Unix.create_process "radare2" args ins_r out_w err_w in
     (* Get rid of the beginning \x00 *)
     ignore (Unix.read out_r (Bytes.create 1) 0 1);
     {pid; read_from = out_r; write_to = ins_w}

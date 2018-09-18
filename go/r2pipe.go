@@ -98,7 +98,7 @@ func newPipeFd() (*Pipe, error) {
 }
 
 func newPipeCmd(file string) (*Pipe, error) {
-	r2cmd := exec.Command("r2", "-q0", file)
+	r2cmd := exec.Command("radare2", "-q0", file)
 	stdin, err := r2cmd.StdinPipe()
 	if err != nil {
 		return nil, err

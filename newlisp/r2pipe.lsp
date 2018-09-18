@@ -37,7 +37,7 @@
 (define (r2pipe-spawn:new filePath r2path)
 	(map set '(myin bcout) (pipe))
 	(map set '(bcin myout) (pipe))
-	(if (not r2path) (set 'r2path (first (exec "which r2"))))
+	(if (not r2path) (set 'r2path (first (exec "which radare2"))))
 	(set 'pid (process (string r2path " -q0 " filePath) bcin bcout))
 	;; XXX is this a bug in newLisp? process never returns -1
 	; (if (= -1 pid) (throw-error "Cannot spawn r2"))

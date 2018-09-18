@@ -8,28 +8,28 @@
 
 -export([init/1, init/2, init/3, cmd/2, cmdj/2, quit/0]).
 
-init(pipe, File) -> 
-	init(pipe, File, "r2").
+init(pipe, File) ->
+	init(pipe, File, "radare2").
 
-init(pipe, File, R2Bin) -> 
+init(pipe, File, R2Bin) ->
 	Path =  R2Bin ++ " -q0 " ++ File,
 	r2pipe_handler:start(Path),
 	{pipe, r2pipe_handler}.
 
-init(lpipe) -> 	
+init(lpipe) ->
 	r2pipe_handler:start(lpipe),
 	timer:sleep(50), %% ugly sleep to let i/o initialize
 	{pipe, r2pipe_handler}.
 
-cmd({pipe, _}, Cmd) -> 
+cmd({pipe, _}, Cmd) ->
 	{ok, Data} = r2pipe_handler:call(prepare_cmd(Cmd)),
 	binary_to_list(Data).
 
-cmdj({pipe, _}, Cmd) -> 
+cmdj({pipe, _}, Cmd) ->
 	{ok, Data} = r2pipe_handler:call(prepare_cmd(Cmd)),
 	parse_json(Data).
-	
-quit() -> 
+
+quit() ->
 	r2pipe_handler:stop().
 
 prepare_cmd(Cmd) ->

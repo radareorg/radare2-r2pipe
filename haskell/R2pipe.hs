@@ -28,7 +28,7 @@ data R2Context = HttpCtx String
 open :: String -> IO R2Context
 open url@('h':'t':'t':'p':_) = return $ HttpCtx (url ++ "/cmd/")
 open filename = do
-    handles@(_, hOut, _, _) <- createProcess' $ proc "r2" ["-q0", filename]
+    handles@(_, hOut, _, _) <- createProcess' $ proc "radare2" ["-q0", filename]
     lHTakeWhile (/= 0) hOut -- drop the inital null that r2 emits
     return $ LocalCtx handles
 

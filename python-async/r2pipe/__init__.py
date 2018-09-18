@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
 	print("[+] Spawning r2 tcp and http servers")
 	os.system("pkill r2")
-	os.system("r2 -qc.:9080 /bin/ls &")
-	os.system("r2 -qc=h /bin/ls &")
+	os.system("radare2 -qc.:9080 /bin/ls &")
+	os.system("radare2 -qc=h /bin/ls &")
 	time.sleep(1)
 
 	if sys.version_info <= (3, 0):
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 		info = rlocal.cmdj("ij")
 		print("Architecture: " + info['bin']['machine'])
 
-		# Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")
+		# Test r2pipe with remote tcp process (launch it with "radare2 -qc.:9080 myfile")
 		print("[+] Testing python r2pipe tcp://")
 		rremote = open("tcp://127.0.0.1:9080")
 		disas = rremote.cmd("pi 5")
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 		else:
 			print(disas)
 
-		# Test r2pipe with remote http process (launch it with "r2 -qc=H myfile")
+		# Test r2pipe with remote http process (launch it with "radare2 -qc=H myfile")
 		print("[+] Testing python r2pipe http://")
 		rremote = open("http://127.0.0.1:9090")
 		disas = rremote.cmd("pi 5")
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 			rlocal.wait([t1, t2, t3])
 
 		#
-		# Test r2pipe with remote tcp process (launch it with "r2 -qc.:9080 myfile")
+		# Test r2pipe with remote tcp process (launch it with "radare2 -qc.:9080 myfile")
 		#
 		#   Start 1 task
 		print("[+] Testing python r2pipe tcp://")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 			rremote.wait([t1, t2, t3])
 
 		#
-		# Test r2pipe with remote http process (launch it with "r2 -qc=H myfile")
+		# Test r2pipe with remote http process (launch it with "radare2 -qc=H myfile")
 		#
 		print("[+] Testing python r2pipe http://")
 		rremote = open("tcp://127.0.0.1:9080")
@@ -155,4 +155,4 @@ if __name__ == "__main__":
 
 			rremote.wait([t1, t2, t3])
 
-	os.system("pkill -INT r2")
+	os.system("pkill -INT radare2")

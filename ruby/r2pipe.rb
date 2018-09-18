@@ -20,7 +20,7 @@ class R2Pipe
       @write = IO.new(fdOut, 'w')
       @pid = -1
     else
-      exec = "r2 -q0 #{Shellwords.shellescape file} 2>/dev/null"
+      exec = "radare2 -q0 #{Shellwords.shellescape file} 2>/dev/null"
       PTY.spawn(exec) do |read, write, pid|
         @read = read
         @write = write
