@@ -68,7 +68,7 @@ But there is r2pipe for:
 	PHP         -     X     -    -    -   -    -    -   -   -
 	Python      X     X     X    X    X   X    X    X   X   -
 	Ruby        X     X     -    -    -   -    X    -   -   -
-	Rust        X     X     -    -    X   -    X    -   -   -
+	Rust        X     X     -    X    X   -    X    -   -   -
 	Swift       X     X     X    X    -   -    X    -   X   -
 	Vala        -     X     X    -    -   -    -    -   -   -
 	Clojure     X     X     -    -    -   -    -    -   -   -
