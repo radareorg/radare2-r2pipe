@@ -2,7 +2,7 @@
 
 # author pancake@nopcode.org
 
-require 'pty'
+require 'open3'
 require 'json'
 require 'shellwords'
 
@@ -21,12 +21,11 @@ class R2Pipe
       @pid = -1
     else
       exec = "radare2 -q0 #{Shellwords.shellescape file} 2>/dev/null"
-      PTY.spawn(exec) do |read, write, pid|
-        @read = read
-        @write = write
-        @pid = pid
-        @read.gets("\0")
-      end
+      write, read, wait_thr = Open3.popen2(exec)
+      @read = read
+      @write = write
+      @pid = wait_thr.pid
+      @read.gets("\0")
     end
   end
 
