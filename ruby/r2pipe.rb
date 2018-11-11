@@ -10,22 +10,13 @@ require 'shellwords'
 class R2Pipe
   def initialize(file = nil)
     @file = file
-    if file == nil
-      fdIn = ENV['R2PIPE_IN'].to_i
-      fdOut = ENV['R2PIPE_OUT'].to_i
-      if fdIn < 1 or fdOut < 1
-        raise 'Cannot find R2PIPE_IN and R2PIPE_OUT environment variables'
-      end
-      @read = IO.new(fdIn, 'r')
-      @write = IO.new(fdOut, 'w')
+    if file.nil?
+      fd_in, fd_out = getfds
+      @read = IO.new(fd_in, 'r')
+      @write = IO.new(fd_out, 'w')
       @pid = -1
     else
-      exec = "radare2 -q0 #{Shellwords.shellescape file} 2>/dev/null"
-      write, read, wait_thr = Open3.popen2(exec)
-      @read = read
-      @write = write
-      @pid = wait_thr.pid
-      @read.gets("\0")
+      execute file
     end
   end
 
@@ -43,14 +34,35 @@ class R2Pipe
     cmd('q!')
     @read.close
     @write.close
-    if @pid != -1
-      ::Process.wait @pid
-    end
+    return if @pid == -1
+
+    ::Process.wait @pid
   end
 
   def json(str)
-    if str != nil
-      JSON.parse str.sub("\n", '').sub("\r", '')
+    return if str.nil?
+
+    JSON.parse str.sub("\n", '').sub("\r", '')
+  end
+
+  private
+
+  def getfds
+    fd_in = ENV['R2PIPE_IN'].to_i
+    fd_out = ENV['R2PIPE_OUT'].to_i
+    if fd_in < 1 || fd_out < 1
+      raise 'Cannot find R2PIPE_IN and R2PIPE_OUT environment variables'
     end
+
+    [fd_in, fd_out]
+  end
+
+  def execute(file)
+    exec = "radare2 -q0 #{Shellwords.shellescape file} 2>/dev/null"
+    write, read, wait_thr = Open3.popen2(exec)
+    @read = read
+    @write = write
+    @pid = wait_thr.pid
+    @read.gets("\0")
   end
 end
