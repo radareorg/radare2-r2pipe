@@ -34,7 +34,7 @@ try:
 except ImportError:
         r2lang = None
 
-VERSION = "0.9.9"
+VERSION = "1.0.0"
 
 if sys.version_info >= (3, 0):
         import urllib.request

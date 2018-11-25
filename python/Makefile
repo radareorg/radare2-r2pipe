@@ -1,16 +1,24 @@
 PWD=$(shell pwd)
-PYTHON?=`pwd`/../../python-wrapper
+PYTHON?=`pwd`/python-wrapper
 PYTHON_VERSION?=`${PYTHON} --version 2>&1 | cut -d ' ' -f 2 | cut -d . -f 1,2`
 PYTHON_PKGDIR=$(shell ${PYTHON} ../../mp.py)
 PYTHON_INSTALL_DIR=${DESTDIR}/${PYTHON_PKGDIR}/r2pipe
 
 all:
+	$(PYTHON) setup.py build sdist
 
 install: uninstall
-	cp -rf r2pipe "$(PYTHON_INSTALL_DIR)"
+	$(PYTHON) setup.py install
+
+clean:
+	$(PYTHON) setup.py clean
+	rm -rf dist
 
 symstall: uninstall
 	ln -fs $(PWD)/r2pipe "$(PYTHON_INSTALL_DIR)"
+
+twine:
+	sudo pip install twine
 
 test:
 	PYTHONPATH=$$PWD python examples/bug.py
@@ -20,4 +28,5 @@ uninstall:
 
 pub publish:
 	#LC_CTYPE=C python3 setup.py sdist upload -r pypi
-	LC_CTYPE=C python2 setup.py sdist upload -r pypi
+	#LC_CTYPE=C python setup.py sdist upload -r https://upload.pypi.org/pypi/
+	twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
