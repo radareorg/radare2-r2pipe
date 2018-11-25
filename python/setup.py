@@ -12,7 +12,7 @@ setup(
     long_description=readme,
     author='pancake',
     author_email='pancake@nopcode.org',
-    url='http://rada.re',
+    url='https://rada.re',
     package_dir={'r2pipe': 'r2pipe'},
     packages=['r2pipe']
 )
