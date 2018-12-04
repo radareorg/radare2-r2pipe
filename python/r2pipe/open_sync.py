@@ -49,8 +49,33 @@ class  open(OpenBase):
                         self.nonblocking = True
                         if self.nonblocking:
                                 fd = self.process.stdout.fileno()
-                                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)        
+                                if not self.__make_non_blocking(fd):
+                                        Exception('ERROR: Cannot make stdout pipe non-blocking')
+
+        @staticmethod
+        def __make_non_blocking(fd):
+                if fcntl is not None:
+                        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+                        return True
+
+                if os.name != 'nt':
+                        raise NotImplementedError()
+
+                import msvcrt
+                from ctypes import windll, byref, WinError
+                from ctypes.wintypes import HANDLE, DWORD, POINTER, BOOL
+
+                LPDWORD = POINTER(DWORD)
+                SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
+                SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
+                SetNamedPipeHandleState.restype = BOOL
+
+                h = msvcrt.get_osfhandle(fd)
+
+                PIPE_NOWAIT = DWORD(0x00000001)
+                res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
+                return res != 0
 
         def _cmd_process(self, cmd): 
                 cmd = cmd.strip().replace("\n", ";")
