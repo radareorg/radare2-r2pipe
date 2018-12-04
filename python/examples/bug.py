@@ -7,11 +7,11 @@ def test(msg, a, b):
 	global err
 	sys.stdout.write("%s  "%(msg))
 	if a == b:
-		print "ok"
+		print("ok")
 	else:
 		err = err + 1
-		print "FAIL"
-		print a
+		print("FAIL")
+		print(a)
 
 def verify(title, cmd, expected):
 	r2 = r2pipe.open("-")

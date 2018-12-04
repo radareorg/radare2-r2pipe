@@ -4,6 +4,9 @@ PYTHON_VERSION?=`${PYTHON} --version 2>&1 | cut -d ' ' -f 2 | cut -d . -f 1,2`
 PYTHON_PKGDIR=$(shell ${PYTHON} ../../mp.py)
 PYTHON_INSTALL_DIR=${DESTDIR}/${PYTHON_PKGDIR}/r2pipe
 
+PYTHON2=python
+PYTHON3=python3
+
 all:
 	$(PYTHON) setup.py build sdist
 
@@ -21,7 +24,10 @@ twine:
 	sudo pip install twine
 
 test:
-	PYTHONPATH=$$PWD python examples/bug.py
+	PYTHONPATH=$$PWD $(PYTHON) examples/bug.py
+	PYTHONPATH=$$PWD $(PYTHON3) examples/bug.py
+	PYTHONPATH=$$PWD $(PYTHON) examples/test.py
+	PYTHONPATH=$$PWD $(PYTHON3) examples/test.py
 
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
