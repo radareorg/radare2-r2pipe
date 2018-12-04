@@ -23,11 +23,17 @@ symstall: uninstall
 twine:
 	sudo pip install twine
 
-test:
-	PYTHONPATH=$$PWD $(PYTHON) examples/bug.py
-	PYTHONPATH=$$PWD $(PYTHON3) examples/bug.py
-	PYTHONPATH=$$PWD $(PYTHON) examples/test.py
-	PYTHONPATH=$$PWD $(PYTHON3) examples/test.py
+test: test2 test3
+
+test2:
+	@echo "Testing Python2"
+	-PYTHONPATH=$$PWD $(PYTHON) examples/bug.py
+	-PYTHONPATH=$$PWD $(PYTHON) examples/test.py
+
+test3:
+	@echo "Testing Python3"
+	-PYTHONPATH=$$PWD $(PYTHON3) examples/bug.py
+	-PYTHONPATH=$$PWD $(PYTHON3) examples/test.py
 
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
