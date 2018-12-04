@@ -26,14 +26,12 @@ twine:
 test: test2 test3
 
 test2:
-	@echo "Testing Python2"
+	@echo "Testing $(PYTHON)"
 	-PYTHONPATH=$$PWD $(PYTHON) examples/bug.py
 	-PYTHONPATH=$$PWD $(PYTHON) examples/test.py
 
 test3:
-	@echo "Testing Python3"
-	-PYTHONPATH=$$PWD $(PYTHON3) examples/bug.py
-	-PYTHONPATH=$$PWD $(PYTHON3) examples/test.py
+	@$(MAKE) test2 PYTHON=$(PYTHON3)
 
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
