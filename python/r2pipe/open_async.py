@@ -3,8 +3,9 @@
 This script use code from r2pipe-async/open_p3.py script.
 
 """
-import re
 import asyncio
+import os
+import re
 
 from collections import Iterable
 from contextlib import ContextDecorator
@@ -29,13 +30,18 @@ class open(OpenBase, ContextDecorator):
                 if not self._loop.is_closed():
                         self._loop.close()
 
-        def __init__(self, filename='', flags=[]):
+        def __init__(self, filename='', flags=[], radare2home=None):
                 super(open, self).__init__(filename, flags)
-                watcher = asyncio.get_child_watcher()
-                
-                self._loop = asyncio.new_event_loop()
 
-                watcher.attach_loop(self._loop)
+                self.r2home = radare2home
+
+                if os.name == 'nt':
+                        self._loop = asyncio.ProactorEventLoop()
+                        asyncio.set_event_loop(self._loop)
+                else:
+                        watcher = asyncio.get_child_watcher()
+                        self._loop = asyncio.new_event_loop()
+                        watcher.attach_loop(self._loop)
 
                 self.asyn = True
 
@@ -68,7 +74,6 @@ class open(OpenBase, ContextDecorator):
                         cmd = ["-q0", filename]
                         cmd = cmd[:1] + flags + cmd[1:]
                         self._process_start_cmd = cmd
-                        self._processes = []
 
                 else:
                         self.asyn = False
@@ -90,35 +95,43 @@ class open(OpenBase, ContextDecorator):
 
                 # Create and start a new task (coroutine)
                 self._loop.run_until_complete(task)
-                return task
+                return task.result() if task else None
 
         @asyncio.coroutine
         def _cmd_process(self, cmd, future, callback):
-                create = asyncio.create_subprocess_exec(get_radare_path(),
-                                                        *self._process_start_cmd,
-                                                        shell=False,
-                                                        stdin=asyncio.subprocess.PIPE,
-                                                        stdout=asyncio.subprocess.PIPE,
-                                                        loop=self._loop)
+                if not hasattr(self, 'process'):
+                        if self.r2home is not None:
+                                if not os.path.isdir(self.r2home):
+                                        raise Exception('`radare2home` passed to `open` is invalid, leave it None or put a valid path to r2 folder')
+                                r2path = os.path.join(self.r2home, 'radare2')
+                                if os.name == 'nt':
+                                        r2path += '.exe'
+                        else:
+                                r2path = get_radare_path()
 
-                process = yield from create  # Init the process
+                        create = asyncio.create_subprocess_exec(r2path,
+                                                                *self._process_start_cmd,
+                                                                shell=False,
+                                                                stdin=asyncio.subprocess.PIPE,
+                                                                stdout=asyncio.subprocess.PIPE,
+                                                                loop=self._loop)
 
-                yield from process.stdout.read(1)  # Reads initial \x00
+                        self.process = yield from create  # Init the process
 
-                process.stdin.write(bytes(cmd + '\n', 'utf-8'))
+                        yield from self.process.stdout.read(1)  # Reads initial \x00
+
+                self.process.stdin.write(bytes(cmd + '\n', 'utf-8'))
 
                 out = []
                 while True:
                         # foo = self.process.stdout.read(1)
-                        foo = yield from process.stdout.read(1)
+                        foo = yield from self.process.stdout.read(1)
                         if foo == b'\x00':
                                 break
                         if len(foo) < 1:
                                 return None
                         out.append(foo)
 
-                process.stdin.close()
-                process.kill()
                 out = b"".join(out).decode('utf-8')
                 future.set_result((out, callback))
                 return out
