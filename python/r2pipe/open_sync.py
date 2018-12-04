@@ -21,7 +21,7 @@ except ImportError:
 
 class  open(OpenBase):
                 
-        def __init__(self, filename='', flags=[]):
+        def __init__(self, filename='', flags=[], radare2home=None):
                 super(open, self).__init__(filename, flags)
                 if filename.startswith("http"):
                         self._cmd = self._cmd_http
@@ -38,7 +38,16 @@ class  open(OpenBase):
                         self.conn.connect((r.group(1), int(r.group(2))))
                 elif filename:
                         self._cmd = self._cmd_process
-                        cmd = ["radare2", "-q0", filename]
+                        if radare2home is not None:
+                                if not os.path.isdir(radare2home):
+                                        raise Exception('`radare2home` passed is invalid, leave it None or put a valid path to r2 folder')
+                                r2e = os.path.join(radare2home, 'radare2')
+                        else:
+                                r2e = 'radare2'
+                        if os.name == 'nt':
+                                # avoid errors on Windows when subprocess messes with name
+                                r2e += '.exe'
+                        cmd = [r2e, "-q0", filename]
                         cmd = cmd[:1] + flags + cmd[1:]
                         try:
                                self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)

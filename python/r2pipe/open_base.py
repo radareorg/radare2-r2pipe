@@ -168,9 +168,17 @@ class OpenBase(object):
                 """
                 self.cmd("q")
                 if hasattr(self, 'process'):
-                        self.process.stdin.flush()
+                        import subprocess
+                        is_async = not isinstance(self.process, subprocess.Popen)
+                        if not is_async:
+                                self.process.stdin.flush()
                         self.process.terminate()
                         self.process.wait()
+                        delattr(self, 'process')
+
+                        if is_async:
+                                import asyncio
+                                asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
         # r2 commands
         def cmd(self, cmd, **kwargs):
@@ -198,10 +206,7 @@ class OpenBase(object):
                 Returns:
                     Returns a Python object respresenting the parsed JSON
                 """
-                if self.asyn:
-                        result = self.cmd(cmd, **kwargs).result()
-                else:
-                        result = self.cmd(cmd, **kwargs)
+                result = self.cmd(cmd, **kwargs)
 
                 try:
                         data = json.loads(result)
