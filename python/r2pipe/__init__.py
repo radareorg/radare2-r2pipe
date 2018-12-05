@@ -27,8 +27,7 @@ Example:
 import os
 import sys
 import time
-import socket
-import urllib
+
 try:
         import r2lang
 except ImportError:
@@ -36,17 +35,8 @@ except ImportError:
 
 VERSION = "1.0.0"
 
-if sys.version_info >= (3, 0):
-        import urllib.request
-        urlopen = urllib.request.urlopen
-        import urllib.error
-        URLError = urllib.error.URLError
-        from .open_async import open
-else:
-        import urllib2
-        urlopen = urllib2.urlopen
-        URLError = urllib2.URLError
-        from .open_sync import open
+from .open_sync import open
+
 
 def version():
         """Return string with the version of the r2pipe library
@@ -91,9 +81,9 @@ if __name__ == "__main__":
                 else:
                         print(disas)
         else:
-		# --------------------------------------------------------------------------
-		# Python 3 examples, with non-blocking API and callbacks
-		# --------------------------------------------------------------------------
+                # --------------------------------------------------------------------------
+                # Python 3 examples, with non-blocking API and callbacks
+                # --------------------------------------------------------------------------
                 def callback(result):
                         print(result)
 

@@ -6,20 +6,27 @@ This script use code from old __init__.py open object
 
 import re
 import socket
+import time
 import urllib
-import urllib2
 import os
+import sys
 from subprocess import Popen, PIPE
 from .open_base import OpenBase, get_radare_path
-urlopen = urllib2.urlopen
-URLError = urllib2.URLError
+
+if sys.version_info >= (3, 0):
+        from urllib.request import urlopen
+        from urllib.error import URLError
+else:
+        from urllib2 import urlopen
+        from urllib2 import URLError
+
 try:
         import fcntl
 except ImportError:
         fcntl = None
 
 
-class  open(OpenBase):
+class open(OpenBase):
                 
         def __init__(self, filename='', flags=[], radare2home=None):
                 super(open, self).__init__(filename, flags)
@@ -36,7 +43,9 @@ class  open(OpenBase):
                         self._cmd = self._cmd_tcp
                         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         self.conn.connect((r.group(1), int(r.group(2))))
-                elif filename:
+                else:
+                        if not filename:
+                                filename = '-'
                         self._cmd = self._cmd_process
                         if radare2home is not None:
                                 if not os.path.isdir(radare2home):
@@ -50,7 +59,7 @@ class  open(OpenBase):
                         cmd = [r2e, "-q0", filename]
                         cmd = cmd[:1] + flags + cmd[1:]
                         try:
-                               self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE)
+                               self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, bufsize=0)
                         except:
                                 raise Exception("ERROR: Cannot find radare2 in PATH")
                         self.process.stdout.read(1)  # Reads initial \x00
@@ -72,8 +81,12 @@ class  open(OpenBase):
                         raise NotImplementedError()
 
                 import msvcrt
-                from ctypes import windll, byref, WinError
-                from ctypes.wintypes import HANDLE, DWORD, POINTER, BOOL
+                from ctypes import windll, byref
+                from ctypes.wintypes import HANDLE, DWORD, BOOL
+                try:
+                        from ctypes import POINTER
+                except:
+                        from ctypes.wintypes import POINTER
 
                 LPDWORD = POINTER(DWORD)
                 SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
@@ -88,10 +101,10 @@ class  open(OpenBase):
 
         def _cmd_process(self, cmd): 
                 cmd = cmd.strip().replace("\n", ";")
-                self.process.stdin.write(cmd + '\n')
+                self.process.stdin.write((cmd + '\n').encode('utf8'))
                 r = self.process.stdout
                 self.process.stdin.flush()
-                out = ''
+                out = b''
                 while True:
                         if self.nonblocking:
                                 try:
@@ -100,11 +113,18 @@ class  open(OpenBase):
                                         continue
                         else:
                                 foo = r.read(1)
-                        if len(foo) > 0 and foo[-1] == '\x00':
-                                out += foo[0:-1]
-                                break
-                        out += foo
-                return out
+                        if foo:
+                                if foo.endswith(b'\0'):
+                                        out += foo[:-1]
+                                        break
+
+                                out += foo
+                        else:
+                                # if there is no any output from pipe this loop will eat CPU, probably we have to do micro-sleep here
+                                if self.nonblocking:
+                                        time.sleep(0.001)
+
+                return out.decode('utf8')
 
         def _cmd_http(self, cmd):
                 try:
