@@ -7,6 +7,10 @@ import asyncio
 import os
 import re
 
+
+# python3 specific code, add guards to not import it in python2
+# whole file doesn't have any profit of asyncio usage, TODO: refactor
+
 from collections import Iterable
 from contextlib import ContextDecorator
 from urllib.parse import quote, urlparse
@@ -68,16 +72,16 @@ class open(OpenBase, ContextDecorator):
                         self._port = r.group(2)
 
                 elif filename:
-                        
+
                         self._cmd_coro = self._cmd_process
-                         
+
                         cmd = ["-q0", filename]
                         cmd = cmd[:1] + flags + cmd[1:]
                         self._process_start_cmd = cmd
 
                 else:
                         self.asyn = False
-                        
+
 
         def _callback_wrapper(self, future):
                 result, callback = future.result()
@@ -120,6 +124,7 @@ class open(OpenBase, ContextDecorator):
 
                         yield from self.process.stdout.read(1)  # Reads initial \x00
 
+                cmd = cmd.strip().replace("\n", ";")
                 self.process.stdin.write(bytes(cmd + '\n', 'utf-8'))
 
                 out = []
