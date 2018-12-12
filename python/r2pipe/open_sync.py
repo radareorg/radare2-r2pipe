@@ -43,9 +43,7 @@ class open(OpenBase):
                         self._cmd = self._cmd_tcp
                         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         self.conn.connect((r.group(1), int(r.group(2))))
-                else:
-                        if not filename:
-                                filename = '-'
+                elif filename:
                         self._cmd = self._cmd_process
                         if radare2home is not None:
                                 if not os.path.isdir(radare2home):
