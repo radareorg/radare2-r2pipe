@@ -3,6 +3,9 @@ package org.radare.r2pipe;
 import java.io.*;
 import java.net.*;
 
+// java7
+import javax.json.*;
+
 public class R2Pipe {
 	private boolean viaHttp;
 	private String file;
@@ -44,11 +47,11 @@ public class R2Pipe {
 		}
 	}
 
-	public String cmd(String str) throws Exception {
+	public String cmd(String command) throws Exception {
 		if (this.viaHttp) {
-			return httpCmd (str);
+			return httpCmd (command);
 		}
-		stdin.write ((str + "\n").getBytes());
+		stdin.write ((command+ "\n").getBytes());
 		stdin.flush();
 		StringBuffer sb = new StringBuffer();
 		byte[] b = new byte[1];
@@ -59,6 +62,11 @@ public class R2Pipe {
 			sb.append ((char)b[0]);
 		}
 		return sb.toString();
+	}
+
+	public JsonObject cmdj(String command) throws Exception {
+        	JsonReader reader = Json.createReader(new StringReader(this.cmd(command)));
+		return reader.readObject();
 	}
 
 	public String httpCmd(String str) {

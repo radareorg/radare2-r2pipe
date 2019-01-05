@@ -1,5 +1,8 @@
+JARPATH=$(shell pwd)
+include config.mk
+
 all:
-	javac -source 1.6 -target 1.6 -classpath . org/radare/r2pipe/*.java examples/Test.java
+	javac $(JAVACFLAGS) org/radare/r2pipe/*.java examples/Test.java
 	jar cvf r2pipe.jar org
 	$(MAKE) -C jni
 	$(MAKE) -C examples
