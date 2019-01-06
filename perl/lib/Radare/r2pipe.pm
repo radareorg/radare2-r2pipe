@@ -19,190 +19,225 @@ use URI::Escape;
 use JSON;
 
 # Version
-our $VERSION = 0.2.1;
+our $VERSION = 0.3;
 
 sub new {
-    my $class = shift;
-    my $self = {};
+	my $class = shift;
+	my $self = {};
 
-    # Bless you.
-    bless $self, $class;
+	# Bless you.
+	bless $self, $class;
 
-    # Open connection to r2 if argument was given.
-    $self->parse_filename(shift) if @_;
+	# Open connection to r2 if argument was given.
+	$self->parse_arguments(@_) if @_;
 
-    return $self;
+	return $self;
 }
 
-sub parse_filename {
-    my ($self, $filename) = @_;
-    if($filename =~ m#^http://#i) { # It's an HTTP server
-        $self->r2pipe_http($filename);
-    } elsif($filename =~ m#^tcp://#i) { # TCP server
-        $self->r2pipe_tcp($filename);
-    } else { # File (probably...)
-        $self->r2pipe_file($filename);
-    }
-    # So that open() knows if it's already opened a file
-    $self->{opened} = 1;
+sub parse_arguments {
+	my ($self, @arguments) = @_;
+	my %parsed_arguments = $self->convert_to_named_parameters(@arguments);
+	$self->{arguments} = \%parsed_arguments;
+	if(defined $parsed_arguments{http} && $parsed_arguments{http} =~ m#^http://#i) { # It's an HTTP server
+		$self->r2pipe_http($parsed_arguments{http});
+	} elsif(defined $parsed_arguments{tcp} && $parsed_arguments{tcp} =~ m#^tcp://#i) { # TCP server
+		$self->r2pipe_tcp($parsed_arguments{tcp});
+	} else { # File (probably...)
+		$self->r2pipe_file($parsed_arguments{file});
+	}
+}
+
+sub convert_to_named_parameters {
+	my ($self, @arguments) = @_;
+	my %parsed_arguments = ();
+	if(@arguments == 1) {
+		# Whatever the argument was (tcp, http or filepath), handle it.
+		$parsed_arguments{filename} = $arguments[0];
+		$parsed_arguments{file} = $arguments[0];
+		$parsed_arguments{tcp} = $arguments[0];
+		$parsed_arguments{url} = $arguments[0];
+		$parsed_arguments{http} = $arguments[0];
+	} else {
+		die "parse_arguments(): More than one argument but unable to interpret as hash\n" if @arguments % 2;
+		%parsed_arguments = @arguments;
+		$parsed_arguments{http} = $parsed_arguments{url} if defined $parsed_arguments{url};
+		$parsed_arguments{url} = $parsed_arguments{http} if defined $parsed_arguments{http};
+		$parsed_arguments{file} = $parsed_arguments{filename} if defined $parsed_arguments{filename};
+		$parsed_arguments{filename} = $parsed_arguments{file} if defined $parsed_arguments{file};
+	}
+	return %parsed_arguments;
 }
 
 sub r2pipe_http {
-    my ($self, $base_uri) = @_;
-    $base_uri .= '/' if $base_uri !~ m#/$#;
-    $base_uri .= 'cmd/';
+	my ($self, $base_uri) = @_;
+	$base_uri .= '/' if $base_uri !~ m#/$#;
+	$base_uri .= 'cmd/';
 
-    # Store type and URI in instance variables
-    $self->{type} = 'http';
-    $self->{uri} = $base_uri;
-    $self->{ua} = LWP::UserAgent->new;
+	# Store type and URI in instance variables
+	$self->{type} = 'http';
+	$self->{uri} = $base_uri;
+	$self->{ua} = LWP::UserAgent->new;
 }
 
 sub r2pipe_tcp {
-    my ($self, $filename) = @_;
-    my ($hostname, $port) = $filename =~ m#^tcp://([^:]+):(\d+)/?#i;
-    # Open TCP socket to r2
-    my $socket = new IO::Socket::INET(PeerHost => $hostname, PeerPort => $port, Proto => 'tcp');
-    die "r2pipe_tcp(): Could not connect to '$hostname:$port': $!\n" unless $socket;
-    $socket->autoflush(1);
+	my ($self, $filename) = @_;
+	my ($hostname, $port) = $filename =~ m#^tcp://([^:]+):(\d+)/?#i;
 
-    # Store type and socket
-    $self->{type} = 'tcp';
-    $self->{socket} = $socket;
+	$self->{socket}->close() if $self->{socket}; # We can be called by cmd_tcp if the socket is closed already...
+
+	# Open TCP socket to r2
+	my $socket = new IO::Socket::INET(PeerHost => $hostname, PeerPort => $port, Proto => 'tcp');
+	die "r2pipe_tcp(): Could not connect to '$hostname:$port': $!\n" unless $socket;
+	$socket->autoflush(1);
+
+	# Store type and socket
+	$self->{type} = 'tcp';
+	$self->{socket} = $socket;
 }
 
 sub r2pipe_file {
-    my ($self, $filename) = @_;
-    if(!(-e $filename && -f $filename && -r $filename)) { # Cannot read file :(
-        die "r2pipe_file(): File '$filename' is not readable.\n";
-    }
-    # Store type and URI in instance
-    $self->{type} = 'file';
-    $self->{file} = $filename;
-    # Spawn process
-    $self->spawn_r2($filename);
+	my ($self, $filename) = @_;
+	if(!(-e $filename && -f $filename && -r $filename)) { # Cannot read file :(
+		die "r2pipe_file(): File '$filename' is not readable.\n" unless $filename eq '-';
+	}
+	# Store type and URI in instance
+	$self->{type} = 'file';
+	$self->{file} = $filename;
+	# Spawn process
+	$self->spawn_r2($filename);
 }
 
 sub r2_exists {
-    `which r2`;
+	`which r2`;
 }
 
 sub spawn_r2 {
-    my ($self, $file) = @_;
-    die "spawn_r2(): No radare2 found in PATH\n" if ! r2_exists();
+	my ($self, $file) = @_;
+	die "spawn_r2(): No radare2 found in PATH\n" if ! r2_exists();
 
-    # Create PTY and store
-    my $r2pipe = IO::Pty::Easy->new;
-    $self->{r2} = $r2pipe;
+	# Create PTY and store
+	my $r2pipe = IO::Pty::Easy->new;
+	$self->{r2} = $r2pipe;
 
-    # Spawn
-    $self->{r2}->spawn("radare2 -q0 $file 2>/dev/null");
-    $self->{r2}->read();
-}
+	# Setup command...
+	my $cmd = 'radare2 -q0 ';
+	$cmd .= '-d ' if $self->{arguments}->{debug};
+	$cmd .= '-w ' if $self->{arguments}->{writable} || $self->{arguments}->{writeable};
+	$cmd .= $file;
+	$cmd .= ' 2>/dev/null';
 
-# Input: Filename to open in r2
-sub open {
-    my $self = shift;
-    return -1 if scalar(@_) != 1; # No argument to open :(
-    return -2 if $self->{opened}; # We already have opened a file in r2?
+	# Spawn
+	$self->{r2}->spawn($cmd);
+	$self->{r2}->read();
 
-    # Open...
-    $self->parse_filename(shift);
+	# -A doesn't work with -q0 at this point, so just manually do it ;)
+	if($self->{arguments}->{analyse} || $self->{arguments}->{analyze}) {
+		print $self->cmd("aaa");
+	}
 }
 
 sub cmd {
-    my $self = shift;
+	my $self = shift;
 
-    # Argument handling
-    return -1 if scalar(@_) != 1; # No command to execute? :(
-    return -2 if ! $self->{opened}; # No file was loaded. :(
-    my $command = shift;
+	# Argument handling
+	return -1 if scalar(@_) < 1; # No command to execute? :(
+	my $command = shift;
+	my $dontloop = 0;
+	$dontloop = shift if @_ == 2;
 
-    # Route the command...
-    my $method_name = 'cmd_' . $self->{type}; # Cause I'm lazy
+	# Route the command...
+	my $method_name = 'cmd_' . $self->{type}; # Cause I'm lazy
 
-    # Execute command
-    my $output = $self->$method_name($command);
-    $output =~ s/(\r?\n)*$//;
-    return $output;
+	# Execute command
+	my $output = $self->$method_name($command, $dontloop);
+	$output =~ s/(\r?\n)*$//;
+	$output =~ s/\x00*$//;
+	return $output;
 }
 
 sub cmdj {
-    my $self = shift;
-    my $cmd_result = $self->cmd(@_);
-    $cmd_result = "{}" if ! $cmd_result;
-    return decode_json($cmd_result);
+	my $self = shift;
+	my $cmd_result = $self->cmd(@_);
+	$cmd_result = "{}" if ! $cmd_result;
+	return decode_json($cmd_result);
 }
 
 sub cmd_http {
-    my ($self, $command) = @_;
-    my $url = $self->{uri} . uri_escape($command);
-    my $req = HTTP::Request->new(GET => $url);
-    my $response = $self->{ua}->request($req)->content;
-    return $response;
+	my ($self, $command, $dontloop) = @_;
+	my $url = $self->{uri} . uri_escape($command);
+	my $req = HTTP::Request->new(GET => $url);
+	my $response = $self->{ua}->request($req)->content;
+	return $response;
 }
 
 sub cmd_tcp {
-    my ($self, $command) = @_;
-    $self->{socket}->write($command . "\r\n", length($command) + 2);
-    my ($output, $data) = ('', '');
-    $self->{socket}->recv($data, 9000);
-    while($data) {
-        $output .= $data;
-        $self->{socket}->recv($data, 512);
-    }
-    return $output;
+	my ($self, $command, $dontloop) = @_;
+
+	# With some testing it turns out the connection is dropped by r2 after 1 cmd() output...
+	# So, we reinitialize our connection before doing anything ...
+	$self->r2pipe_tcp($self->{arguments}->{tcp});
+
+	# Write the command to it...
+	$self->{socket}->write($command . "\r\n", length($command) + 2);
+	my ($output, $data) = ('', '');
+	$self->{socket}->recv($data, 128);
+	while($data) {
+		$output .= $data;
+		$self->{socket}->recv($data, 128);
+	}
+	return $output;
 }
 
 sub cmd_file {
-    my ($self, $command) = @_;
-    $self->{r2}->write($command . "\n");
+	my ($self, $command, $dontloop) = @_;
+	my $pty_result = $self->{r2}->write($command . "\n", 1);
 
-    # Read the output...
-    my $output = $self->{r2}->read();
-    while($output !~ /\x00$/) { # Gambatte ne!
-        $output .= $self->{r2}->read();
-    }
-    # Clean up...
-    $output =~ s/^\x00//;
+	# Read the output...
+	my $output = $self->{r2}->read(1);
+	if($dontloop == 0) { # We loop
+		while(!$output || $output !~ /\x00$/) {
+			$output .= $self->{r2}->read();
+		}
+	}
+	# Clean up...
+	$output =~ s/^\x00//;
 
-    # Return
-    return $output;
+	# Return
+	return $output;
 }
 
 sub quit {
-    my $self = shift;
+	my $self = shift;
 
-    # Routing...
-    my $quit_method = 'quit_' . $self->{type};
+	# Routing...
+	my $quit_method = 'quit_' . $self->{type};
 
-    # Calling
-    $self->$quit_method();
-    $self->{opened} = undef;
-    $self->{type} = undef;
+	# Calling
+	$self->$quit_method();
+	$self->{type} = undef;
 }
 
 sub quit_file {
-    my $self = shift;
-    $self->{r2}->close();
-    $self->{file} = undef;
+	my $self = shift;
+	$self->{r2}->close();
+	$self->{file} = undef;
 }
 
 sub quit_tcp {
-    my $self = shift;
-    $self->{socket}->close();
+	my $self = shift;
+	$self->{socket}->close();
 }
 
 sub quit_http {
-    my $self = shift;
-    $self->{ua} = undef;
-    $self->{uri} = undef;
+	my $self = shift;
+	$self->{ua} = undef;
+	$self->{uri} = undef;
 }
 
 # Just for handiness sake.
 sub close {
-    my $self = shift;
-    $self->quit();
+	my $self = shift;
+	$self->quit();
 }
 
 1;
@@ -216,22 +251,30 @@ Radare::r2pipe - Interface with radare2
 
 =head1 VERSION
 
-version 0.1
+version 0.3
 
 =head1 SYNOPSIS
 
     use Radare::r2pipe;
+    use Data::Printer;
 
     my $r2 = Radare::r2pipe->new('/bin/ls');
-    $r2->cmd('iI');
-    $r2->cmdj('ij');
+    print "Information about the /bin/ls binary:\n";
+    print $r2->cmd('iI');
+    print "Information about the /bin/ls binary in JSON: ";
+    print $r2->cmd('ij') . "\n";
+    print "Information about the /bin/ls binary in a native Perl datastructure:\n";
+    p $r2->cmdj('ij');
     $r2->quit();
 
     # Other stuff
-    $r2 = Radare::r2pipe->new;
-    $r2->open('/bin/ls');
-    $r2->cmd('pi 5');
+    print "Opening /bin/ls with -A (analyze) flag.\n";
+    $r2 = Radare::r2pipe->new(file => '/bin/ls', analyse => 1); # Opens r2 with -A option.
+    print "Functions found in /bin/ls:\n";
+    print $r2->cmd('afl') . "\n";
     $r2->close(); # Same as quit()
+
+See `t/test.pl` for more examples on usage such as debugging, writing and etc.
 
 =head1 DESCRIPTION
 
@@ -247,11 +290,11 @@ Also, memory management results into a much simpler thing because you only have 
 
 =head2 new($file)
 
-The C<new> constructor initializes r2 and optionally loads a file into r2.
+The C<new> constructor initializes r2 and optionally loads a file into r2. There's support for TCP and HTTP as well.
+TCP: `Radare::r2pipe->new("tcp://127.0.0.1:9080")`) and HTTP (`Radare::r2pipe->new("http://127.0.0.1:9090")`.
 
-=head2 open($file)
-
-Opens the file in radare2. It also supports radare2 over TCP sockets (`$r2pipe->open("tcp://127.0.0.1:9080")`) and HTTP (`$r2pipe->open("http://127.0.0.1:9090")`).
+Named parameters are also possible:
+`Radare::r2pipe->new(file => "/bin/ls", analyse => 1, debug => 1);`
 
 =head2 cmd($command)
 
