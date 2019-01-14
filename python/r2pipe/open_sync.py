@@ -55,7 +55,13 @@ class open(OpenBase):
                                 # avoid errors on Windows when subprocess messes with name
                                 r2e += '.exe'
                         cmd = [r2e, "-q0", filename]
-                        cmd = cmd[:1] + flags + cmd[1:]
+                        if ' ' in filename:
+                            cmd = cmd[:1] + flags + cmd[1:-1] + [cmd[-1].split(' ')[0]]
+                            arguments = filename.split(' ')[1:]
+                            arguments = ['-Rarg'+str(x+1)+'='+arg for x,arg in enumerate(arguments)]
+                            cmd += arguments
+                        else:
+                            cmd = cmd[:1] + flags + cmd[1:]
                         try:
                                self.process = Popen(cmd, shell=False, stdin=PIPE, stdout=PIPE, bufsize=0)
                         except:
