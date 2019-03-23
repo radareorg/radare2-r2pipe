@@ -274,10 +274,11 @@ let errmsg = '';
 
     ls.on('close', function (code, signal) {
       running = false;
+      let error = errmsg ? errmsg : '';
       if (signal) {
-        cb(new Error('Child received signal ' + signal + '\n' + errmsg? errmsg: ''));
+        cb(new Error('Child received signal ' + signal + '\n' + error));
       } else if (code && r2cmd.toString().indexOf('httpCmd') === -1) {
-        cb(new Error('Cannot spawn children with code ' + code));
+        cb(new Error('Cannot spawn children with code ' + code + '\n' + error));
       }
     });
   }
