@@ -1,4 +1,5 @@
 % -*- Mode: Prolog -*-
+:- module(r2pipe, []).
 :- use_module(library(unix)).
 :- use_module(library(process)).
 :- use_module(library(http/json)).
