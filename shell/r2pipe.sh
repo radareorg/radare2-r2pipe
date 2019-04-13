@@ -18,4 +18,3 @@ r2cmd() {
                 echo "$A"
         done
 }
-
