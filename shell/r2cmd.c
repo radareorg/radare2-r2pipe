@@ -30,8 +30,13 @@ static void r2cmd(int in, int out, const char *cmd) {
 
 int main(int argc, char **argv) {
 	int i;
-	int in = atoi (getenv ("R2PIPE_IN"));
-	int out = atoi (getenv ("R2PIPE_OUT"));
+	char *_in = getenv ("R2PIPE_IN");
+	char *_out = getenv ("R2PIPE_OUT");
+	if (!_in || !_out) {
+		return 1;
+	}
+	int in = atoi (_in);
+	int out = atoi (_out);
 	for (i = 1; i < argc; i++) {
 		r2cmd (in, out, argv[i]);
 	}

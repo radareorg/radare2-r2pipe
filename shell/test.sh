@@ -8,6 +8,10 @@ echo "Running analysis..."
 $R aaa
 echo "Disassembling code..."
 
+$R pdj | jq .
+
+exit 0
+
 $R "pd 3"
 $R "px 32"
 $R "pd 3"
