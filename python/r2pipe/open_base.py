@@ -12,6 +12,8 @@ import json
 import shutil
 import platform
 
+from subprocess import Popen, PIPE
+
 try:
 	import r2lang
 except ImportError:
