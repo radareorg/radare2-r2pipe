@@ -12,6 +12,9 @@ static void r2cmd(int in, int out, const char *cmd) {
 	int n;
 	int bufsz = (1024 * 1024 * 2);
 	unsigned char *buf = malloc (bufsz);
+	if (!buf) {
+		return;
+	}
 	while (1) {
 		int n = read (in, buf, bufsz);
 		int len = strlen ((const char *)buf);
