@@ -1,5 +1,5 @@
 PKGNAME radare2-r2pipe
-VERSION 3.4.0
+VERSION 3.5.0
 CONTACT pancake ; pancake@nopcode.org
 
 SUBDIRS ./Makefile ;
