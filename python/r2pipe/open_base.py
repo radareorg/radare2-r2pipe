@@ -44,6 +44,11 @@ if os.name == "nt":
 def in_rlang():
 	return r2lang is not None and r2lang.cmd is not None
 
+def jo2po(jo):
+	from collections import namedtuple
+	def _json_object_hook(d): return namedtuple('X', d.keys(), rename=True)(*d.values())
+	def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
+	return json2obj(jo)
 
 def get_radare_path():
 	try:
@@ -204,9 +209,9 @@ class OpenBase(object):
         def cmdj(self, cmd, **kwargs):
                 """Same as cmd() but evaluates JSONs and returns an object
                 Args:
-                    cmd (str): r2 command
+                    cmdj (str): r2 command
                 Returns:
-                    Returns a Python object respresenting the parsed JSON
+                    Returns a JSON object respresenting the parsed JSON
                 """
                 result = self.cmd(cmd, **kwargs)
 
@@ -216,6 +221,20 @@ class OpenBase(object):
                         sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
                         data = None
                 return data
+
+        def cmdJ(self, cmd, **kwargs):
+                """Same as cmdj() but evaluates into a native Python Object
+                Args:
+                    cmdJ (str): r2 command
+                Returns:
+                    Returns a Python object respresenting the parsed JSON
+                """
+                result = self.cmd(cmd, **kwargs)
+                try:
+                        return jo2po(result)
+                except (ValueError, KeyError, TypeError) as e:
+                        sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
+                return None
 
         def syscmd(self, cmd):
                 """Executes a program and returns the output (stdout only)
