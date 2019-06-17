@@ -1,8 +1,8 @@
 #!/bin/sh
 
-#r=r2cmd
 #. r2pipe.sh
-R=./r2cmd
+#R=./r2cmd
+R=r2p
 
 echo "Running analysis..."
 $R aaa
