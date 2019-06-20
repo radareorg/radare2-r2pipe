@@ -122,7 +122,7 @@ class open(OpenBase):
                                 if self.nonblocking:
                                         time.sleep(0.001)
 
-                return out
+                return out.decode('utf-8', errors='ignore')
 
         def _cmd_http(self, cmd):
                 try:
@@ -131,7 +131,7 @@ class open(OpenBase):
                         except:
                                 quocmd = urllib.quote(cmd)
                         response = urlopen('{uri}/{cmd}'.format(uri=self.uri, cmd=quocmd))
-                        return response.read()
+                        return response.read().decode('utf-8', errors='ignore')
                 except URLError:
                          pass
                 return None
@@ -143,4 +143,4 @@ class open(OpenBase):
                 while data:
                         res += data
                         data = self.conn.recv(512)
-                return res
+                return res.decode('utf-8', errors='ignore')
