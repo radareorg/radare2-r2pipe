@@ -114,11 +114,11 @@ function pipeCmdOutput (proc, data, cb) {
     return this.pipeQueue[0].result;
   }
 
-  while (data[data.length - 1] == 0x00) {
-    data = data.slice(0, data.length - 1);
+  while (data[len - 1] == 0x00) {
+    len -= 1;
   }
 
-  this.pipeQueue[0].result += data.toString();
+  this.pipeQueue[0].result += data.slice(0, len).toString();
   this.pipeQueue[0].cb(this.pipeQueue[0].error, this.pipeQueue[0].result);
   this.pipeQueue.splice(0, 1);
 
