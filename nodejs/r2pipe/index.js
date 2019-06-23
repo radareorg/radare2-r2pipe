@@ -299,10 +299,15 @@ function isPath (text) {
   return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
 }
 
+function isAvailable () {
+  return IN > 0;
+}
+
 const r2node = {
   r2bin: 'radare2',
   options: [],
   jsonParse: JSON.parse,
+  available: isAvailable,
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function () {
