@@ -115,7 +115,7 @@ function pipeCmdOutput (proc, data, cb) {
   }
 
   while (data[len - 1] == 0x00) {
-    len -= 1;
+    len--;
   }
 
   this.pipeQueue[0].result += data.slice(0, len).toString();
