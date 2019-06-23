@@ -1,6 +1,6 @@
 {
   "name": "r2pipe-promise",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "promisified r2pipe api",
   "types": "r2pipe-promise.d.ts",
   "main": "index.js",
@@ -38,9 +38,9 @@
   },
   "homepage": "http://www.radare.org",
   "devDependencies": {
-    "semistandard": "11.0.0"
+    "semistandard": "^13.0.1"
   },
   "dependencies": {
-    "r2pipe": "^2.6.3"
+    "r2pipe": "^2.7.0"
   }
 }

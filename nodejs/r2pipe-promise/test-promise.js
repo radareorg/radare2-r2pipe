@@ -1,8 +1,8 @@
 
 const r2promise = require('./'); // r2pipe-promise');
-var a = r2promise.open('/bin/ls')
+var a = r2promise.open('/bin/ls');
 
-console.log("AAA", a)
+console.log('AAA', a);
 
 a
 .then(r2 => {

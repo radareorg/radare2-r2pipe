@@ -5,20 +5,20 @@ const r2pipe = require('r2pipe');
 const pendingRejects = new Set();
 
 class R2Pipe {
-  static open(file, options) {
+  static open (file, options) {
     return openPromise(file, options);
   }
 }
 
 module.exports = {
   R2Pipe,
+  available: r2pipe.available,
   open: openPromise,
   syscmd: makePromise(r2pipe, 'syscmd'),
   syscmdj: makePromise(r2pipe, 'syscmdj')
 };
 
-
- function openPromise (file, options) {
+function openPromise (file, options) {
   return new Promise(function (resolve, reject) {
     let cbResolved = false;
     function cb (err, r2) {
@@ -62,7 +62,7 @@ function R2Promise (r2, method, args) {
   let promise = new Promise((resolve, reject) => {
     myReject = reject;
     pendingRejects.add(reject);
-    function handler(err, res) {
+    function handler (err, res) {
       pendingRejects.delete(reject);
       if (finished) {
         console.log('timeout was executed before the execution');
@@ -108,7 +108,7 @@ function R2Promise (r2, method, args) {
 function makePromise (r2, method) {
   return function () {
     return new R2Promise(r2, method, [...arguments]);
-  }
+  };
 }
 
 function r2promise (r2) {

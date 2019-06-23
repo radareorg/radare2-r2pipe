@@ -9,6 +9,6 @@ const radare2FTW = async () => {
   } catch (err) {
     console.error(err);
   }
-}
+};
 
 radare2FTW();
