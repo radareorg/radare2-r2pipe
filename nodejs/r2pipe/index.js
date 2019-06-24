@@ -300,14 +300,14 @@ function isPath (text) {
 }
 
 function isAvailable () {
-  return IN > 0;
+  return !isNaN(IN);
 }
 
 const r2node = {
   r2bin: 'radare2',
   options: [],
   jsonParse: JSON.parse,
-  available: isAvailable,
+  isAvailable: isAvailable,
   syscmd: syscmd,
   syscmdj: syscmdj,
   open: function () {
