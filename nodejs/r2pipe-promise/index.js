@@ -12,7 +12,7 @@ class R2Pipe {
 
 module.exports = {
   R2Pipe,
-  available: r2pipe.available,
+  isAvailable: r2pipe.isAvailable,
   open: openPromise,
   syscmd: makePromise(r2pipe, 'syscmd'),
   syscmdj: makePromise(r2pipe, 'syscmdj')
