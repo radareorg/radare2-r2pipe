@@ -34,7 +34,7 @@ function openPromise (file, options) {
       }
       resolve(r2promise(r2));
     }
-    const args = [file, options, cb].filter(x => x !== undefined);
+    const args = [file||'', options, cb].filter(x => x !== undefined);
     r2pipe.open(...args);
   });
 }
