@@ -156,7 +156,7 @@ function parseJSON (func, cmd, callback) {
 
 function r2bind (ls, cb, r2cmd) {
   let running = false;
-let errmsg = '';
+  let errmsg = '';
   const r2 = {
     pipeQueue: [],
 
@@ -185,7 +185,7 @@ let errmsg = '';
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
       if (typeof cb2 !== 'function') {
-        cb2 = function () {};
+        cb2 = function () {console.error('lost promise');};
       }
       try {
         s = util.cleanCmd(s);
@@ -296,7 +296,7 @@ let errmsg = '';
 }
 
 function isPath (text) {
-  return (text[0] === '.' || text[0] === '/' || fs.existsSync(text));
+  return (text && (text[0] === '.' || text[0] === '/' || fs.existsSync(text)));
 }
 
 function isAvailable () {
@@ -313,10 +313,10 @@ const r2node = {
   open: function () {
     // XXX shrink this spaguetti somehow
     const modes = [
-      function (me, arg) {
+      function (me, arg) { // 0 args
         return me.lpipeSync();
       },
-      function (me, arg) {
+      function (me, arg) { // 1 arg
         if (typeof (arg[0]) === 'function') {
           return me.lpipe(arg[0]);
         }
@@ -325,11 +325,12 @@ const r2node = {
         }
         return me.lpipe(arg[0]);
       },
-      function (me, arg) {
+      function (me, arg) { // 2 args
         if (!arg[0]) {
-          throw new Error('Invalid path');
-        }
-        if (isPath(arg[0])) {
+          const cb = arg[1];
+          return me.lpipe(cb);
+          // throw new Error('Invalid path');
+        } else if (isPath(arg[0])) {
           me.pipe(arg[0], arg[1]);
         } else if (arg[0].startsWith('http://')) {
           me.connect(arg[0], arg[1]);
@@ -340,7 +341,7 @@ const r2node = {
           // throw new Error('Unknown URI');
         }
       },
-      function (me, arg) {
+      function (me, arg) { // 3 args
         if (!arg[0]) {
           throw new Error('Invalid path');
         }
@@ -358,21 +359,21 @@ const r2node = {
     ];
     if (arguments.length < modes.length) {
       return modes[arguments.length](this, arguments);
-    } else {
-      throw new Error('Invalid parameters' + arguments.length);
     }
+    throw new Error('Invalid parameters' + arguments.length);
   },
   openSync: function () {
+    const args = [...arguments].filter(x => x !== undefined);
     let msg;
-    switch (arguments.length) {
+    switch (args.length) {
       case 0:
         return this.lpipeSync();
       case 1:
-        if (isPath(arguments[0])) {
+        if (isPath(args[0])) {
           return this.pipeSync(arguments[0]);
-        } else if (arguments.indexOf('http://') === 0) {
+        } else if (args.indexOf('http://') === 0) {
           msg = 'httpsync not supported';
-        } else if (arguments.indexOf('io://') === 0) {
+        } else if (args.indexOf('io://') === 0) {
           msg = 'iosync not supported';
         } else {
           msg = 'Unknown uri';
