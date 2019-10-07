@@ -2,7 +2,7 @@
 
 `"Know only Clojure and want to work with r2? I got you fam."`
 
-r2pipe.clj is a Clojure library to interact with [radare2](https://github.com/radare/radare2). This requires you to have r2 installed on your system. It spawns a new process and communicates with it over pipes.
+r2pipe.clj is a Clojure library to interact with [radare2](https://github.com/radareorg/radare2). This requires you to have r2 installed on your system. It spawns a new process and communicates with it over pipes.
 
 ## Installation
 

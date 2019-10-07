@@ -5,8 +5,8 @@
     <version>1.0.1</version>
     <authors>radare2</authors>
     <owners>radare2</owners>
-    <licenseUrl>https://github.com/radare/radare2-bindings/blob/master/COPYING</licenseUrl>
-    <projectUrl>https://github.com/radare/radare2-bindings</projectUrl>
+    <licenseUrl>https://github.com/radareorg/radare2-bindings/blob/master/COPYING</licenseUrl>
+    <projectUrl>https://github.com/radareorg/radare2-bindings</projectUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>r2pipe</description>
     <releaseNotes></releaseNotes>
