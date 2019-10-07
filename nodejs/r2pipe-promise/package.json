@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/radare/radare2-r2pipe.git"
+    "url": "https://github.com/radareorg/radare2-r2pipe.git"
   },
   "files": [
     "index.js",
@@ -34,7 +34,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/radare/radare2-r2pipe/issues"
+    "url": "https://github.com/radareorg/radare2-r2pipe/issues"
   },
   "homepage": "http://www.radare.org",
   "devDependencies": {
