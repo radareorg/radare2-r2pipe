@@ -178,7 +178,9 @@ class OpenBase(object):
                         import subprocess
                         is_async = not isinstance(self.process, subprocess.Popen)
                         if not is_async:
-                                self.process.stdin.flush()
+                                for f in [self.process.stdin, self.process.stdout]:
+                                        if f is not None:
+                                                f.close()
                         self.process.terminate()
                         self.process.wait()
                         delattr(self, 'process')
