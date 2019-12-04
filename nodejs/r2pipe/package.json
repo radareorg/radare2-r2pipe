@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
   "types": "r2pipe.d.ts",
@@ -59,12 +59,9 @@
   },
   "homepage": "http://www.radare.org",
   "devDependencies": {
-    "semistandard": "13.0.1"
-  },
-  "optionalDependencies": {
-    "syspipe": "^0.1.5"
+    "semistandard": "^14.2.0"
   },
   "dependencies": {
-    "tern": "^0.24.1"
+    "tern": "^0.24.2"
   }
 }

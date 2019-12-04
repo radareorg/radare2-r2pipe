@@ -474,26 +474,7 @@ const r2node = {
   },
 
   pipeSync: function (file, opts) {
-    let pipe, syspipe;
-    try {
-      syspipe = require('syspipe');
-      pipe = syspipe.pipe();
-    } catch (e) {
-      throw new Error('ERROR: Cannot find "syspipe" npm module');
-    }
-    if (typeof opts !== 'object') {
-      opts = this.options;
-    }
-    const procOptions = {
-      stdio: ['pipe', pipe.write, 'ignore']
-    };
-    const ls = proc.spawn(this.r2bin,
-      ['-q0'].concat(opts).concat(file), procOptions);
-
-    ls.syncStdin = ls.stdin['_handle'].fd;
-    ls.syncStdout = pipe.read;
-
-    return sync.r2bind(ls, 'pipe');
+    throw new Error('ERROR: sync r2pipe apis have been deprecated');
   },
 
   lpipeSync: function () {

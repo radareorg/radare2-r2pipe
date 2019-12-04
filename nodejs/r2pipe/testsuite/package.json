@@ -43,8 +43,7 @@
   },
   "homepage": "http://www.radare.org",
   "dependencies": {
-    "syspipe": "*",
-    "colors": "*",
+    "colors": "^1.4.0",
     "jsfmt": "*"
   }
 }
