@@ -1,4 +1,4 @@
-module R2pipe (R2Context(), open, cmd, cmdj) where
+module R2Pipe (R2Context(), open, cmd, cmdj) where
 import Data.Char
 import Data.Word
 import Network.HTTP
