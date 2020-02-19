@@ -1,4 +1,4 @@
-import R2pipe
+import R2Pipe
 import qualified Data.ByteString.Lazy as L
 
 showMainFunction ctx = do
