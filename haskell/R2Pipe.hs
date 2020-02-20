@@ -43,5 +43,5 @@ cmd :: R2Context -> String -> IO L.ByteString
 cmd (HttpCtx url) cmd = fmap stringToLBS $ getResponseBody =<< simpleHTTP (getRequest (url ++ urlEncode cmd))
 cmd (PipeCtx hIn hOut) cmd = hPutStrLn hIn cmd >> hFlush hIn >> lHTakeWhile (/= 0) hOut
 
-cmdj :: R2Context -> String -> IO (Maybe JSON.Value)
+cmdj :: JSON.FromJSON a => R2Context -> String -> IO (Maybe a)
 cmdj = (fmap JSON.decode .) . cmd

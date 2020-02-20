@@ -12,13 +12,13 @@ extra-source-files:  CHANGELOG.md
 library
   exposed-modules:     R2Pipe
   other-modules:
-  build-depends:       base >=4.13 && <4.14,
+  build-depends:       base >=4.12 && <5,
                        HTTP, aeson, process, bytestring
   default-language:    Haskell2010
 
 executable example
   main-is:             example_r2pipe.hs 
   other-modules:       R2Pipe
-  build-depends:       base >= 4.13 && <4.14,
+  build-depends:       base >= 4.12 && <5,
                        r2pipe, HTTP, aeson, process, bytestring
 

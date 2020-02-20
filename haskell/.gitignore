@@ -1,0 +1,3 @@
+.ghc.*
+*.local
+dist-*
