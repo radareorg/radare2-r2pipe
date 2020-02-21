@@ -5,9 +5,7 @@ version:             0.1.0.0
 synopsis:            Pipe interface for radare2
 license-file:        LICENSE
 author:              radareorg
-maintainer:          info@florianmaerkl.de
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:     R2Pipe
