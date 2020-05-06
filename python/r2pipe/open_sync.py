@@ -30,13 +30,13 @@ class open(OpenBase):
                 
         def __init__(self, filename='', flags=[], radare2home=None):
                 super(open, self).__init__(filename, flags)
-                if filename.startswith("http"):
+                if filename.startswith("http://"):
                         self._cmd = self._cmd_http
                         self.uri = filename + "/cmd"
                 elif filename.startswith("ccall://"):
                         self._cmd = self._cmd_native
                         self.uri = filename[7:]
-                elif filename.startswith("tcp"):
+                elif filename.startswith("tcp://"):
                         r = re.match(r'tcp://(\d+\.\d+.\d+.\d+):(\d+)/?', filename)
                         if not r:
                                 raise Exception("String doesn't match tcp format")
