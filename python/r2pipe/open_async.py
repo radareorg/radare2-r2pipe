@@ -49,7 +49,7 @@ class open(OpenBase, ContextDecorator):
 
                 self.asyn = True
 
-                if filename.startswith("http"):
+                if filename.startswith("http://"):
                         self._cmd_coro = self._cmd_http
                         self.uri = "/cmd"
 
@@ -61,7 +61,7 @@ class open(OpenBase, ContextDecorator):
                         self._cmd_coro = self._cmd_native
                         self.uri = filename[7:]
 
-                elif filename.startswith("tcp"):
+                elif filename.startswith("tcp://"):
 
                         r = re.match(r'tcp://(\d+\.\d+.\d+.\d+):(\d+)/?', filename)
                         if not r:
