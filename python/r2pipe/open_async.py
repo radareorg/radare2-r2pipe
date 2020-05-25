@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""open_async.py 
+"""open_async.py
 This script use code from r2pipe-async/open_p3.py script.
 
 """

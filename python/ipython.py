@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Author: pancake@nopcode.org // radare2 2015
 #
@@ -62,12 +62,12 @@ class Radare:
 				address = str(address)
 			if len(arg)>1:
 				count = arg[1]
-		print self.r2.cmd("e scr.color=true;pd %d @ %s"%(count,address))
+		print(self.r2.cmd("e scr.color=true;pd %d @ %s"%(count,address)))
 		return self
 	def hexdump(self, address, count):
 		if type(address) == int:
 			address = str(address)
-		print self.r2.cmd("e scr.color=true;px %d @ %s"%(count,address))
+		print(self.r2.cmd("e scr.color=true;px %d @ %s"%(count,address)))
 		return self
 
 

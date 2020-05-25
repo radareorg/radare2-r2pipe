@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from distutils.core import setup
 import r2pipe
 
@@ -9,7 +10,6 @@ setup(
     version=r2pipe.version(),
     license='MIT',
     description='Pipe interface for radare2',
-#    long_description=readme,
     author='pancake',
     author_email='pancake@nopcode.org',
     url='https://rada.re',

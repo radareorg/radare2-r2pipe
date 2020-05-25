@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""open_sync.py 
+"""open_sync.py
 This script use code from old __init__.py open object
 
 """
@@ -13,12 +14,8 @@ import sys
 from subprocess import Popen, PIPE
 from .open_base import OpenBase, get_radare_path
 
-if sys.version_info >= (3, 0):
-        from urllib.request import urlopen
-        from urllib.error import URLError
-else:
-        from urllib2 import urlopen
-        from urllib2 import URLError
+from urllib.request import urlopen
+from urllib.error import URLError
 
 try:
         import fcntl
@@ -27,7 +24,7 @@ except ImportError:
 
 
 class open(OpenBase):
-                
+
         def __init__(self, filename='', flags=[], radare2home=None):
                 super(open, self).__init__(filename, flags)
                 if filename.startswith("http://"):
@@ -97,7 +94,7 @@ class open(OpenBase):
                 res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
                 return res != 0
 
-        def _cmd_process(self, cmd): 
+        def _cmd_process(self, cmd):
                 cmd = cmd.strip().replace("\n", ";")
                 self.process.stdin.write((cmd + '\n').encode('utf8'))
                 r = self.process.stdout

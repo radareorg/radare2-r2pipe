@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import r2pipe
 
 r2 = r2pipe.open("#!pipe")
