@@ -10,12 +10,11 @@ import socket
 import time
 import urllib
 import os
-import sys
 from subprocess import Popen, PIPE
-from .open_base import OpenBase, get_radare_path
-
 from urllib.request import urlopen
 from urllib.error import URLError
+from .open_base import OpenBase
+
 
 try:
     import fcntl
@@ -127,10 +126,7 @@ class open(OpenBase):
 
     def _cmd_http(self, cmd):
         try:
-            try:
-                quocmd = urllib.parse.quote(cmd)
-            except:
-                quocmd = urllib.quote(cmd)
+            quocmd = urllib.parse.quote(cmd)
             response = urlopen("{uri}/{cmd}".format(uri=self.uri, cmd=quocmd))
             return response.read().decode("utf-8", errors="ignore")
         except URLError:

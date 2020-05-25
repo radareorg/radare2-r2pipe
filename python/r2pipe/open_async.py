@@ -8,10 +8,9 @@ import os
 import re
 
 
-# python3 specific code, add guards to not import it in python2
 # whole file doesn't have any profit of asyncio usage, TODO: refactor
 
-from collections import Iterable
+from collections.abc import Iterable
 from contextlib import ContextDecorator
 from urllib.parse import quote, urlparse
 
