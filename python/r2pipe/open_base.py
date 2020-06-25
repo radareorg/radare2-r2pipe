@@ -37,7 +37,6 @@ if os.name == "nt":
     ERROR_PIPE_BUSY = 231
     ERROR_MORE_DATA = 234
     BUFSIZE = 4096
-    szPipename = "\\\\.\\pipe\\"
     chBuf = create_string_buffer(BUFSIZE)
     cbRead = c_ulong(0)
     cbWritten = c_ulong(0)
@@ -117,8 +116,8 @@ class OpenBase(object):
             if os.name == "nt":
                 mypipename = os.environ["r2pipe_path"]
                 while 1:
-                    hPipe = windll.kernel32.CreateFileA(
-                        szPipename + mypipename,
+                    hPipe = windll.kernel32.CreateFileW(
+                        mypipename,
                         GENERIC_READ | GENERIC_WRITE,
                         0,
                         None,
@@ -128,18 +127,14 @@ class OpenBase(object):
                     )
                     if hPipe != INVALID_HANDLE_VALUE:
                         break
-                    else:
-                        print("Invalid Handle Value")
-                    if windll.kernel32.GetLastError() != ERROR_PIPE_BUSY:
-                        print("Could not open pipe")
+                    err = windll.kernel32.GetLastError()
+                    print("Invalid Handle Value")
+                    if err != ERROR_PIPE_BUSY:
+                        print("Could not open pipe:", hex(err), "\n")
                         return
-                    elif (windll.kernel32.WaitNamedPipeA(szPipename, 20000)) == 0:
-                        print("Could not open pipe\n")
+                    elif (windll.kernel32.WaitNamedPipeW(mypipename, 20000)) == 0:
+                        print("Pipe busy\n")
                         return
-                windll.kernel32.WriteFile(
-                    hPipe, "e scr.color=false\n", 18, byref(cbWritten), None
-                )
-                windll.kernel32.ReadFile(hPipe, chBuf, BUFSIZE, byref(cbRead), None)
                 self.pipe = [hPipe, hPipe]
                 self._cmd = self._cmd_pipe
             else:
@@ -159,6 +154,7 @@ class OpenBase(object):
         out = b""
         cmd = cmd.strip().replace("\n", ";")
         if os.name == "nt":
+            cmd = cmd.encode("utf-8")
             windll.kernel32.WriteFile(
                 self.pipe[1], cmd, len(cmd), byref(cbWritten), None
             )
