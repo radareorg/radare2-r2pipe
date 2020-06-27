@@ -24,7 +24,7 @@ class R2Pipe {
                syswrite(fdOut, cast(void*)cbuf, cbuf.length);
                string res = "";
                while (true) {
-                       byte buf[1];
+                       byte[1] buf;
                        auto n = sysread(fdIn, &buf, 1);
                        if (buf[0] == '\0') {
                                break;
