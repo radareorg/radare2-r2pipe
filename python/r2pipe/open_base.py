@@ -164,7 +164,8 @@ class OpenBase(object):
                 )
                 out += chBuf.value
                 if ord(chBuf[cbRead.value - 1]) == 0:
-                    out = out[0:-1]
+                    if len(out) > 0 and out[-1] == 0:
+                        out = out[0:-1]
                     break
         else:
             os.write(self.pipe[1], cmd.encode())
