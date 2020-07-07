@@ -1,4 +1,0 @@
-include setup.py
-include r2pipe/__init__.py
-include LICENSE
-include README.rst
