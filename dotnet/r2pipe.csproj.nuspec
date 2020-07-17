@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>r2pipe</id>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <authors>radare2</authors>
     <owners>radare2</owners>
     <licenseUrl>https://github.com/radareorg/radare2-bindings/blob/master/COPYING</licenseUrl>
@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>r2pipe</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright 2015</copyright>
+    <copyright>Copyright 2015-2020</copyright>
     <tags>radare2 r2pipe</tags>
     <dependencies>
       <!-- Everything but... -->
