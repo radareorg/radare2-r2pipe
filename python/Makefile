@@ -21,7 +21,7 @@ symstall: uninstall
 	ln -fs $(PWD)/r2pipe "$(PYTHON_INSTALL_DIR)"
 
 twine:
-	sudo pip install twine
+	sudo pip install -U twine
 
 test: test2 test3
 
@@ -36,7 +36,9 @@ test3:
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
 
-pub publish:
+.PHONY: twine
+
+pub publish: all
 	#LC_CTYPE=C python3 setup.py sdist upload -r pypi
 	#LC_CTYPE=C python setup.py sdist upload -r https://upload.pypi.org/pypi/
 	twine upload --repository-url https://upload.pypi.org/legacy/ --verbose dist/*

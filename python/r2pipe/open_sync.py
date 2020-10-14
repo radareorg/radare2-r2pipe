@@ -11,9 +11,8 @@ import time
 import urllib
 import os
 from subprocess import Popen, PIPE
-from urllib.request import urlopen
 from urllib.error import URLError
-from .open_base import OpenBase
+from open_base import OpenBase
 
 
 try:
@@ -126,6 +125,7 @@ class open(OpenBase):
 
     def _cmd_http(self, cmd):
         try:
+            from urllib.request import urlopen
             quocmd = urllib.parse.quote(cmd)
             response = urlopen("{uri}/{cmd}".format(uri=self.uri, cmd=quocmd))
             return response.read().decode("utf-8", errors="ignore")

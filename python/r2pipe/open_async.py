@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from urllib.parse import quote, urlparse
 
-from .open_base import OpenBase, get_radare_path
+from open_base import OpenBase, get_radare_path
 
 
 class open(OpenBase, ContextDecorator):
@@ -100,8 +100,7 @@ class open(OpenBase, ContextDecorator):
         self._loop.run_until_complete(task)
         return task.result() if task else None
 
-    @asyncio.coroutine
-    def _cmd_process(self, cmd, future, callback):
+    async def _cmd_process(self, cmd, future, callback):
         if not hasattr(self, "process"):
             if self.r2home is not None:
                 if not os.path.isdir(self.r2home):
@@ -123,9 +122,9 @@ class open(OpenBase, ContextDecorator):
                 loop=self._loop
             )
 
-            self.process = yield from create  # Init the process
+            self.process = await create  # Init the process
 
-            yield from self.process.stdout.read(1)  # Reads initial \x00
+            await self.process.stdout.read(1)  # Reads initial \x00
 
         cmd = cmd.strip().replace("\n", ";")
         self.process.stdin.write(bytes(cmd + "\n", "utf-8"))
@@ -133,7 +132,7 @@ class open(OpenBase, ContextDecorator):
         out = []
         while True:
             # foo = self.process.stdout.read(1)
-            foo = yield from self.process.stdout.read(1)
+            foo = await self.process.stdout.read(1)
             if foo == b"\x00":
                 break
             if len(foo) < 1:
@@ -144,12 +143,11 @@ class open(OpenBase, ContextDecorator):
         future.set_result((out, callback))
         return out
 
-    @asyncio.coroutine
-    def _cmd_http(self, cmd, future, callback):
+    async def _cmd_http(self, cmd, future, callback):
         try:
             quocmd = quote(cmd)
 
-            reader, writer = yield from asyncio.open_connection(
+            reader, writer = await asyncio.open_connection(
                 self._host, self._port, loop=self._loop
             )
 
@@ -165,10 +163,10 @@ class open(OpenBase, ContextDecorator):
             ).encode()
 
             writer.write(message)
-            data = yield from reader.read(512)
+            data = await reader.read(512)
             res = [data]
             while data:
-                data = yield from reader.read(512)
+                data = await reader.read(512)
                 res.append(data)
             writer.close()
 
@@ -188,21 +186,20 @@ class open(OpenBase, ContextDecorator):
         except Exception as e:
             future.set_result((str(e), callback))
 
-    @asyncio.coroutine
-    def _cmd_tcp(self, cmd, future, callback):
+    async def _cmd_tcp(self, cmd, future, callback):
 
         try:
-            reader, writer = yield from asyncio.open_connection(
+            reader, writer = await asyncio.open_connection(
                 self._host, self._port, loop=self._loop
             )
 
             writer.write(cmd.encode("utf-8"))
-            data = yield from reader.read(512)
+            data = await reader.read(512)
 
             res = [data]
             while data:
                 res.append(data)
-                data = yield from reader.read(512)
+                data = await reader.read(512)
             res = b"".join(res).decode("utf-8")
             future.set_result((res, callback))
             writer.close()
