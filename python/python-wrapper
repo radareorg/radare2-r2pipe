@@ -3,24 +3,25 @@
 # -- pancake
 
 PCS="${PYTHON_CONFIG}
-	python2
-	python25
-	python2.5
-	python26
-	python2.6
-	python27
-	python2.7
-	python28
-	python2.8
+	python3
+	python39
+	python3.9
+	python-3.9
+	python38
+	python3.8
+	python-3.8
+	python37
+	python3.7
+	python-3.7
 	python"
 PYCFG=""
 
 for a in ${PCS} ; do
 	$a --help >/dev/null 2>&1
 	if [ $? = 0 ]; then
-		PYCFG=$a
-		PY3=`$a --version 2>&1 | grep 'Python 3'`
-		[ -z "${PY3}" ] && break
+		PYCFG="$a"
+		PY3="`$a --version 2>&1 | grep 'Python 3'`"
+		[ -n "${PY3}" ] && break
 	fi
 done
 

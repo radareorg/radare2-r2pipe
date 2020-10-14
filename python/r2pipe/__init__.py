@@ -35,7 +35,7 @@ except ImportError:
 
 VERSION = "1.5.0"
 
-from .open_sync import open
+from r2pipe.open_sync import open
 
 
 def version():
