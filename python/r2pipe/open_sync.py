@@ -11,7 +11,7 @@ import time
 import urllib
 import os
 from subprocess import Popen, PIPE
-from open_base import OpenBase
+from r2pipe.open_base import OpenBase
 from urllib.error import URLError
 from urllib.request import urlopen
 

@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from urllib.parse import quote, urlparse
 
-from open_base import OpenBase, get_radare_path
+from r2pipe.open_base import OpenBase, get_radare_path
 
 
 class open(OpenBase, ContextDecorator):
