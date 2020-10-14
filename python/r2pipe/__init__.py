@@ -33,7 +33,7 @@ try:
 except ImportError:
     r2lang = None
 
-VERSION = "1.4.2"
+VERSION = "1.5.0"
 
 from .open_sync import open
 
