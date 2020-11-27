@@ -138,11 +138,12 @@ class OpenBase(object):
                 self.pipe = [hPipe, hPipe]
                 self._cmd = self._cmd_pipe
             else:
+                self.pipe = [-1,-1]
+                self._cmd = self._cmd_pipe
                 self.pipe = [
                     int(os.environ["R2PIPE_IN"]),
                     int(os.environ["R2PIPE_OUT"]),
                 ]
-                self._cmd = self._cmd_pipe
             self.url = "#!pipe"
             return
         except:

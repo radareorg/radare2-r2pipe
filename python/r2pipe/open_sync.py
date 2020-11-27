@@ -12,8 +12,15 @@ import urllib
 import os
 from subprocess import Popen, PIPE
 from r2pipe.open_base import OpenBase
-from urllib.error import URLError
-from urllib.request import urlopen
+
+def no_urlopen():
+  raise IOError
+try:
+  from urllib.error import URLError
+  from urllib.request import urlopen
+except:
+  URLError = IOError
+  urlopen = no_urlopen
 
 
 try:
