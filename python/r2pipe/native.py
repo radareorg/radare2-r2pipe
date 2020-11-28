@@ -21,16 +21,18 @@ def r2lib():
     global lib
     if lib is not None:
         return lib
-    lib_name = find_library("r_core")
-    if lib_name == None:
-        raise ImportError("No native r_core library")
-    if sys.platform.startswith("win"):
-        lib = WinDLL(lib_name)
-    else:
-        lib = CDLL(lib_name)
-    return lib
-
-
+    try:
+        lib_name = find_library("r_core")
+        if lib_name == None:
+            raise ImportError("No native r_core library")
+        if sys.platform.startswith("win"):
+            lib = WinDLL(lib_name)
+        else:
+            lib = CDLL(lib_name)
+        return lib
+    except OSError:
+        pass
+    return None
 
 class AddressHolder(object):
     def __get__(self, obj, type_):
@@ -48,7 +50,9 @@ class WrappedRMethod(object):
         self.args = args
         self.ret = ret
         self.args_set = False
-        self.method = getattr(r2lib(), cname)
+        r2 = r2lib()
+        if r2 is not None:
+            self.method = getattr(r2, cname)
 
     def __call__(self, *a):
         if not self.args_set:
@@ -109,7 +113,10 @@ def register(cname, args, ret):
 class RCore(Structure):  # 1
     def __init__(self):
         Structure.__init__(self)
-        r_core_new = r2lib().r_core_new
+        r2 = r2lib()
+        if r2 is None:
+            return
+        r_core_new = r2.r_core_new
         r_core_new.restype = c_void_p
         self._o = r_core_new()
 
