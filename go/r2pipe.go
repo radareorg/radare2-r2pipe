@@ -36,7 +36,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -57,8 +56,10 @@ type Pipe struct {
 	close  CloseDelegate
 }
 
-type CmdDelegate func(*Pipe, string) (string, error)
-type CloseDelegate func(*Pipe) error
+type (
+	CmdDelegate   func(*Pipe, string) (string, error)
+	CloseDelegate func(*Pipe) error
+)
 
 // NewPipe returns a new r2 pipe and initializes an r2 core that will try to
 // load the provided file or URI. If file is an empty string, the env vars
@@ -68,23 +69,28 @@ func NewPipe(file string) (*Pipe, error) {
 	if file == "" {
 		return newPipeFd()
 	}
+
 	return newPipeCmd(file)
 }
 
 func newPipeFd() (*Pipe, error) {
 	r2pipeIn := os.Getenv("R2PIPE_IN")
 	r2pipeOut := os.Getenv("R2PIPE_OUT")
+
 	if r2pipeIn == "" || r2pipeOut == "" {
-		return nil, errors.New("missing R2PIPE_{IN,OUT} vars")
+		return nil, fmt.Errorf("missing R2PIPE_{IN,OUT} vars")
 	}
+
 	r2pipeInFd, err := strconv.Atoi(r2pipeIn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert IN into file descriptor")
 	}
+
 	r2pipeOutFd, err := strconv.Atoi(r2pipeOut)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert OUT into file descriptor")
 	}
+
 	stdout := os.NewFile(uintptr(r2pipeInFd), "R2PIPE_IN")
 	stdin := os.NewFile(uintptr(r2pipeOutFd), "R2PIPE_OUT")
 
@@ -93,20 +99,25 @@ func newPipeFd() (*Pipe, error) {
 		r2cmd:  nil,
 		stdin:  stdin,
 		stdout: stdout,
+		Core:   nil,
 	}
+
 	return r2p, nil
 }
 
 func newPipeCmd(file string) (*Pipe, error) {
 	r2cmd := exec.Command("radare2", "-q0", file)
+
 	stdin, err := r2cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
+
 	stdout, err := r2cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
+
 	if err := r2cmd.Start(); err != nil {
 		return nil, err
 	}
@@ -120,7 +131,9 @@ func newPipeCmd(file string) (*Pipe, error) {
 		r2cmd:  r2cmd,
 		stdin:  stdin,
 		stdout: stdout,
+		Core:   nil,
 	}
+
 	return r2p, nil
 }
 
@@ -142,15 +155,19 @@ func (r2p *Pipe) Cmd(cmd string) (string, error) {
 		if r2p.cmd != nil {
 			return r2p.cmd(r2p, cmd)
 		}
+
 		return "", nil
 	}
+
 	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
 		return "", err
 	}
+
 	buf, err := bufio.NewReader(r2p).ReadString('\x00')
 	if err != nil {
 		return "", err
 	}
+
 	return strings.TrimRight(buf, "\n\x00"), nil
 }
 
@@ -160,15 +177,20 @@ func (r2p *Pipe) Cmdj(cmd string) (interface{}, error) {
 	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
 		return nil, err
 	}
+
 	buf, err := bufio.NewReader(r2p).ReadBytes('\x00')
 	if err != nil {
 		return nil, err
 	}
+
 	buf = bytes.TrimRight(buf, "\n\x00")
+
 	var output interface{}
+
 	if err := json.Unmarshal(buf, &output); err != nil {
 		return nil, err
 	}
+
 	return output, nil
 }
 
@@ -177,11 +199,14 @@ func (r2p *Pipe) Close() error {
 	if r2p.close != nil {
 		return r2p.close(r2p)
 	}
+
 	if r2p.File == "" {
 		return nil
 	}
+
 	if _, err := r2p.Cmd("q!"); err != nil {
 		return err
 	}
+
 	return r2p.r2cmd.Wait()
 }

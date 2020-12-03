@@ -8,6 +8,7 @@ func main() {
 	r2p, err := r2pipe.NewPipe("/bin/ls")
 	if err != nil {
 		print("ERROR: ", err)
+
 		return
 	}
 	defer r2p.Close()
