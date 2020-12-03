@@ -204,7 +204,7 @@ func (r2p *Pipe) Close() error {
 		return nil
 	}
 
-	if _, err := r2p.Cmd("q!"); err != nil {
+	if _, err := r2p.Cmd("q"); err != nil {
 		return err
 	}
 
