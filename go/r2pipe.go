@@ -210,3 +210,20 @@ func (r2p *Pipe) Close() error {
 
 	return r2p.r2cmd.Wait()
 }
+
+// Forcing shutdown of r2, closing the created pipe.
+func (r2p *Pipe) ForceClose() error {
+	if r2p.close != nil {
+		return r2p.close(r2p)
+	}
+
+	if r2p.File == "" {
+		return nil
+	}
+
+	if _, err := r2p.Cmd("q!"); err != nil {
+		return err
+	}
+
+	return r2p.r2cmd.Wait()
+}
