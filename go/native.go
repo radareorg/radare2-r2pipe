@@ -2,16 +2,20 @@
 
 package r2pipe
 
-import "github.com/rainycape/dl"
-import "errors"
+import (
+	"github.com/rainycape/dl"
+	"errors"
+)
 
 type Ptr = *struct{}
 
-var lib Ptr = nil
-var r_core_new func() Ptr
-var r_core_free func(Ptr)
-var r_mem_free func(interface{})
-var r_core_cmd_str func(Ptr, string) string
+var (
+	lib            Ptr = nil
+	r_core_new     func() Ptr
+	r_core_free    func(Ptr)
+	r_mem_free     func(interface{})
+	r_core_cmd_str func(Ptr, string) string
+)
 
 func NativeLoad() error {
 	if lib != nil {
