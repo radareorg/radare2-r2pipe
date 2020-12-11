@@ -4,8 +4,8 @@ on: push
 
 jobs:
   build:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    name: r2pipe
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Install python
