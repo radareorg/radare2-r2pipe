@@ -1,10 +1,16 @@
 import unittest
+import os
+
 import r2pipe
 from r2pipe.native import *
 import ctypes
 
 
 class TestR2PipeUnit(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.curdir = os.path.dirname(os.path.realpath(__file__))
 
     def test_version(self):
         self.assertEqual(r2pipe.version(), r2pipe.VERSION)
@@ -18,6 +24,6 @@ class TestR2PipeUnit(unittest.TestCase):
     
     def test_native_rcore(self):
         c = RCore()
-        value = c.cmd_str("o /bin/ls; s entry0;pd 1~1[2]")
+        value = c.cmd_str("o %s/ls; s entry0;pi 1 @e:scr.color=0" % self.curdir).strip()
         c.free()
-        self.assertEqual(value, 'push\n')
+        self.assertEqual(value, 'push rbp')
