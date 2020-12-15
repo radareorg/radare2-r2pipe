@@ -1,13 +1,17 @@
 import unittest
 import os
+
 import r2pipe
 
 
 class TestR2PipeIntegration(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.curdir = os.path.dirname(os.path.realpath(__file__))
+
     def setUp(self):
-        curdir = os.path.dirname(os.path.realpath(__file__))
-        self.r2 = r2pipe.open(os.path.join(curdir, "ls") , ["-2"])
+        self.r2 = r2pipe.open(os.path.join(self.curdir, "ls") , ["-2"])
 
     def tearDown(self):
         self.r2.quit()
@@ -36,14 +40,7 @@ class TestR2PipeIntegration(unittest.TestCase):
         self.assertEqual(res[0]['opcode'], "push rbp")
 
     def test_r2ccal_successfully(self):
-        r2 = r2pipe.open("ccall:///bin/ls")
+        r2 = r2pipe.open("ccall:///%s" % os.path.join(self.curdir, "ls"))
         res = r2.cmd("pi 1 @e:scr.color=0").strip()
         self.assertEqual(res, "push rbp")
         r2.quit()
-
-    def test_dbg_successfully(self):
-        r2 = r2pipe.open("/bin/ls", ["-nd"])
-        for a in range(1, 10):
-            regs = r2.cmdj("drj")
-            print("0x%x  0x%x" % (regs["rip"], regs["rsp"]))
-            r2.cmd("ds")

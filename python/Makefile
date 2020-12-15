@@ -23,15 +23,16 @@ symstall: uninstall
 twine:
 	sudo pip install -U twine
 
-test: test2 test3
+test: testpy2 testpy3
 
-test2:
+testpy2:
 	@echo "Testing $(PYTHON)"
-	-PYTHONPATH=$$PWD $(PYTHON) examples/bug.py
-	-PYTHONPATH=$$PWD $(PYTHON) examples/test.py
+	PYTHONPATH=$$PWD $(PYTHON) -m pip install coverage pytest
+	PYTHONPATH=$$PWD $(PYTHON) -m coverage run -m pytest -k "test_" test
+	PYTHONPATH=$$PWD $(PYTHON) -m coverage report -m
 
-test3:
-	@$(MAKE) test2 PYTHON=$(PYTHON3)
+testpy3:
+	@$(MAKE) testpy2 PYTHON=$(PYTHON3)
 
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
