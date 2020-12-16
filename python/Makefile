@@ -29,7 +29,7 @@ testpy2:
 	@echo "Testing $(PYTHON)"
 	PYTHONPATH=$$PWD $(PYTHON) -m pip install coverage pytest
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage run --omit="*.local*" -m pytest -k "test_" test
-	PYTHONPATH=$$PWD $(PYTHON) -m coverage report -m
+	PYTHONPATH=$$PWD $(PYTHON) -m coverage report
 
 testpy3:
 	@$(MAKE) testpy2 PYTHON=$(PYTHON3)
