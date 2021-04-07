@@ -12,11 +12,16 @@ class R2Pipe {
 
 module.exports = {
   R2Pipe,
+  setBinPath,
   isAvailable: r2pipe.isAvailable,
   open: openPromise,
   syscmd: makePromise(r2pipe, 'syscmd'),
   syscmdj: makePromise(r2pipe, 'syscmdj')
 };
+
+function setBinPath (path) {
+    r2pipe.r2bin = path;
+}
 
 function openPromise (file, options) {
   return new Promise(function (resolve, reject) {
