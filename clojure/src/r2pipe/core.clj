@@ -1,42 +1,68 @@
 (ns r2pipe.core
-    (:refer-clojure :exclude [read-string])
-    (:require [me.raynes.conch.low-level :as sh]
-              [clojure.java.io :as io]))
+  (:require [r2pipe.proto :as proto]
+            [r2pipe.spawn :as spawn]
+            [r2pipe.tcp :as tcp]
+            [r2pipe.http :as http]
+
+            [clojure.string :as string])
+  (:import [java.net URI]))
 
 ;; Define the default path for r2 to load.
-(def r2path "/usr/bin/r2")
+(def r2-path "/usr/bin/r2")
+
+;; Define core instance
+(def r2-instance nil)
 
 (defn configure-path
-  "Confgiure the r2 path."
+  "Configure the r2 path."
   [path]
-  (def r2path path))
+  (def r2-path path))
+
+(defn parse-r2pipe-url
+  "Parse r2pipe URL"
+  [url]
+  (let [url-parsed (URI. url)]
+    {:url url
+     :scheme (keyword (.getScheme url-parsed))
+     :server-name (.getHost url-parsed)
+     :server-port (.getPort url-parsed)
+     :uri (.getPath url-parsed)
+     :user-info (.getUserInfo url-parsed)
+     :query-string (.getRawQuery url-parsed)}))
 
 (defn r2open
-  "Opens a file in r2 and starts a process instance"
-  [input_file]
-  (def pipe (sh/proc r2path "-q0" (str input_file))))
+  "Open instance, according to url.
 
-(defn r2print
-  "Read from the r2 process(pipe) and print."
+  Example urls:
+  spawn:///./program.bin
+  tcp://127.0.0.1:9090
+  http://127.0.0.1:9090/cmd
+  "
+  [url]
+  (let [parsed-url (parse-r2pipe-url url)]
+    (def r2-instance
+      (case (:scheme parsed-url)
+        :spawn
+        (spawn/r2open (string/replace-first (:uri parsed-url) "/" "") r2-path)
+        :tcp
+        (tcp/r2open (:server-name parsed-url) (:server-port parsed-url))
+        :http
+        (http/r2open (:url parsed-url))
+        ;; default
+        (ex-info "unsupported url" {:url url})))))
+
+(defn cmd
+  "Send command to the default r2 instance"
+  [& cmds]
+  (apply proto/cmd r2-instance cmds))
+
+(defn cmdj
+  "Send JSON command to the default r2 instance"
+  [& cmds]
+  (apply proto/cmdj r2-instance cmds))
+
+(defn close
+  "Closes default r2 pipe instance"
   []
-  (dotimes [i (.available (get pipe :out))] (print (str (char (.read (get pipe :out)))))))
-
-(defn r2write
-  "Write to the r2 process"
-  [input]
-  (.write (get pipe :in) (.getBytes (str input "\n")))
-  (.flush (get pipe :in)))
-
-(defn r2string
-  "Returns a string representation of the output shown by radare2"
-  []
-  (apply str (repeatedly (.available (get pipe :out)) #(str (char (.read (get pipe :out)))))))
-
-(defn r2cmd
-  "Runs an r2 command and returns the result as a string"
-  [input]
-  (do
-      (r2write input)
-      ;; 1337 hax! This is to offset the latency created due to stream buffering.
-      (Thread/sleep 1)
-      (r2string)))
+  (.close r2-instance)
+  (def r2-instance nil))
