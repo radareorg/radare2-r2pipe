@@ -43,10 +43,6 @@ class AddressHolder(object):
     def __set__(self, obj, value):
         obj._address = value
 
-def r2cmd_method(self, cmd = ''):
-    # ignore any command, we just do nothing
-    return ''
-
 class WrappedRMethod(object):
     def __init__(self, cname, args, ret):
         self.cname = cname
@@ -57,7 +53,7 @@ class WrappedRMethod(object):
         if r2 is not None:
             self.method = getattr(r2, cname)
         else:
-            self.method = r2cmd_method
+            raise ImportError("Cannot use ccall")
 
     def __call__(self, *a):
         if not self.args_set:
