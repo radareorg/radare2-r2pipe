@@ -56,7 +56,7 @@ class WrappedRMethod(object):
 
     def __call__(self, *a):
         if not self.args_set:
-            if self.args:
+            if self.args and self.method:
                 self.method.argtypes = [eval(x.strip()) for x in self.args.split(",")]
             self.method.restype = eval(self.ret) if self.ret else None
             self.args_set = True
