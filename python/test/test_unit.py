@@ -26,4 +26,6 @@ class TestR2PipeUnit(unittest.TestCase):
         c = RCore()
         value = c.cmd_str("o %s/ls; s entry0;pi 1 @e:scr.color=0" % self.curdir).strip()
         c.free()
+        if type(value) == 'unicode':
+            value = value.decode('utf-8')
         self.assertEqual(value, 'push rbp')
