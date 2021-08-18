@@ -43,6 +43,8 @@ class AddressHolder(object):
     def __set__(self, obj, value):
         obj._address = value
 
+def r2cmd_method():
+    return ''
 
 class WrappedRMethod(object):
     def __init__(self, cname, args, ret):
@@ -53,10 +55,12 @@ class WrappedRMethod(object):
         r2 = r2lib()
         if r2 is not None:
             self.method = getattr(r2, cname)
+        else:
+            self.method = r2cmd_method
 
     def __call__(self, *a):
         if not self.args_set:
-            if self.args and self.method:
+            if self.args:
                 self.method.argtypes = [eval(x.strip()) for x in self.args.split(",")]
             self.method.restype = eval(self.ret) if self.ret else None
             self.args_set = True
