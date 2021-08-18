@@ -118,6 +118,7 @@ class open(OpenBase):
         r = self.process.stdout
         self.process.stdin.flush()
         out = b""
+        foo = None
         while True:
             if self.nonblocking:
                 try:
@@ -126,11 +127,12 @@ class open(OpenBase):
                     continue
             else:
                 foo = r.read(1)
+            if foo == b'':
+                break
             if foo:
                 if foo.endswith(b"\0"):
                     out += foo[:-1]
                     break
-
                 out += foo
             else:
                 # if there is no any output from pipe this loop will eat CPU, probably we have to do micro-sleep here
