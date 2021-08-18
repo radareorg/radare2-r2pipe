@@ -69,8 +69,6 @@ class WrappedRMethod(object):
         for i, argt in enumerate(self.method.argtypes):
             if argt is c_char_p:
                 a[i] = a[i].encode()
-        if self.method.restype is c_char_p:
-            return self.method(*a).decode()
         return self.method(*a)
 
 
