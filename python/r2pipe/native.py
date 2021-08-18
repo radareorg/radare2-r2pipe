@@ -21,16 +21,17 @@ def r2lib():
     global lib
     if lib is not None:
         return lib
+    lib_name = find_library("r_core")
+    if lib_name is None:
+        return None
     try:
-        lib_name = find_library("r_core")
-        if lib_name == None:
-            raise ImportError("No native r_core library")
         if sys.platform.startswith("win"):
             lib = WinDLL(lib_name)
         else:
             lib = CDLL(lib_name)
         return lib
-    except OSError:
+    except OSError as err:
+        print(err)
         pass
     return None
 
