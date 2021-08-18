@@ -30,11 +30,7 @@ def r2lib():
         if sys.platform.startswith("win"):
             lib = WinDLL(lib_name)
         else:
-            try:
-                lib = CDLL(lib_name)
-            except OSError:
-                lib_name = "/usr/lib/" + lib_name
-                lib = CDLL(lib_name)
+            lib = CDLL(lib_name)
         return lib
     except OSError as err:
         print(err)
