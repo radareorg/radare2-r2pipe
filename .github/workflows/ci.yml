@@ -13,6 +13,6 @@ jobs:
     - name: Building Radare2
       run: git clone --depth=1 https://github.com/radareorg/radare2 r2 && r2/sys/install.sh /usr > /dev/null
     - name: Testing r2
-      run: r2 -v; type r2 ls -l /usr/lib/libr_*.so
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.py
       run: make -C python test
