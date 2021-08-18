@@ -43,7 +43,7 @@ class AddressHolder(object):
     def __set__(self, obj, value):
         obj._address = value
 
-def r2cmd_method(self, cmd):
+def r2cmd_method(self, cmd = ''):
     # ignore any command, we just do nothing
     return ''
 
