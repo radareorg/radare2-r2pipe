@@ -68,7 +68,10 @@ class WrappedRMethod(object):
         for i, argt in enumerate(self.method.argtypes):
             if argt is c_char_p:
                 a[i] = a[i].encode()
-        return self.method(*a)
+        res = self.method(*a)
+        if isinstance(res, bytes):
+            return res.decode()
+        return res
 
 
 class WrappedApiMethod(object):
