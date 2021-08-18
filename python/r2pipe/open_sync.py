@@ -114,7 +114,10 @@ class open(OpenBase):
 
     def _cmd_process(self, cmd):
         cmd = cmd.strip().replace("\n", ";")
-        self.process.stdin.write((cmd + "\n").encode("utf8"))
+        try:
+            self.process.stdin.write((cmd + "\n").encode("utf8"))
+        except:
+            return ''
         r = self.process.stdout
         self.process.stdin.flush()
         out = b""
