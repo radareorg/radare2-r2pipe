@@ -111,7 +111,6 @@ def register(cname, args, ret):
     wrapped_method = WrappedApiMethod(method, ret2, last)
     return wrapped_method, method
 
-
 class RCore(Structure):  # 1
     def __init__(self):
         Structure.__init__(self)

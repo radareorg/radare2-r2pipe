@@ -189,7 +189,7 @@ class OpenBase(object):
         if not hasattr(self, "native"):
             self.native = RCore()
             self.native.cmd_str("o " + self.uri)
-        return self.native.cmd_str(cmd)
+        return self.native.cmd_str(cmd).decode()
 
     def _cmd_rlang(self, cmd):
         return r2lang.cmd(cmd)
