@@ -21,16 +21,17 @@ def r2lib():
     global lib
     if lib is not None:
         return lib
+    lib_name = find_library("r_core")
+    if lib_name is None:
+        return None
     try:
-        lib_name = find_library("r_core")
-        if lib_name == None:
-            raise ImportError("No native r_core library")
         if sys.platform.startswith("win"):
             lib = WinDLL(lib_name)
         else:
             lib = CDLL(lib_name)
         return lib
-    except OSError:
+    except OSError as err:
+        # print(err)
         pass
     return None
 
@@ -43,7 +44,6 @@ class AddressHolder(object):
     def __set__(self, obj, value):
         obj._address = value
 
-
 class WrappedRMethod(object):
     def __init__(self, cname, args, ret):
         self.cname = cname
@@ -53,10 +53,12 @@ class WrappedRMethod(object):
         r2 = r2lib()
         if r2 is not None:
             self.method = getattr(r2, cname)
+        else:
+            raise ImportError("Cannot use ccall")
 
     def __call__(self, *a):
         if not self.args_set:
-            if self.args and self.method:
+            if self.args:
                 self.method.argtypes = [eval(x.strip()) for x in self.args.split(",")]
             self.method.restype = eval(self.ret) if self.ret else None
             self.args_set = True
@@ -64,9 +66,10 @@ class WrappedRMethod(object):
         for i, argt in enumerate(self.method.argtypes):
             if argt is c_char_p:
                 a[i] = a[i].encode()
-        if self.method.restype is c_char_p:
-            return self.method(*a).decode()
-        return self.method(*a)
+        res = self.method(*a)
+        if isinstance(res, bytes):
+            return res.decode()
+        return res
 
 
 class WrappedApiMethod(object):
@@ -108,7 +111,6 @@ def register(cname, args, ret):
     method = WrappedRMethod(cname, args, ret)
     wrapped_method = WrappedApiMethod(method, ret2, last)
     return wrapped_method, method
-
 
 class RCore(Structure):  # 1
     def __init__(self):
