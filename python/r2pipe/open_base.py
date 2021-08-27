@@ -108,6 +108,8 @@ class OpenBase(object):
                 Returns:
                     Returns an object with methods to interact with r2 via commands
                 """
+        self.use_cache = False
+        self.cache = {}
         self.asyn = False
         if not filename and in_rlang():
             self._cmd = self._cmd_rlang
@@ -136,14 +138,12 @@ class OpenBase(object):
                         print("Pipe busy\n")
                         return
                 self.pipe = [hPipe, hPipe]
-                self._cmd = self._cmd_pipe
             else:
-                self.pipe = [-1,-1]
-                self._cmd = self._cmd_pipe
                 self.pipe = [
                     int(os.environ["R2PIPE_IN"]),
                     int(os.environ["R2PIPE_OUT"]),
                 ]
+            self._cmd = self._cmd_pipe
             self.url = "#!pipe"
             return
         except:
@@ -151,7 +151,13 @@ class OpenBase(object):
         if filename.startswith("#!pipe"):
             raise Exception("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
 
+    def invalidate_cache(self):
+        self.use_cache = False
+        self.cache = {}
+
     def _cmd_pipe(self, cmd):
+        if self.use_cache and self.cache.get(cmd) is not None:
+            return self.cache[cmd]
         out = b""
         cmd = cmd.strip().replace("\n", ";")
         if os.name == "nt":
@@ -180,9 +186,14 @@ class OpenBase(object):
                     out += res
                 if len(res) < 4096:
                     break
-        return out.decode("utf-8")
+        res = out.decode("utf-8")
+        if self.use_cache:
+            self.cache[cmd] = res
+        return res
 
     def _cmd_native(self, cmd):
+        if self.use_cache and self.cache.get(cmd) is not None:
+            return self.cache[cmd]
         cmd = cmd.strip().replace("\n", ";")
         if not has_native:
             raise Exception("No native ctypes connector available")
@@ -191,11 +202,18 @@ class OpenBase(object):
             self.native.cmd_str("o " + self.uri)
         res = self.native.cmd_str(cmd)
         if isinstance(res, bytes):
-            return res.decode()
+            res = res.decode()
+        if self.use_cache:
+            self.cache[cmd] = res
         return res
 
     def _cmd_rlang(self, cmd):
-        return r2lang.cmd(cmd)
+        if self.use_cache and self.cache.get(cmd) is not None:
+            return self.cache[cmd]
+        res = r2lang.cmd(cmd)
+        if self.use_cache:
+            self.cache[cmd] = res
+        return res
 
     def quit(self):
         """Quit current r2pipe session and kill
