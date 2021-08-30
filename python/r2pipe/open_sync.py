@@ -32,6 +32,7 @@ except ImportError:
 class open(OpenBase):
     def __init__(self, filename="", flags=[], radare2home=None):
         super(open, self).__init__(filename, flags)
+        self.pending = b''
         if filename.startswith("http://"):
             self._cmd = self._cmd_http
             self.uri = filename + "/cmd"
@@ -125,23 +126,28 @@ class open(OpenBase):
         while True:
             if self.nonblocking:
                 try:
-                    foo = r.read(4096)
+                    if len(self.pending) > 0:
+                        foo = self.pending
+                        self.pending = b""
+                    else:
+                        foo = r.read(4096)
+                    if foo is not None:
+                        zro = foo.find(b"\x00")
+                        if zro != -1:
+                            out += foo[0:zro]
+                            if zro < len(foo):
+                                self.pending = foo[zro + 1:]
+                            break
+                        out += foo
                 except:
-                    continue
+                    pass
             else:
                 foo = r.read(1)
-            if foo == b'':
-                break
-            if foo:
-                if foo.endswith(b"\0"):
-                    out += foo[:-1]
-                    break
-                out += foo
-            else:
-                # if there is no any output from pipe this loop will eat CPU, probably we have to do micro-sleep here
-                if self.nonblocking:
-                    time.sleep(0.001)
-
+                if foo is not None:
+                    if foo == b"\x00":
+                        break
+                    out += foo
+            time.sleep(0.001)
         return out.decode("utf-8", errors="ignore")
 
     def _cmd_http(self, cmd):
