@@ -178,10 +178,9 @@ class OpenBase(object):
             os.write(self.pipe[1], cmd.encode())
             while True:
                 res = os.read(self.pipe[0], 4096)
-                if len(res) < 1:
-                    break
-                if res[-1] == b"\x00"[0]:
-                    out += res[0:-1]
+                pos = res.find(b"\x00"[0])
+                if pos != -1:
+                    out += res[0:pos]
                 else:
                     out += res
                 if len(res) < 4096:
@@ -251,9 +250,9 @@ class OpenBase(object):
                 """
 
         res = self._cmd(cmd, **kwargs)
-        if res is not None:
-            return res
-        return None
+        if res is None:
+            return None
+        return res
 
     def cmdj(self, cmd, **kwargs):
         """Same as cmd() but evaluates JSONs and returns an object

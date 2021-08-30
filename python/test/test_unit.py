@@ -21,6 +21,9 @@ class TestR2PipeUnit(unittest.TestCase):
             self.assertIsInstance(lib, ctypes.WinDLL)
         else:
             self.assertIsInstance(lib, ctypes.CDLL)
+
+    def test_race_io(self):
+        os.system("sh race.sh");
     
     def test_native_rcore(self):
         c = RCore()
