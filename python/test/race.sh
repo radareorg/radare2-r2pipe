@@ -7,8 +7,9 @@ fail() {
 
 C=0
 while : ; do
-	python race.py /bin/ls | grep FAIL
+	PYTHONPATH=${PWD}/.. python race.py /bin/ls | grep FAIL
 	[ $? = 0 ] && fail
+	printf "... $C\r"
 	C=$(($C+1))
 	[ "$C" = 32 ] && break
 done
