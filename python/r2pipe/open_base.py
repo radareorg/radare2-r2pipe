@@ -217,7 +217,7 @@ class OpenBase(object):
     def quit(self):
         """Quit current r2pipe session and kill
                 """
-        self.cmd("q")
+        # HANGS self.cmd("q!!")
         if hasattr(self, "process"):
             import subprocess
 
@@ -232,7 +232,6 @@ class OpenBase(object):
 
             if is_async:
                 import asyncio
-
                 asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
     # r2 commands
