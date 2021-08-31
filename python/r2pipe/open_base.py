@@ -132,10 +132,10 @@ class OpenBase(object):
                     err = windll.kernel32.GetLastError()
                     print("Invalid Handle Value")
                     if err != ERROR_PIPE_BUSY:
-                        print("Could not open pipe:", hex(err), "\n")
+                        print("Could not open pipe:", hex(err))
                         return
                     elif (windll.kernel32.WaitNamedPipeW(mypipename, 20000)) == 0:
-                        print("Pipe busy\n")
+                        print("Pipe busy")
                         return
                 self.pipe = [hPipe, hPipe]
             else:

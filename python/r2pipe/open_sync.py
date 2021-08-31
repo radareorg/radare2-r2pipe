@@ -67,14 +67,16 @@ class open(OpenBase):
                 )
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
-            self.process.stdout.read(1)  # Reads initial \x00
-            try:
-                self.process.stdin.write(("?V\n").encode("utf8"))
-                self.process.stdin.flush()
-                r = self.process.stdout
-                r.read(4096)
-            except:
-                raise Exception("ERROR: Cannot open %s" % filename)
+            hello_cmd = True
+            if hello_cmd:
+                self.process.stdout.read(1)  # Reads initial \x00
+                try:
+                    self.process.stdin.write(("?V\n").encode("utf8"))
+                    self.process.stdin.flush()
+                    r = self.process.stdout
+                    r.read(4096)
+                except:
+                    raise Exception("ERROR: Cannot open %s" % filename)
             
             # make it non-blocking to speedup reading
             self.nonblocking = True

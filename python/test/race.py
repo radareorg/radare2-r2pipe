@@ -6,3 +6,6 @@ _pipe = r2pipe.open(sys.argv[1], flags=["-2"]) #, "-S"])
 res = _pipe.cmdj('iIj')
 if res is None:
     print("{} - FAIL".format(sys.argv[1]))
+res = _pipe.cmdj('iIj')
+if res is None:
+    print("{} - FAIL".format(sys.argv[1]))
