@@ -59,7 +59,7 @@ class open(OpenBase, ContextDecorator):
 
         elif filename.startswith("ccall://"):
             self._cmd_coro = self._cmd_native
-            self.uri = filename[7:]
+            self.uri = filename[8:]
 
         elif filename.startswith("tcp://"):
 
