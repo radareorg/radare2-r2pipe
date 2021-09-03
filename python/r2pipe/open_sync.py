@@ -38,7 +38,7 @@ class open(OpenBase):
             self.uri = filename + "/cmd"
         elif filename.startswith("ccall://"):
             self._cmd = self._cmd_native
-            self.uri = filename[7:]
+            self.uri = filename[8:]
         elif filename.startswith("tcp://"):
             r = re.match(r"tcp://(\d+\.\d+.\d+.\d+):(\d+)/?", filename)
             if not r:
