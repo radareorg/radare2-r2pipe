@@ -1,15 +1,18 @@
+-- r2pipe hello world program in rexx
+-- known to work on regina's rexx on macos
+-- getenv is not portable, we can use '8'
 
-say R2CMD('?E hello from rexx')
-exit
+Say r2cmd('?E hello from rexx')
+
+Exit
 
 r2cmd: PROCEDURE EXPOSE globals.
   arg cmd
-  fin = '/dev/fd/'getenv(R2PIPE_IN)
-  fou = '/dev/fd/'getenv(R2PIPE_OUT)
-  o = charout(fou, cmd''D2C(0))
+  fin = '/dev/fd/'Getenv(R2PIPE_IN)
+  fou = '/dev/fd/'Getenv(R2PIPE_OUT)
+  o = CharOut(fou, cmd''D2C(0))
   len = 0
-  do while len == 0
-    len = chars(fin)
-  end
-  return charin(fin,,len)
-
+  DO while len == 0
+    len = Chars(fin)
+  END
+  return CharIn(fin,,len)
