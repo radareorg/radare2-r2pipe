@@ -152,7 +152,6 @@ class OpenBase(object):
             raise Exception("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
 
     def invalidate_cache(self):
-        self.use_cache = False
         self.cache = {}
 
     def _cmd_pipe(self, cmd):
