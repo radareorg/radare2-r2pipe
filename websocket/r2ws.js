@@ -20,9 +20,8 @@ r2ws.cmd = function r2ws_cmd (cmd, cb) {
 r2ws.open = function r2ws_open (addr, file, cb) {
   ws = new WebSocket(addr);
   ws.onmessage = function (event) {
-    queue.reverse();
-    var first = queue.pop();
-    queue.reverse();
+    first = queue[0];
+    queue = queue.slice(1);
     if (first) {
       first(event.data);
     }

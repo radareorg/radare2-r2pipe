@@ -1,4 +1,4 @@
-/* radare2 Copyleft 2013-2016 pancake */
+/* radare2 Copyleft 2013-2021 pancake */
 
 var r2 = {};
 
@@ -11,27 +11,13 @@ var prev_lastoff = 0;
 var hascmd = false;
 var r2_root = self.location.pathname.split('/').slice(0, -2).join('/');
 
-function isFirefoxOS () {
-  if (typeof locationbar !== 'undefined' && !locationbar.visible) {
-    if (navigator.userAgent.indexOf('Firefox') > -1 && navigator.userAgent.indexOf('Mobile') > -1) {
-      return ('mozApps' in navigator);
-    }
-  }
-  return false;
-}
-
 // Valid options: sync, async or sasync
 // r2.asyncMode = 'sasync';
 r2.asyncMode = 'sync';
 
 r2.err = null; // callback to be executed when connection fails
 
-if (isFirefoxOS()) {
-  /* Requires CORS or SystemXHR */
-  r2.root = 'http://cloud.radare.org';
-} else {
-  r2.root = r2_root;
-}
+r2.root = r2_root;
 
 // async helper
 function asyncLoop (iterations, func, callback) {
@@ -102,23 +88,7 @@ function dump (obj) {
   }
 }
 
-r2.analAll = function () {
-  r2.cmd('aa', function () {});
-};
 
-r2.analOp = function (addr, cb) {
-  r2.cmd('aoj 1 @ ' + addr, function (txt) {
-    try {
-      cb(JSON.parse(txt)[0]);
-    } catch (e) {
-      console.error(e);
-      cb(txt);
-    }
-  });
-};
-
-r2.varMap = [];
-r2.argMap = [];
 
 function objtostr (obj) {
   var str = '';
@@ -151,11 +121,7 @@ function Ajax (method, uri, body, fn, err) {
   }
 
   var x = undefined;
-  if (isFirefoxOS()) {
-    var x = new XMLHttpRequest({ mozSystem: true });
-  } else {
     var x = new XMLHttpRequest();
-  }
   if (!x) {
     return false;
   }
@@ -196,218 +162,6 @@ function Ajax (method, uri, body, fn, err) {
 
   return true;
 }
-
-r2.assemble = function (offset, opcode, fn) {
-  var off = offset ? '@' + offset : '';
-  r2.cmd('"pa ' + opcode + '"' + off, fn);
-};
-
-r2.disassemble = function (offset, bytes, fn) {
-  var off = offset ? '@' + offset : '';
-  var str = 'pi @b:' + bytes + off;
-  r2.cmd(str, fn);
-};
-
-r2.get_hexdump = function (offset, length, cb) {
-  r2.cmd('px ' + length + '@' + offset, cb);
-};
-
-r2.get_disasm = function (offset, length, cb) {
-  // TODO: honor offset and length
-  r2.cmd('pD ' + length + '@' + offset, cb);
-};
-
-r2.get_disasm_before = function (offset, start, cb) {
-  var before = [];
-  r2.cmd('pdj -' + start + '@' + offset + '|', function (x) {
-    before = JSON.parse(x);
-  });
-  cb(before);
-};
-
-r2.get_disasm_after = function (offset, end, cb) {
-  var after = [];
-  r2.cmd('pdj ' + end + '@' + offset + '|', function (x) {
-    after = JSON.parse(x);
-  });
-  cb(after);
-};
-
-r2.get_disasm_before_after = function (offset, start, end, cb) {
-  var before = [];
-  var after = [];
-  r2.cmd('pdj ' + start + ' @' + offset + '|', function (x) {
-    before = JSON.parse(x);
-  });
-  r2.cmd('pdj ' + end + '@' + offset + '|', function (x) {
-    after = JSON.parse(x);
-  });
-  var opcodes = before.concat(after);
-  cb(opcodes);
-};
-
-r2.Config = function (k, v, fn) {
-  if (typeof v === 'function' || !v) { // get
-    r2.cmd('e ' + k + '|', fn || v);
-  } else { // set
-    r2.cmd('e ' + k + '=' + v, fn);
-  }
-  return r2;
-};
-
-r2.sections = {};
-
-r2.load_mmap = function () {
-  r2.cmdj('iSj|', function (x) {
-    if (x !== undefined && x !== null) {
-      r2.sections = x;
-    }
-  });
-};
-
-r2.get_address_type = function (address) {
-  var offset = parseInt(address, 16);
-  for (var i in r2.sections) {
-    if (offset >= r2.sections[i].addr && offset < r2.sections[i].addr + r2.sections[i].size) {
-      if (r2.sections[i].flags.indexOf('x') > -1) {
-        return 'instruction';
-      } else {
-        return 'memory';
-      }
-    }
-  }
-  return '';
-};
-
-r2.settings = {};
-
-r2.load_settings = function () {
-  r2.cmd('e asm.arch', function (x) { r2.settings['asm.arch'] = x.trim(); });
-  r2.cmd('e asm.bits', function (x) { r2.settings['asm.bits'] = x.trim(); });
-  r2.cmd('e asm.bytes', function (x) { r2.settings['asm.bytes'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.flags', function (x) { r2.settings['asm.flags'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.offset', function (x) { r2.settings['asm.offset'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.lines', function (x) { r2.settings['asm.lines'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.xrefs', function (x) { r2.settings['asm.xrefs'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.cmtright', function (x) { r2.settings['asm.cmtright'] = toBoolean(x.trim()); });
-  r2.cmd('e asm.pseudo', function (x) { r2.settings['asm.pseudo'] = toBoolean(x.trim()); });
-  // console.log("Loading settings from r2");
-  // console.log(r2.settings);
-};
-
-r2.flags = {};
-
-r2.update_flags = function () {
-  r2.cmd('fs *;fj|', function (x) {
-    var fs = JSON.parse(x);
-    if (fs !== undefined && fs !== null) {
-      r2.flags = {};
-      for (var f in fs) {
-        var addr = '0x' + fs[f].offset.toString(16);
-        addr = address_canonicalize(addr);
-        if (addr in r2.flags) {
-          var fl = r2.flags[addr];
-          fl[fl.length] = { name: fs[f].name, size: fs[f].size };
-          r2.flags[addr] = fl;
-        } else {
-          r2.flags[addr] = [{ name: fs[f].name, size: fs[f].size }];
-        }
-      }
-    }
-  });
-};
-
-r2.get_flag_address = function (name) {
-  for (var f in r2.flags) {
-    for (var v in r2.flags[f]) {
-      if (name == r2.flags[f][v].name) return f;
-    }
-  }
-  return null;
-};
-
-r2.get_flag_names = function (offset) {
-  var names = [];
-  for (var i in r2.flags[offset]) {
-    names[names.length] = r2.flags[offset][i].name;
-  }
-  return names;
-};
-
-r2.set_flag_space = function (ns, fn) {
-  r2.cmd('fs ' + ns, fn);
-};
-
-r2.get_flags = function (fn) {
-  r2.cmd('fj|', function (x) {
-    fn(x ? JSON.parse(x) : []);
-  });
-};
-
-r2.get_opcodes = function (off, n, cb) {
-  r2.cmd('pdj @' + off + '!' + n + '|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-
-r2.get_bytes = function (off, n, cb) {
-  r2.cmd('pcj @' + off + '!' + n + '|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-
-r2.asm_config = {};
-
-r2.store_asm_config = function () {
-  config = {};
-  r2.cmd('e', function (x) {
-    conf = x.split('\n');
-    for (var prop in conf) {
-      var fields = conf[prop].split(' ');
-      if (fields.length == 3) {
-        // TODO: Dont know why byt e~asm. is not working so filtering here
-        if (fields[0].trim().indexOf('asm.') == 0) config[fields[0].trim()] = fields[2].trim();
-      }
-    }
-    r2.asm_config = config;
-  });
-};
-
-r2.restore_asm_config = function () {
-  cmd = '';
-  for (var prop in r2.asm_config) {
-    cmd += 'e ' + prop + '=' + r2.asm_config[prop] + ';';
-  }
-  r2.cmd(cmd, function () {});
-};
-
-r2.get_info = function (cb) {
-  r2.cmd('ij|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-r2.bin_relocs = function (cb) {
-  r2.cmd('irj|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-r2.bin_imports = function (cb) {
-  r2.cmd('iij|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-
-r2.bin_symbols = function (cb) {
-  r2.cmd('isj|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
-
-r2.bin_sections = function (cb) {
-  r2.cmd('iSj|', function (json) {
-    cb(JSON.parse(json));
-  });
-};
 
 r2.cmds = function (cmds, cb) {
   if (cmds.length == 0) return;
@@ -489,75 +243,6 @@ r2.alive = function (cb) {
       cb(o);
     }
   });
-};
-
-r2.getTextLogger = function (obj) {
-  if (typeof (obj) !== 'object') {
-    obj = {};
-  }
-  obj.last = 0;
-  obj.events = {};
-  obj.interval = null;
-  r2.cmd('Tl', function (x) {
-    obj.last = +x;
-  });
-  obj.load = function (cb) {
-    r2.cmd('"Tj ' + (obj.last + 1) + '"', function (ret) {
-      if (cb) {
-        cb(JSON.parse(ret));
-      }
-    });
-  };
-  obj.clear = function (cb) {
-    // XXX: fix l-N
-    r2.cmd('T-', cb); // +obj.last, cb);
-  };
-  obj.send = function (msg, cb) {
-    r2.cmd('"T ' + msg + '"', cb);
-  };
-  obj.refresh = function (cb) {
-    obj.load(function (ret) {
-      // obj.last = 0;
-      for (var i = 0; i < ret.length; i++) {
-        var message = ret[i];
-        obj.events['message']({
-          'id': message[0],
-          'text': message[1]
-        });
-        if (message[0] > obj.last) {
-          obj.last = message[0];
-        }
-      }
-      if (cb) {
-        cb();
-      }
-    });
-  };
-  obj.autorefresh = function (n) {
-    if (!n) {
-      if (obj.interval) {
-        obj.interval.stop();
-      }
-      return;
-    }
-    function to () {
-      obj.refresh(function () {
-        // obj.clear ();
-      });
-      if (r2ui.selected_panel === 'Logs') {
-        setTimeout(to, n * 1000);
-      } else {
-        console.log('Not in logs :(');
-      }
-      return true;
-    }
-    obj.interval = setTimeout(to, n * 1000);
-  };
-  obj.on = function (ev, cb) {
-    obj.events[ev] = cb;
-    return obj;
-  };
-  return obj;
 };
 
 r2.filter_asm = function (x, display) {
