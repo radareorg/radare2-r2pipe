@@ -260,7 +260,8 @@ class OpenBase(object):
                     Returns a JSON object respresenting the parsed JSON
                 """
         result = self.cmd(cmd, **kwargs)
-
+        if result == "":
+            result = "{}"
         try:
             data = json.loads(result)
         except (ValueError, KeyError, TypeError) as e:
