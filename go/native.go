@@ -2,40 +2,113 @@
 
 package r2pipe
 
+//#cgo linux LDFLAGS: -ldl
+//#include <stdio.h>
+//#include <dlfcn.h>
+// #include <stdlib.h>
+// void *gor_core_new(void *f) {
+// 	void *(*rcn)();
+// 	rcn = (void *(*)())f;
+// 	return rcn();
+// }
+//
+// void gor_core_free(void *f, void *arg) {
+// 	void (*fr)(void *);
+// 	fr = (void (*)(void *))f;
+// 	fr(arg);
+// }
+//
+// char *gor_core_cmd_str(void *f, void *arg, char *arg2) {
+// 	char *(*cmdstr)(void *, char *);
+// 	cmdstr = (char *(*)(void *, char *))f;
+// 	return cmdstr(arg, arg2);
+// }
+import "C"
+
 import (
-	"github.com/rainycape/dl"
 	"errors"
+	"fmt"
+	"runtime"
+	"unsafe"
 )
 
-type Ptr = *struct{}
+type Ptr = unsafe.Pointer
+
+// *struct{}
 
 var (
 	lib            Ptr = nil
 	r_core_new     func() Ptr
 	r_core_free    func(Ptr)
-	r_mem_free     func(interface{})
 	r_core_cmd_str func(Ptr, string) string
 )
+
+type DL struct {
+	handle unsafe.Pointer
+	name   string
+}
+
+func dlOpen(path string) (*DL, error) {
+	var ret DL
+	switch runtime.GOOS {
+	case "darwin":
+		path = path + ".dylib"
+	case "windows":
+		path = path + ".dll"
+	default:
+		path = path + ".so" //linux/bsds
+	}
+	cpath := C.CString(path)
+	if cpath == nil {
+		return nil, errors.New("Failed to get cpath")
+	}
+	//r2pioe only uses flag 0
+	ret.handle = C.dlopen(cpath, 0)
+	ret.name = path
+	C.free(unsafe.Pointer(cpath))
+	if ret.handle == nil {
+		return nil, errors.New(fmt.Sprintf("Failed to open %s", path))
+	}
+	return &ret, nil
+}
+
+func dlSym(dl *DL, name string) (unsafe.Pointer, error) {
+	cname := C.CString(name)
+	if cname == nil {
+		return nil, errors.New("Fail")
+	}
+	handle := C.dlsym(dl.handle, cname)
+	C.free(unsafe.Pointer(cname))
+	if handle == nil {
+		return nil, errors.New("Fail")
+	}
+	return handle, nil
+}
 
 func NativeLoad() error {
 	if lib != nil {
 		return nil
 	}
-	lib, err := dl.Open("libr_core", 0)
+	lib, err := dlOpen("libr_core")
+	_ = lib
 	if err != nil {
 		return err
 	}
-	if lib.Sym("r_core_new", &r_core_new) != nil {
-		return errors.New("Missing r_core_new")
+	handle1, _ := dlSym(lib, "r_core_new")
+	r_core_new = func() Ptr {
+		a := (Ptr)(C.gor_core_new(handle1))
+		return a
 	}
-	if lib.Sym("r_core_cmd_str", &r_core_cmd_str) != nil {
-		return errors.New("Missing r_core_cmd_str")
+	handle2, _ := dlSym(lib, "r_core_free")
+	r_core_free = func(p Ptr) {
+		C.gor_core_free(handle2, unsafe.Pointer(p))
 	}
-	if lib.Sym("r_core_free", &r_core_free) != nil {
-		return errors.New("Missing r_core_free")
-	}
-	if lib.Sym("r_mem_free", &r_mem_free) != nil {
-		return errors.New("Missing r_mem_free")
+	handle3, _ := dlSym(lib, "r_core_cmd_str")
+	r_core_cmd_str = func(p Ptr, s string) string {
+		a := C.CString(s)
+		b := C.gor_core_cmd_str(handle3, unsafe.Pointer(p), a)
+		C.free(unsafe.Pointer(a))
+		return C.GoString(b)
 	}
 	return nil
 }

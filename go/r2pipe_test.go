@@ -3,8 +3,10 @@
 package r2pipe
 
 import "testing"
+import "fmt"
 
 func TestCmd(t *testing.T) {
+	fmt.Println("[*] Testing r2 spawn pipe")
 	r2p, err := NewPipe("malloc://256")
 	if err != nil {
 		t.Fatal(err)

@@ -1,10 +1,12 @@
-// radare - LGPL - Copyright 2017 - pancake
+// radare - LGPL - Copyright 2017-2021 - pancake
 
 package r2pipe
 
 import "testing"
+import "fmt"
 
 func TestNativeCmd(t *testing.T) {
+	fmt.Println("[*] Testing r2 native api pipe")
 	r2p, err := NewNativePipe("/bin/ls")
 	// r2p, err := NewPipe("/bin/ls")
 	if err != nil {

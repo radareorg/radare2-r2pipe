@@ -42,6 +42,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 // A Pipe represents a communication interface with r2 that will be used to
@@ -51,7 +52,8 @@ type Pipe struct {
 	r2cmd  *exec.Cmd
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
-	Core   *struct{}
+	stderr io.ReadCloser
+	Core   unsafe.Pointer
 	cmd    CmdDelegate
 	close  CloseDelegate
 }
@@ -59,6 +61,7 @@ type Pipe struct {
 type (
 	CmdDelegate   func(*Pipe, string) (string, error)
 	CloseDelegate func(*Pipe) error
+	EventDelegate func(*Pipe, string, interface{}, string) bool
 )
 
 // NewPipe returns a new r2 pipe and initializes an r2 core that will try to
@@ -106,35 +109,21 @@ func newPipeFd() (*Pipe, error) {
 }
 
 func newPipeCmd(file string) (*Pipe, error) {
-	r2cmd := exec.Command("radare2", "-q0", file)
 
-	stdin, err := r2cmd.StdinPipe()
-	if err != nil {
-		return nil, err
+	r2p := &Pipe{File: file, r2cmd: exec.Command("radare2", "-q0", file)}
+	var err error
+	r2p.stdin, err = r2p.r2cmd.StdinPipe()
+	if err == nil {
+		r2p.stdout, err = r2p.r2cmd.StdoutPipe()
+		if err == nil {
+			r2p.stderr, err = r2p.r2cmd.StdoutPipe()
+		}
+		if err = r2p.r2cmd.Start(); err == nil {
+			//Read the initial data
+			_, err = bufio.NewReader(r2p.stdout).ReadString('\x00')
+		}
 	}
-
-	stdout, err := r2cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r2cmd.Start(); err != nil {
-		return nil, err
-	}
-	// Read initial data
-	if _, err := bufio.NewReader(stdout).ReadString('\x00'); err != nil {
-		return nil, err
-	}
-
-	r2p := &Pipe{
-		File:   file,
-		r2cmd:  r2cmd,
-		stdin:  stdin,
-		stdout: stdout,
-		Core:   nil,
-	}
-
-	return r2p, nil
+	return r2p, err
 }
 
 // Write implements the standard Write interface: it writes data to the r2
@@ -144,9 +133,38 @@ func (r2p *Pipe) Write(p []byte) (n int, err error) {
 }
 
 // Read implements the standard Read interface: it reads data from the r2
-// pipe, blocking until the previously issued commands have finished.
+// pipe's stdin, blocking until the previously issued commands have finished.
 func (r2p *Pipe) Read(p []byte) (n int, err error) {
 	return r2p.stdout.Read(p)
+}
+
+func (r2p *Pipe) ReadErr(p []byte) (n int, err error) {
+	return r2p.stderr.Read(p)
+}
+
+func (r2p *Pipe) On(evname string, p interface{}, cb EventDelegate) error {
+	path, err := r2p.Cmd("===stderr")
+	if err != nil {
+		return err
+	}
+	f, err := os.OpenFile(path, os.O_RDONLY, 0600)
+
+	if err != nil {
+		return err
+	}
+	go func() {
+		var buf bytes.Buffer
+		for {
+			io.Copy(&buf, f)
+			if buf.Len() > 0 {
+				if !cb(r2p, evname, p, buf.String()) {
+					break
+				}
+			}
+		}
+		f.Close()
+	}()
+	return nil
 }
 
 // Cmd is a helper that allows to run r2 commands and receive their output.
@@ -167,31 +185,27 @@ func (r2p *Pipe) Cmd(cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return strings.TrimRight(buf, "\n\x00"), err
+}
 
-	return strings.TrimRight(buf, "\n\x00"), nil
+//like cmd but formats the command
+func (r2p *Pipe) Cmdf(f string, args ...interface{}) (string, error) {
+	return r2p.Cmd(fmt.Sprintf(f, args...))
 }
 
 // Cmdj acts like Cmd but interprets the output of the command as json. It
 // returns the parsed json keys and values.
-func (r2p *Pipe) Cmdj(cmd string) (interface{}, error) {
-	if _, err := fmt.Fprintln(r2p, cmd); err != nil {
-		return nil, err
+func (r2p *Pipe) Cmdj(cmd string) (out interface{}, err error) {
+	rstr, err := r2p.Cmd(cmd)
+	if err == nil {
+		err = json.Unmarshal([]byte(rstr), out)
 	}
+	return out, err
+}
 
-	buf, err := bufio.NewReader(r2p).ReadBytes('\x00')
-	if err != nil {
-		return nil, err
-	}
-
-	buf = bytes.TrimRight(buf, "\n\x00")
-
-	var output interface{}
-
-	if err := json.Unmarshal(buf, &output); err != nil {
-		return nil, err
-	}
-
-	return output, nil
+//like cmdj but formats the command
+func (r2p *Pipe) Cmdjf(f string, args ...interface{}) (interface{}, error) {
+	return r2p.Cmdj(fmt.Sprintf(f, args...))
 }
 
 // Close shuts down r2, closing the created pipe.
