@@ -203,9 +203,25 @@ func (r2p *Pipe) Cmdj(cmd string) (out interface{}, err error) {
 	return out, err
 }
 
+// CmdjStruct acts like Cmdjs but it will fill the interface/struct with the wanted values. It
+// returns the command execution error.
+func (r2p *Pipe) CmdjStruct(cmd string, out interface{}) (err error) {
+	rstr, err := r2p.Cmd(cmd)
+
+	if err == nil {
+		err = json.Unmarshal([]byte(rstr), out)
+	}
+	return err
+}
+
 //like cmdj but formats the command
 func (r2p *Pipe) Cmdjf(f string, args ...interface{}) (interface{}, error) {
 	return r2p.Cmdj(fmt.Sprintf(f, args...))
+}
+
+// like Cmdj, but besides format the command it will already fill the interface sent
+func (r2p *Pipe) CmdjfStruct(f string, out interface{}, args ...interface{}) error {
+	return r2p.CmdjStruct(fmt.Sprintf(f, args...), out)
 }
 
 // Close shuts down r2, closing the created pipe.
