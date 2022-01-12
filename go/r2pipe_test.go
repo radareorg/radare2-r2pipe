@@ -2,8 +2,15 @@
 
 package r2pipe
 
-import "testing"
-import "fmt"
+import (
+	"fmt"
+	"testing"
+)
+
+type Offset struct {
+	Offset  uint
+	Current bool
+}
 
 func TestCmd(t *testing.T) {
 	fmt.Println("[*] Testing r2 spawn pipe")
@@ -25,5 +32,17 @@ func TestCmd(t *testing.T) {
 	}
 	if buf != check {
 		t.Errorf("buf=%v; want=%v", buf, check)
+	}
+
+	offset := Offset{}
+	r2p.CmdjStruct("sj ~{0}", &offset)
+
+	if !offset.Current {
+		t.Errorf("CurrentOffset=%v; want=%v", offset.Current, true)
+	}
+
+	r2p.CmdjfStruct("sj ~{%d}", &offset, 0)
+	if !offset.Current {
+		t.Errorf("CurrentOffset=%v; want=%v", offset.Current, true)
 	}
 }
