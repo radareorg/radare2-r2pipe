@@ -32,6 +32,7 @@ except ImportError:
 class open(OpenBase):
     def __init__(self, filename="", flags=[], radare2home=None):
         super(open, self).__init__(filename, flags)
+        self.pipe_read_sleep = 0.001
         self.pending = b''
         if filename.startswith("http://"):
             self._cmd = self._cmd_http
@@ -149,7 +150,7 @@ class open(OpenBase):
                     if foo == b"\x00":
                         break
                     out += foo
-            time.sleep(0.001)
+            time.sleep(self.pipe_read_sleep)
         return out.decode("utf-8", errors="ignore")
 
     def _cmd_http(self, cmd):
