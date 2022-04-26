@@ -129,19 +129,26 @@ class open(OpenBase):
         while True:
             if self.nonblocking:
                 try:
+                    null_start = False
                     if len(self.pending) > 0:
                         foo = self.pending
                         self.pending = b""
                     else:
                         foo = r.read(4096)
-                    if foo is not None:
+                        if os.name == "nt":
+                            if foo.startswith(b"\x00"):
+                                foo = foo[1:]
+                                null_start = True
+                    if foo:
                         zro = foo.find(b"\x00")
                         if zro != -1:
                             out += foo[0:zro]
-                            if zro < len(foo):
+                            if zro  < len(foo):
                                 self.pending = foo[zro + 1:]
                             break
                         out += foo
+                    elif null_start:
+                        break
                 except:
                     pass
             else:
