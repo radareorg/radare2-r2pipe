@@ -68,7 +68,7 @@ class open(OpenBase):
                 )
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
-            hello_cmd = True
+            hello_cmd = False
             if hello_cmd:
                 self.process.stdout.read(1)  # Reads initial \x00
                 try:
