@@ -60,6 +60,9 @@ class open(OpenBase):
             if os.name == "nt":
                 # avoid errors on Windows when subprocess messes with name
                 r2e += ".exe"
+                hello_cmd = False
+            else:
+                hello_cmd = True
             cmd = [r2e, "-q0", filename]
             cmd = cmd[:1] + flags + cmd[1:]
             try:
@@ -68,7 +71,6 @@ class open(OpenBase):
                 )
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
-            hello_cmd = False
             if hello_cmd:
                 self.process.stdout.read(1)  # Reads initial \x00
                 try:
