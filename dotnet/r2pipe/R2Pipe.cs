@@ -101,12 +101,12 @@ namespace r2pipe
             
             while (true)
             {
-                char buffer = (char)r2Process.StandardOutput.Read();
+                int buffer = r2Process.StandardOutput.Read();
 
-                if (buffer == 0x00)
+                if (buffer == -1)
                     break;
 
-                sb.Append(buffer);
+                sb.Append((char)buffer);
             }
             return sb.ToString();
         }
