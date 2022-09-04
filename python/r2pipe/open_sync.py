@@ -71,12 +71,7 @@ class open(OpenBase):
                 )
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
-            # make it non-blocking to speedup reading
-            self.nonblocking = True
-            if self.nonblocking:
-                fd = self.process.stdout.fileno()
-                if not self.__make_non_blocking(fd):
-                    Exception("ERROR: Cannot make stdout pipe non-blocking")
+
             if hello_cmd:
                 self.process.stdout.read(1)  # Reads initial \x00
                 try:
@@ -131,30 +126,29 @@ class open(OpenBase):
         out = b""
         foo = None
         while True:
-            if self.nonblocking:
-                try:
-                    null_start = False
-                    if len(self.pending) > 0:
-                        foo = self.pending
-                        self.pending = b""
-                    else:
-                        foo = r.read(4096)
-                        if os.name == "nt":
-                            if foo.startswith(b"\x00"):
-                                foo = foo[1:]
-                                null_start = True
-                    if foo:
-                        zro = foo.find(b"\x00")
-                        if zro != -1:
-                            out += foo[0:zro]
-                            if zro  < len(foo):
-                                self.pending = foo[zro + 1:]
-                            break
-                        out += foo
-                    elif null_start:
+            try:
+                null_start = False
+                if len(self.pending) > 0:
+                    foo = self.pending
+                    self.pending = b""
+                else:
+                    foo = r.read(4096)
+                    if os.name == "nt":
+                        if foo.startswith(b"\x00"):
+                            foo = foo[1:]
+                            null_start = True
+                if foo:
+                    zro = foo.find(b"\x00")
+                    if zro != -1:
+                        out += foo[0:zro]
+                        if zro  < len(foo):
+                            self.pending = foo[zro + 1:]
                         break
-                except:
-                    pass
+                    out += foo
+                elif null_start:
+                    break
+            except:
+                pass
             else:
                 foo = r.read(1)
                 if foo is not None:
