@@ -72,7 +72,7 @@ class open(OpenBase):
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
             # make it non-blocking to speedup reading
-            self.nonblocking = True
+            self.nonblocking = False
             if self.nonblocking:
                 fd = self.process.stdout.fileno()
                 if not self.__make_non_blocking(fd):
