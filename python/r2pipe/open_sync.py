@@ -71,22 +71,24 @@ class open(OpenBase):
                 )
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
+            # make it non-blocking to speedup reading
+            self.nonblocking = False
+            if self.nonblocking:
+                fd = self.process.stdout.fileno()
+                if not self.__make_non_blocking(fd):
+                    Exception("ERROR: Cannot make stdout pipe non-blocking")
             if hello_cmd:
                 self.process.stdout.read(1)  # Reads initial \x00
                 try:
                     self.process.stdin.write(("?V\n").encode("utf8"))
                     self.process.stdin.flush()
                     r = self.process.stdout
-                    r.read(4096)
+                    while True:
+                        ch = r.read(1)
+                        if ch == b'\x00':
+                            break
                 except:
                     raise Exception("ERROR: Cannot open %s" % filename)
-            
-            # make it non-blocking to speedup reading
-            self.nonblocking = True
-            if self.nonblocking:
-                fd = self.process.stdout.fileno()
-                if not self.__make_non_blocking(fd):
-                    Exception("ERROR: Cannot make stdout pipe non-blocking")
 
     @staticmethod
     def __make_non_blocking(fd):
