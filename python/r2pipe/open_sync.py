@@ -7,7 +7,6 @@ This script use code from old __init__.py open object
 
 import re
 import socket
-import time
 import urllib
 import os
 from subprocess import Popen, PIPE
