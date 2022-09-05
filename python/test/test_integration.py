@@ -88,3 +88,9 @@ class TestR2PipeIntegration(unittest.TestCase):
         res = self.r2.cmd(cmd)
         self.assertEqual(res, expected)
 
+    def test_r2cmd_no_nullbyte_bug(self):
+        import r2pipe
+        r = r2pipe.open('/bin/ls')
+
+        result = r.cmd('prx @ rsp')
+        self.assertNotEqual(result, '')
