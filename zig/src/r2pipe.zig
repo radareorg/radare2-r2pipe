@@ -1,7 +1,5 @@
 const std = @import("std");
-const fmt = std.fmt; // @import("std.fmt");
 const print = @import("std").debug.print;
-const testing = std.testing;
 
 pub const R2PipeMode = enum {
     env,
@@ -12,10 +10,6 @@ pub const R2PipeMode = enum {
 pub const R2Pipe = struct {
     fd_in: i32 = -1,
     fd_out: i32 = -1,
-
-    pub fn init() R2Pipe {
-        return R2Pipe{};
-    }
 
     pub fn deinit(r2: *R2Pipe) void {
         r2.arena.deinit();
@@ -29,7 +23,6 @@ pub const R2Pipe = struct {
             if (res > 0) {
                 return foo[0..res];
             }
-            return "";
         }
         return "";
     }
@@ -40,14 +33,13 @@ pub const R2Pipe = struct {
 };
 
 pub fn open(file: []const u8) !R2Pipe {
-    var r2 = R2Pipe.init();
+    var r2 = R2Pipe{};
     if (std.mem.eql(u8, file, "")) {
         var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-        defer arena.deinit();
         const env_map = try std.process.getEnvMap(arena.allocator());
         r2.fd_in = try std.fmt.parseInt(i32, env_map.get("R2PIPE_IN") orelse "-1", 10);
         r2.fd_out = try std.fmt.parseInt(i32, env_map.get("R2PIPE_OUT") orelse "-1", 10);
+        arena.deinit();
     }
-    _ = file;
     return r2;
 }
