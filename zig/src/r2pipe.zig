@@ -27,7 +27,7 @@ pub const R2Pipe = struct {
         return "";
     }
 
-    pub fn quit(r2: R2Pipe) void {
+    pub fn quit(r2: R2Pipe) !void {
         _ = r2.cmd("q!!");
     }
 };

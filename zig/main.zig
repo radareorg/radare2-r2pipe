@@ -4,17 +4,18 @@ const r2pipe = @import("src/r2pipe.zig");
 
 pub fn main() !void {
     try inr2();
+    // try inspawn();
 }
 
 fn inr2() !void {
     const r2 = try r2pipe.open("");
-    const res = r2.cmd("?E Hello World");
-    print("Hello, {s}!\n{s}\n", .{ "world", res });
+    const res = try r2.cmd("?E Hello World");
+    print("Hello, {s}\n{s}\n", .{ "world", res });
 }
 
 fn inspawn() !void {
     const r2 = try r2pipe.open("/bin/ls");
-    const res = r2.cmd("?E Hello World");
-    print("Hello, {s}!\n{s}\n", .{ "world", res });
+    const res = try r2.cmd("?E Hello World");
+    print("Hello, {s}\n{s}\n", .{ "world", res });
     r2.quit();
 }
