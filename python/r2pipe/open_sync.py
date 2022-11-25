@@ -122,7 +122,7 @@ class open(OpenBase):
             return ''
         r = self.process.stdout
         self.process.stdin.flush()
-        out = b""
+        out = bytearray()
         foo = None
         while True:
             try:
