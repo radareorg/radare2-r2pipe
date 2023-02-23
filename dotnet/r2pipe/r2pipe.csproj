@@ -9,10 +9,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>r2pipe</RootNamespace>
     <AssemblyName>r2pipe</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
-<!--
+    <TargetFrameworkProfile />
+    <!--
     <AssemblyOriginatorKeyFile>r2pipe.snk</AssemblyOriginatorKeyFile>
 -->
   </PropertyGroup>
