@@ -37,14 +37,10 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-<!--
+    <!--
     <AssemblyOriginatorKeyFile>r2pipe.snk</AssemblyOriginatorKeyFile>
 -->
   </PropertyGroup>
-  <ItemGroup>
-    <!-- A reference to the entire .NET Framework is automatically included -->
-    <None Include="r2pipe.snk" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="..\r2pipe\CmdQueue.cs">
       <Link>CmdQueue.cs</Link>
