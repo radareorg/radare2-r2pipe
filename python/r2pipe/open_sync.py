@@ -71,6 +71,9 @@ class open(OpenBase):
             except:
                 raise Exception("ERROR: Cannot find radare2 in PATH")
 
+            if os.name == "nt":
+                # On windows-spawn method we need to read the null byte twice
+                self.process.stdout.read(1)  # Reads initial \x00
             if hello_cmd:
                 self.process.stdout.read(1)  # Reads initial \x00
                 try:

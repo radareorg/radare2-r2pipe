@@ -116,8 +116,10 @@ class OpenBase(object):
             return
         try:
             if os.name == "nt":
-                mypipename = os.environ["r2pipe_path"]
-                while 1:
+                # if r2pipe_path environment is not set then fail below
+                mypipename = os.environ["r2pipe_path"] # throws exception if not set
+                # this logic is only when using r2pipe from INSIDE r2
+                while True:
                     hPipe = windll.kernel32.CreateFileW(
                         mypipename,
                         GENERIC_READ | GENERIC_WRITE,
@@ -135,7 +137,7 @@ class OpenBase(object):
                         print("Could not open pipe:", hex(err))
                         return
                     elif (windll.kernel32.WaitNamedPipeW(mypipename, 20000)) == 0:
-                        print("Pipe busy")
+                        print("Named pipe is busy")
                         return
                 self.pipe = [hPipe, hPipe]
             else:
