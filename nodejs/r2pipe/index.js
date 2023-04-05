@@ -536,3 +536,4 @@ const r2node = {
 };
 
 module.exports = r2node;
+module.exports.default = r2node;
