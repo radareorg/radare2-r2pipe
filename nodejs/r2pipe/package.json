@@ -1,6 +1,6 @@
 {
   "name": "r2pipe",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "description": "NodeJS r2pipe API for radare2",
   "main": "index.js",
   "types": "r2pipe.d.ts",
@@ -20,17 +20,11 @@
   },
   "files": [
     "README.md",
+    "r2pipe.d.ts",
     "index.js",
     "promise.js",
     "sync.js",
-    "util.js",
-    "examples/hello.js",
-    "examples/r2co.js",
-    "examples/test-io.js",
-    "examples/test-open.js",
-    "examples/test-pipeSync.js",
-    "examples/test-lpipeSync.js",
-    "test.js"
+    "util.js"
   ],
   "keywords": [
     "radare",
