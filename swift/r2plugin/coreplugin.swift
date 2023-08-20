@@ -87,12 +87,15 @@ public func r2swift_cmd(_core: UnsafeMutableRawPointer, cmd: UnsafePointer<CChar
 		let res = core.cmd("x")
 		print("This is your favourite Swift command BEGIN\n \(str) \(res) END")
 
-		let j = core.cmdj("ij")
+		if let j = core.cmdj("ij") {
+			let j_bin = j.value(forKey:"bin") as? NSDictionary
+			if j_bin != nil {
+				let j_bin_arch = j_bin!.value(forKey:"arch")!
+				print("arch=\(j_bin_arch)")
+			}
+		}
 		//print("Json \(String(describing:j))")
-		let j_bin = j!.value(forKey:"bin")! as? NSDictionary
 		//print("jbin \(String(describing:j_bin))")
-		let j_bin_arch = j_bin!.value(forKey:"arch")!
-		print("arch=\(j_bin_arch)")
 	}
 	return 0
 }

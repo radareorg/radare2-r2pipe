@@ -27,7 +27,8 @@ class R2PipeNative {
 	private var inHandle:FileHandle? = nil;
 
 	init?(file:String?) {
-		let outHandle: FileHandle;
+		var outHandle: FileHandle;
+		outHandle = pipe.fileHandleForReading
 		if file == nil {
 #if USE_ENV_PIPE
 			let dict = ProcessInfo.processInfo.environment
@@ -85,7 +86,7 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 							// skip
 							self.initState = false;
 						} else {
-							let newData = Data(bytes: bytes, length:foundTerminatorAt);
+							let newData = Data(bytes: bytes, count:foundTerminatorAt);
 							if let str = String(data: data, encoding: .utf8) {
 								self.bufferedString += str as String;
 								self.runCallback (self.bufferedString);
@@ -99,7 +100,7 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 						// let newBytes = UnsafePointer<UInt8>(data.withUnsafeBytes) + foundTerminatorAt + 1;
 						let newBytes = bytes + foundTerminatorAt + 1;
 						let k = data.count - foundTerminatorAt - 1;
-						data = Data(bytes: newBytes, length: k);
+						data = Data(bytes: newBytes, count: k);
 						pointer = UnsafePointer<UInt8>(newBytes)
 						buffer = UnsafeBufferPointer<UInt8>(start:pointer, count:k)
 

@@ -7,3 +7,4 @@ all:
 	swiftc $(CFLAGS) -o main struct.c coreplugin.swift main.swift
 	mkdir -p $(shell r2 -H R2_USER_PLUGINS)
 	cp -f libr2swift.dylib $(shell r2 -H R2_USER_PLUGINS)
+	r2 -qc 'swift jeje' /bin/ls
