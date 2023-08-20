@@ -95,7 +95,7 @@ public class R2Pipe {
 		if r2c != nil {
 			if let s = r_core.r_core_cmd_str(r2c, str) {
 				let r = String(cString:s);
-		//			r_core.free (s);
+				// r_core.free (s);
 				return r;
 			}
 		}
