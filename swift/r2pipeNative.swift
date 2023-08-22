@@ -87,7 +87,7 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 							self.initState = false;
 						} else {
 							let newData = Data(bytes: bytes, count:foundTerminatorAt);
-							if let str = String(data: data, encoding: .utf8) {
+							if let str = String(data: newData, encoding: .utf8) {
 								self.bufferedString += str as String;
 								self.runCallback (self.bufferedString);
 								self.bufferedString = "";

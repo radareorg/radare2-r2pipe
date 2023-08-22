@@ -134,6 +134,7 @@ public class R2Pipe {
 		let request = URLRequest(url: url!)
 		let response:AutoreleasingUnsafeMutablePointer<URLResponse?>? = nil;
 		do {
+			// let responseData = try NSURLConnection.dataTaskWithRequest
 			let responseData = try NSURLConnection.sendSynchronousRequest(
 					request, returning: response) as Data;
 			if let responseStr = String(data:responseData, encoding: String.Encoding.utf8) {
@@ -168,6 +169,7 @@ public class R2Pipe {
 		}
 	}
 
+	@discardableResult
 	public func cmdSync(_ str:String) -> String? {
 		switch (mode) {
 		case .Ccall:
