@@ -145,6 +145,7 @@ public class R2Pipe {
 		return nil;
 	}
 
+	@discardableResult
 	public func cmd(_ str:String, closure: @escaping (String?)->()) -> Bool {
 		switch (mode) {
 		case .Ccall:
