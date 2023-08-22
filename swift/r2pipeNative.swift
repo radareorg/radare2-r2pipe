@@ -67,9 +67,10 @@ class R2PipeNative {
 			notification -> Void in
 			var data = outHandle.availableData
 			if data.count > 0 {
-data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
-				var pointer = UnsafePointer<UInt8>(bytes)
-				var buffer = UnsafeBufferPointer<UInt8>(start:pointer, count: data.count)
+data.withUnsafeBytes {
+    (bytes: UnsafeRawBufferPointer)->Void in
+    var pointer = bytes.baseAddress?.assumingMemoryBound(to: UInt8.self)
+ 			var buffer = UnsafeBufferPointer<UInt8>(start:pointer, count: data.count)
 				var foundTerminator = false;
 				var foundTerminatorAt = -1;
 				for i in 0..<data.count {
@@ -86,7 +87,7 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 							// skip
 							self.initState = false;
 						} else {
-							let newData = Data(bytes: bytes, count:foundTerminatorAt);
+                            let newData = Data(bytes: pointer!, count:foundTerminatorAt);
 							if let str = String(data: newData, encoding: .utf8) {
 								self.bufferedString += str as String;
 								self.runCallback (self.bufferedString);
@@ -96,12 +97,10 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 							}
 						}
 
-						// let newBytes = UnsafePointer<UInt8>(data.bytes) + foundTerminatorAt + 1;
-						// let newBytes = UnsafePointer<UInt8>(data.withUnsafeBytes) + foundTerminatorAt + 1;
-						let newBytes = bytes + foundTerminatorAt + 1;
+                        let newBytes = bytes.baseAddress! + foundTerminatorAt + 1;
 						let k = data.count - foundTerminatorAt - 1;
 						data = Data(bytes: newBytes, count: k);
-						pointer = UnsafePointer<UInt8>(newBytes)
+                        pointer = newBytes.assumingMemoryBound(to: UInt8.self)
 						buffer = UnsafeBufferPointer<UInt8>(start:pointer, count:k)
 
 						if k < 1 {
@@ -168,10 +167,13 @@ data.withUnsafeBytes {(bytes: UnsafePointer<UInt8>)->Void in
 	func sendCommandSync(_ str: String) -> String? {
 		let timeout = 10000000;
 		var result:String? = nil;
-		self.sendCommand (str, closure:{
+		let res = self.sendCommand (str, closure:{
 			(str:String?) in
 			result = str
 		})
+        if !res {
+            return nil
+        }
 		for _ in 0..<timeout {
 			// wait for reply in a loop
 			if let r = result {

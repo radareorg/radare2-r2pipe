@@ -17,7 +17,6 @@ public enum R2PipeChannel {
 extension String {
 	func URLEncodedString() -> String? {
 		let customAllowedSet = CharacterSet.urlQueryAllowed;
-		// let escapedString = self.stringByAddingPercentEncodingWithAllowedCharacters(customAllowedSet)
 		let escapedString = self.addingPercentEncoding(withAllowedCharacters:customAllowedSet)
 		return escapedString
 	}
@@ -106,22 +105,11 @@ public class R2Pipe {
 	func cmdHttp(_ str: String, closure:@escaping (String?)->()) -> Bool {
 		let urlstr = self.path.ToR2WebURL(str);
 		let request = URLRequest(url: URL(string: urlstr)!);
-#if USE_NSURL_SESSION
 		URLSession.shared.dataTask(with: request, completionHandler:{
 			(data:Data?, url:URLResponse?, error:Error?) -> Void in
 			let str = String(data: data!, encoding: String.Encoding.utf8)
 			closure (str as String?);
 		})
-#else
-		URLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) in
-			if let d = data {
-				let str = NSString(data: d, encoding: String.Encoding.utf8)
-				closure (str as String?);
-			} else {
-				closure (nil);
-			}
-		}
-#endif
 		return true;
 	}
 
@@ -132,18 +120,18 @@ public class R2Pipe {
 		let urlstr = self.path.ToR2WebURL(str);
 		let url = URL(string: urlstr);
 		let request = URLRequest(url: url!)
-		let response:AutoreleasingUnsafeMutablePointer<URLResponse?>? = nil;
-		do {
-			// let responseData = try NSURLConnection.dataTaskWithRequest
-			let responseData = try NSURLConnection.sendSynchronousRequest(
-					request, returning: response) as Data;
-			if let responseStr = String(data:responseData, encoding: String.Encoding.utf8) {
-				return responseStr;
+		var responseStr : String! = nil;
+		DispatchQueue.main.async {
+			let session = URLSession.shared;
+			let task = session.dataTask(with: request) { data, response, error in
+				if let rstr = String(data:data!, encoding: String.Encoding.utf8) {
+					responseStr = rstr;
+					return;
+				}
 			}
-		} catch _ {
-			print ("catch");
+			task.resume()
 		}
-		return nil;
+		return responseStr;
 	}
 
 	@discardableResult

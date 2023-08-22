@@ -57,6 +57,9 @@ lib:
 	ar rcs libR2Pipe.a r2pipe.o r2pipeNative.o
 	swiftc -emit-library -emit-module -module-name R2Pipe $(SFLAGS) $(SFILES)
 
+xcode:
+	open -a xcode .
+
 clean:
 	rm -f main
 	rm -rf main.dSYM
