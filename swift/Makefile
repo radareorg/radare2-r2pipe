@@ -60,6 +60,9 @@ lib:
 xcode:
 	open -a xcode .
 
+fmt:
+	swiftformat .
+
 clean:
 	rm -f main
 	rm -rf main.dSYM
