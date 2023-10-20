@@ -20,10 +20,10 @@ stringToLBS = L.pack . map (fromIntegral . ord)
 
 lHTakeWhile :: (Word8 -> Bool) -> Handle -> IO L.ByteString
 lHTakeWhile p h = do
-    c <- fmap L.head $ L.hGet h 1
-    if p c
-        then fmap (c `L.cons`) $ lHTakeWhile p h
-        else return L.empty
+    c <- fmap L.uncons $ L.hGet h 1
+    case c of
+        Just (j, _) | p j -> fmap (j `L.cons`) $ lHTakeWhile p h
+        _ -> return L.empty
 
 data R2Context = HttpCtx String
                | PipeCtx Handle Handle
