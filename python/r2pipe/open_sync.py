@@ -6,7 +6,6 @@ This script use code from old __init__.py open object
 """
 
 import re
-import signal
 import socket
 import urllib
 import os
@@ -153,8 +152,8 @@ class open(OpenBase):
                 elif null_start:
                     break
 
-            except KeyboardInterrupt:
-                os.kill(os.getpid(), signal.SIGINT)
+            except KeyboardInterrupt as e:
+                raise e
             except:
                 pass
         return out.decode("utf-8", errors="ignore")
