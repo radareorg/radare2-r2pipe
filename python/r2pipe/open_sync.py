@@ -6,6 +6,7 @@ This script use code from old __init__.py open object
 """
 
 import re
+import signal
 import socket
 import urllib
 import os
@@ -129,6 +130,8 @@ class open(OpenBase):
         foo = None
         while True:
             try:
+                if self.process.poll() == -11:
+                    raise RuntimeError(f'Segmentation fault detected {self.process}')
                 null_start = False
                 if len(self.pending) > 0:
                     foo = self.pending
@@ -149,6 +152,10 @@ class open(OpenBase):
                     out += foo
                 elif null_start:
                     break
+            except RuntimeError as e:
+                raise e
+            except KeyboardInterrupt:
+                os.kill(os.getpid(), signal.SIGINT)
             except:
                 pass
         return out.decode("utf-8", errors="ignore")
