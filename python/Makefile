@@ -44,6 +44,4 @@ uninstall:
 .PHONY: twine
 
 pub publish: all
-	#LC_CTYPE=C python3 setup.py sdist upload -r pypi
-	#LC_CTYPE=C python setup.py sdist upload -r https://upload.pypi.org/pypi/
-	twine upload --repository-url https://upload.pypi.org/legacy/ --verbose dist/*
+	twine upload -u __token__ --repository-url https://upload.pypi.org/legacy/ --verbose dist/*
