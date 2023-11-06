@@ -128,8 +128,8 @@ class open(OpenBase):
         out = bytearray()
         foo = None
         while True:
-            if self.process.poll() == -11:
-                raise RuntimeError(f'Segmentation fault detected {self.process}')
+            if self.process.poll() is not None:
+                raise RuntimeError(f"Process terminated unexpectedly trying to run the command {cmd}\n{self.process}")
             try:
                 null_start = False
                 if len(self.pending) > 0:
