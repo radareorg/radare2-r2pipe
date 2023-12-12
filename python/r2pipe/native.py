@@ -71,7 +71,6 @@ class WrappedRMethod(object):
             return res.decode()
         return res
 
-
 class WrappedApiMethod(object):
     def __init__(self, method, ret2, last):
         self.method = method
@@ -93,7 +92,6 @@ class WrappedApiMethod(object):
     def __get__(self, obj, type_):
         self._o = obj._o
         return self
-
 
 def register(cname, args, ret):
     ret2 = last = None
@@ -121,16 +119,17 @@ class RCore(Structure):  # 1
         r_core_new = r2.r_core_new
         r_core_new.restype = c_void_p
         self._o = r_core_new()
+        self._r_core_cmd_str = register(
+            "r_core_cmd_str", "c_void_p, c_char_p", "c_char_p"
+        )
+        self._r_core_free = register("r_core_free", "c_void_p", "c_void_p")
+    def __del__(self):
+        self._r_core_free(_o)
+    def cmd_str(self, cmd):
+        return self._r_core_cmd_str(self._o, cmd)
 
-    _o = AddressHolder()
-
-    cmd_str, r_core_cmd_str = register(
-        "r_core_cmd_str", "c_void_p, c_char_p", "c_char_p"
-    )
-    free, r_core_free = register("r_core_free", "c_void_p", "c_void_p")
-
-
-#  c = RCore()
+### self._o = AddressHolder()
+#  c = r2pipe.native.RCore()
 #  c.cmd_str("o /bin/ls")
 #  print(c)
 #  print(c.cmd_str("s entry0;pd 20"))
