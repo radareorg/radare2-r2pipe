@@ -33,7 +33,7 @@ try:
 except ImportError:
     r2lang = None
 
-VERSION = "1.8.3"
+VERSION = "1.8.4"
 
 from r2pipe.open_sync import open
 
