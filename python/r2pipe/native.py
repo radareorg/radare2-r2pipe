@@ -126,7 +126,7 @@ class RCore(Structure):
     def __del__(self):
         self.free()
     def free(self):
-        self._r_core_free[1](self._o)
+        self._r_core_free[0](self._o)
     def cmd_str(self, cmd):
         return self._r_core_cmd_str[1](self._o, cmd)
 

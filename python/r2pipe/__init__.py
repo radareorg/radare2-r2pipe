@@ -29,12 +29,14 @@ import sys
 import time
 from r2pipe.open_sync import open as r2pipe_open
 
+open = r2pipe_open
+
 try:
     import r2lang
 except ImportError:
     r2lang = None
 
-VERSION = "1.8.7"
+VERSION = "1.8.8"
 
 
 def version():
