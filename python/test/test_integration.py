@@ -92,5 +92,5 @@ class TestR2PipeIntegration(unittest.TestCase):
         import r2pipe
         r = r2pipe.open('/bin/ls')
 
-        result = r.cmd('prx @ rsp')
+        result = r.cmd('prx @r:SP')
         self.assertNotEqual(result, '')
