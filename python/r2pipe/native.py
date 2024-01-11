@@ -124,7 +124,7 @@ class RCore(Structure):
         )
         self._r_core_free = register("r_core_free", "c_void_p", "c_void_p")
     def __del__(self):
-        self._r_core_free[1](self._o)
+        self.free()
     def free(self):
         self._r_core_free[1](self._o)
     def cmd_str(self, cmd):
