@@ -34,7 +34,7 @@ try:
 except ImportError:
     r2lang = None
 
-VERSION = "1.8.6"
+VERSION = "1.8.7"
 
 
 def version():
