@@ -29,6 +29,10 @@ except ImportError:
 
 
 class open(OpenBase):
+    def __enter__(self):
+        return
+    def __exit__(self):
+        return
     def __init__(self, filename="", flags=[], radare2home=None):
         super(open, self).__init__(filename, flags)
         self.pipe_read_sleep = 0.001

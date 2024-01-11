@@ -27,6 +27,7 @@ Example:
 import os
 import sys
 import time
+from r2pipe.open_sync import open as r2pipe_open
 
 try:
     import r2lang
@@ -35,8 +36,6 @@ except ImportError:
 
 VERSION = "1.8.6"
 
-from r2pipe.open_sync import open
-
 
 def version():
     """Return string with the version of the r2pipe library
@@ -44,11 +43,8 @@ def version():
     return VERSION
 
 
-"""open class is now in open_base.py"""
-
-# Hello World
+# Open class is now in open_base.py
 if __name__ == "__main__":
-
     print("[+] Spawning r2 tcp and http servers")
     os.system("pkill r2")
     os.system("radare2 -qc.:9080 /bin/ls &")
@@ -58,7 +54,7 @@ if __name__ == "__main__":
     if sys.version_info <= (3, 0):
         # Test r2pipe with local process
         print("[+] Testing python r2pipe local")
-        rlocal = open("/bin/ls")
+        rlocal = r2pipe_open("/bin/ls")
         print(rlocal.cmd("pi 5"))
         # print rlocal.cmd("pn")
         info = rlocal.cmdj("ij")
@@ -66,7 +62,7 @@ if __name__ == "__main__":
 
         # Test r2pipe with remote tcp process (launch it with "radare2 -qc.:9080 myfile")
         print("[+] Testing python r2pipe tcp://")
-        rremote = open("tcp://127.0.0.1:9080")
+        rremote = r2pipe_open("tcp://127.0.0.1:9080")
         disas = rremote.cmd("pi 5")
         if not disas:
             print("Error with remote tcp conection")
@@ -75,7 +71,7 @@ if __name__ == "__main__":
 
         # Test r2pipe with remote http process (launch it with "radare2 -qc=H myfile")
         print("[+] Testing python r2pipe http://")
-        rremote = open("http://127.0.0.1:9090")
+        rremote = r2pipe_open("http://127.0.0.1:9090")
         disas = rremote.cmd("pi 5")
         if not disas:
             print("Error with remote http conection")
@@ -86,6 +82,8 @@ if __name__ == "__main__":
         # Python 3 examples, with non-blocking API and callbacks
         # --------------------------------------------------------------------------
         def callback(result):
+            """Dummy callback printing command execution result
+            """
             print(result)
 
         #
@@ -93,7 +91,7 @@ if __name__ == "__main__":
         #
         #   Start 1 task
         print("[+] Testing python r2pipe local")
-        rlocal = open("/bin/ls")
+        rlocal = r2pipe_open("/bin/ls")
         t = rlocal.cmd("pi 5", callback=callback)
         rlocal.wait(t)  # Wait for task end
         info = rlocal.cmdj("ij")
@@ -102,7 +100,7 @@ if __name__ == "__main__":
         rlocal.close()
         #   Start 3 tasks with Context manager
         print("[+] Testing python r2pipe local with 3 queries")
-        with open("/bin/ls") as rlocall:
+        with r2pipe_open("/bin/ls") as rlocall:
             t1 = rlocall.cmd("pi 5", callback=callback)
             t2 = rlocall.cmd("pi 5", callback=callback)
             t3 = rlocall.cmd("pi 5", callback=callback)
@@ -113,14 +111,14 @@ if __name__ == "__main__":
         #
         #   Start 1 task
         print("[+] Testing python r2pipe tcp://")
-        rremote = open("tcp://127.0.0.1:9080")
+        rremote = r2pipe_open("tcp://127.0.0.1:9080")
         t = rremote.cmd("pi 5", callback=callback)
         rremote.wait(t)
         rremote.close()
 
         #   Start 3 tasks with Context manager
         print("[+] Testing python r2pipe tcp:// with 3 queries")
-        with open("tcp://127.0.0.1:9080") as rremote:
+        with r2pipe_open("tcp://127.0.0.1:9080") as rremote:
             t1 = rremote.cmd("pi 5", callback=callback)
             t2 = rremote.cmd("pi 5", callback=callback)
             t3 = rremote.cmd("pi 5", callback=callback)
@@ -131,14 +129,14 @@ if __name__ == "__main__":
         # Test r2pipe with remote http process (launch it with "radare2 -qc=H myfile")
         #
         print("[+] Testing python r2pipe http://")
-        rremote = open("tcp://127.0.0.1:9080")
+        rremote = r2pipe_open("tcp://127.0.0.1:9080")
         t = rremote.cmd("pi 5", callback=callback)
         rremote.wait(t)
         rremote.close()
 
         #   Start 3 tasks with Context manager
         print("[+] Testing python r2pipe http:// with 3 queries")
-        with open("http://127.0.0.1:9090") as rremote:
+        with r2pipe_open("http://127.0.0.1:9090") as rremote:
             t1 = rremote.cmd("pi 10", callback=callback)
             t2 = rremote.cmd("pi 5", callback=callback)
             t3 = rremote.cmd("pi 5", callback=callback)
