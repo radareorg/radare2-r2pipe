@@ -110,7 +110,7 @@ def register(cname, args, ret):
     wrapped_method = WrappedApiMethod(method, ret2, last)
     return wrapped_method, method
 
-class RCore(Structure):  # 1
+class RCore(Structure):
     def __init__(self):
         Structure.__init__(self)
         r2 = r2lib()
@@ -124,9 +124,9 @@ class RCore(Structure):  # 1
         )
         self._r_core_free = register("r_core_free", "c_void_p", "c_void_p")
     def __del__(self):
-        self._r_core_free(self._o)
+        self._r_core_free[1](self._o)
     def cmd_str(self, cmd):
-        return self._r_core_cmd_str(self._o, cmd)
+        return self._r_core_cmd_str[1](self._o, cmd)
 
 ### self._o = AddressHolder()
 #  c = r2pipe.native.RCore()
