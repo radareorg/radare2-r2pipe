@@ -181,7 +181,29 @@ function r2bind (ls, cb, r2cmd) {
         r2.cmd(command);
       });
     },
-
+    call: (s, cb2) => {
+      this.cmd("'" + s, cb2);
+    },
+    callj: (s, cb2) => {
+      this.cmd("'" + s, cb2);
+    },
+    callAt: (s, addr, cb2) => {
+      // addr must be a NativePointer not a number
+      this.cmd("'0x" + Number(addr).toString(16) + "'" + s, cb2);
+    },
+    cmdAt: function (s, addr, cb2) {
+      // addr must be a NativePointer not a number
+      this.cmd(s + "@0x" + Number(addr).toString(16), cb2);
+    },
+    plugin: function (s, cb2) {
+      throw new Exception("not implemented");
+    },
+    unload: function (s, cb2) {
+      throw new Exception("not implemented");
+    },
+    log: function (msg) {
+      console.log(msg);
+    },
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
       if (typeof cb2 !== 'function') {
