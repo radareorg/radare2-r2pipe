@@ -38,7 +38,7 @@
   },
   "homepage": "http://www.radare.org",
   "devDependencies": {
-    "semistandard": "^14.0.0"
+    "semistandard": "^17.0.0"
   },
   "dependencies": {
     "r2pipe": "^2.8.5"
