@@ -120,8 +120,15 @@ function r2promise (r2) {
   return {
     cmd: makePromise(r2, 'cmd'),
     cmdj: makePromise(r2, 'cmdj'),
+    cmdAt: makePromise(r2, 'cmdAt'),
+    call: makePromise(r2, 'call'),
+    callj: makePromise(r2, 'callj'),
+    callAt: makePromise(r2, 'callAt'),
     syscmd: makePromise(r2, 'syscmd'),
     syscmdj: makePromise(r2, 'syscmdj'),
+    plugin: makePromise(r2, 'plugin'),
+    unload: makePromise(r2, 'unload'),
+    log: console.log,
     quit: makePromise(r2, 'quit')
   };
 }
