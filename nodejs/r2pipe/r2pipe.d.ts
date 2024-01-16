@@ -3,6 +3,13 @@
 export class R2Pipe {
 	cmd(string): string;
 	cmdj(string): any;
+	cmdAt(string, string|number): any;
+	call(string): string;
+	callj(string): any;
+	callAt(string, string|number): any;
+	plugin(string, any): boolean;
+	unload(string, string): boolean;
+	log(string);
 }
 
 export default class r2pipe {
