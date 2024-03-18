@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": "r2pipe",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "module": "commonjs",
+    "lib": ["es2017"],
+    "declaration": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "outDir": "./dist"
+  },
+  "paths": {
+      "*": ["node_modules/*", "src/types/*"]
+    },
+  "include": [
+    "r2pipe/index.ts",
+    "test.ts"
+  ]
+}

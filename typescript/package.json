@@ -1,0 +1,19 @@
+{
+  "name": "r2pipe-ts",
+  "version": "0.0.6",
+  "description": "TypeScript r2pipe API",
+  "type": "commonjs",
+  "main": "./r2pipe/index.js",
+  "types": "./r2pipe/index.d.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.24",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "eslint": "^8.34.0",
+    "typescript": "^5.0.0"
+  }
+}
