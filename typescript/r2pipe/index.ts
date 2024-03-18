@@ -55,7 +55,7 @@ export class R2PipeHttp extends R2PipeBase {
   private async httpCmd(uri: string, cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const url = `${uri}/cmd/${cmd}`;
-      console.error("==> " + url);
+      // console.error("==> " + url);
       http.get(url, (res: any) => {
         if (res.statusCode !== 200) {
           reject(new Error(`Request Failed. Status Code: ${res.statusCode}`));
@@ -75,7 +75,7 @@ export class R2PipeHttp extends R2PipeBase {
   }
 }
 
-function pipeCmd (proc, cmd, cb) {
+function pipeCmd(proc, cmd, cb) {
   this.pipeQueue.push({
     cmd: cmd,
     cb: cb,
@@ -86,34 +86,39 @@ function pipeCmd (proc, cmd, cb) {
     proc.stdin.write(cmd + '\n');
   }
 }
-function r2bind (ls, cb, r2cmd) {
+function pipeCmdOutput(proc, data, cb) {
+  var len = data.length;
+
+  if (this.pipeQueue.length < 1) {
+    return cb(new Error('r2pipe error: No pending commands for incomming data'));
+  }
+
+  if (data[len - 1] !== 0x00) {
+    this.pipeQueue[0].result += data.toString();
+    return this.pipeQueue[0].result;
+  }
+
+  while (data[len - 1] == 0x00) {
+    len--;
+  }
+
+  this.pipeQueue[0].result += data.slice(0, len).toString();
+  this.pipeQueue[0].cb(this.pipeQueue[0].error, this.pipeQueue[0].result);
+  this.pipeQueue.splice(0, 1);
+
+  if (this.pipeQueue.length > 0) {
+    try {
+      proc.stdin.write(this.pipeQueue[0].cmd + '\n');
+    } catch (e) {
+      return cb(e);
+    }
+  }
+}
+function r2bind(ls, cb, r2cmd) {
   let running = false;
   let errmsg = '';
   const r2 = {
     pipeQueue: [],
-/*
-    getBuffer: function (addr, size, cb) {
-      let dataBuffer = Buffer.from([]);
-      const server = net.createServer(client => {
-        client.on('data', data => {
-          dataBuffer = Buffer.concat([dataBuffer, data]);
-        });
-        client.on('end', _ => {
-          cb(null, dataBuffer);
-          client.destroy();
-          server.close();
-        });
-        client.on('error', err => {
-          cb(err);
-        });
-      });
-      server.listen(0, _ => {
-        const port = server.address().port;
-        const command = 'wts 127.0.0.1:' + port + ' ' + size + '@ ' + addr;
-        r2.cmd(command);
-      });
-    },
-    */
     call: (s, cb2) => {
       this.cmd("'" + s, cb2);
     },
@@ -140,7 +145,7 @@ function r2bind (ls, cb, r2cmd) {
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
       try {
-      //  s = util.cleanCmd(s);
+        //  s = util.cleanCmd(s);
         switch (typeof r2cmd) {
           case 'string':
             pipeCmd.bind(r2)(ls, s, cb2);
@@ -154,20 +159,20 @@ function r2bind (ls, cb, r2cmd) {
       }
     },
 
-/*
-    // Run cmd and return JSON output
-    cmdj: function (s, cb2) {
-      if (typeof cb2 !== 'function') {
-        cb2 = function () {};
-      }
-      try {
-        s = util.cleanCmd(s);
-        arseJSON(r2.cmd, s, cb2);
-      } catch (e) {
-        cb2(e);
-      }
-    },
-*/
+    /*
+        // Run cmd and return JSON output
+        cmdj: function (s, cb2) {
+          if (typeof cb2 !== 'function') {
+            cb2 = function () {};
+          }
+          try {
+            s = util.cleanCmd(s);
+            arseJSON(r2.cmd, s, cb2);
+          } catch (e) {
+            cb2(e);
+          }
+        },
+    */
     /* Run system cmd */
     //syscmd: syscmd,
     //syscmdj: syscmdj,
@@ -211,7 +216,7 @@ function r2bind (ls, cb, r2cmd) {
       /* Set as running for pipe method */
       if (running) {
         if (typeof r2cmd === 'string') {
-          //pipeCmdOutput.bind(r2)(ls, data, cb);
+          pipeCmdOutput.bind(r2)(ls, data, cb);
         }
       } else {
         running = true;
@@ -315,18 +320,21 @@ export class R2PipeSpawn extends R2PipeBase {
     this.pipeSpawn(this.filePath, []);
   }
   async cmd(command: string): Promise<string> {
-    return this.r2cb.cmd(command);
+    return new Promise((resolve, reject) => {
+      this.r2cb.cmd(command, (error, res) => {
+        resolve(res);
+      });
+    });
     //return this.httpCmd(this.filePath, command);
   }
   async quit(): Promise<boolean> {
     this.r2cb.quit();
     return true;
   }
-  private pipeSpawn(filePath:string, opts: any) {
+  private pipeSpawn(filePath: string, opts: any) {
     const args = ['-q0'].concat(opts).concat(filePath);
-    console.log(args);
     const ls = proc.spawn(this.r2Path, args);
-    this.r2cb = r2bind(ls, ()=>{}, 'pipe');
+    this.r2cb = r2bind(ls, () => { }, 'pipe');
   }
 }
 
