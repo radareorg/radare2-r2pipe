@@ -20,4 +20,5 @@ jobs:
       run: |
         node --version
         tsc --version
+        mkdir node_modules && npm i
         make -C typescript
