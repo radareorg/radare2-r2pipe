@@ -15,5 +15,8 @@
     "@typescript-eslint/parser": "^7.2.0",
     "eslint": "^8.34.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "wtfnode": "^0.9.1"
   }
 }

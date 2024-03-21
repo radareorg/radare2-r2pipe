@@ -1,5 +1,5 @@
 import * as proc from "child_process";
-import {R2PipeBase, R2PipeCmdInterface} from "./base.js";
+import { R2PipeBase } from "./base.js";
 
 export class R2PipeSpawn extends R2PipeBase {
   private filePath: string;
@@ -16,7 +16,11 @@ export class R2PipeSpawn extends R2PipeBase {
   async cmd(command: string): Promise<string> {
     return new Promise((resolve, reject) => {
       this.r2cb.cmd(command, (error, res) => {
+		      if (error) {
+		      reject(error);
+		      } else {
         resolve(res);
+	}
       });
     });
     //return this.httpCmd(this.filePath, command);
