@@ -41,6 +41,7 @@ export class R2PipeLocal extends R2PipeBase {
   async quit(): Promise<boolean> {
     this.stream.dispose();
     this.stream = null;
+    process.kill(process.pid, 'SIGINT');
     return true;
   }
 }

@@ -16,11 +16,11 @@ export class R2PipeSpawn extends R2PipeBase {
   async cmd(command: string): Promise<string> {
     return new Promise((resolve, reject) => {
       this.r2cb.cmd(command, (error, res) => {
-		      if (error) {
-		      reject(error);
-		      } else {
-        resolve(res);
-	}
+        if (error) {
+          reject(error);
+        } else {
+          resolve(res);
+        }
       });
     });
     //return this.httpCmd(this.filePath, command);
@@ -49,7 +49,7 @@ function pipeCmd(proc, cmd, cb) {
 }
 
 function pipeCmdOutput(proc, data, cb) {
-  var len = data.length;
+  let len = data.length;
 
   if (this.pipeQueue.length < 1) {
     return cb(new Error('r2pipe error: No pending commands for incomming data'));
@@ -95,15 +95,6 @@ function r2bind(child, cb, r2cmd) {
     cmdAt: function (s, addr, cb2) {
       // addr must be a NativePointer not a number
       this.cmd(s + "@0x" + Number(addr).toString(16), cb2);
-    },
-    plugin: function (s, cb2) {
-      //throw new Exception("not implemented");
-    },
-    unload: function (s, cb2) {
-      // throw new Exception("not implemented");
-    },
-    log: function (msg) {
-      console.log(msg);
     },
     /* Run cmd and return plaintext output */
     cmd: function (s, cb2) {
@@ -172,7 +163,7 @@ function r2bind(child, cb, r2cmd) {
 
     child.on('close', function (code, signal) {
       running = false;
-      let error = errmsg ? errmsg : '';
+      const error = errmsg ? errmsg : '';
       if (signal) {
         cb(new Error('Child received signal ' + signal + '\n' + error));
       } else {

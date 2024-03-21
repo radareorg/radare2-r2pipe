@@ -1,4 +1,4 @@
-import {R2PipeBase, R2PipeCmdInterface} from "./base.js";
+import {R2PipeCmdInterface} from "./base.js";
 import {R2PipeHttp} from "./http.js";
 import {R2PipeSpawn} from "./spawn.js";
 import {R2PipeLocal} from "./local.js";

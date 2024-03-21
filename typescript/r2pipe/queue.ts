@@ -4,7 +4,7 @@ interface R2PipeQueueItem {
   cmd: string;
   result: string;
   cb: any;
-  error: any;
+  error: Error;
 }
 
 export class R2PipeQueue {
@@ -24,7 +24,7 @@ export class R2PipeQueue {
     this.input.destroy();
     this.output.destroy();
   }
-  cmd(cmd: string, cb: Function) {
+  cmd(cmd: string, cb: any) {
     this.pipeQueue.push({
       cmd: cmd,
       cb: cb,

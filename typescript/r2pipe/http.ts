@@ -1,5 +1,5 @@
 import * as http from "http";
-import {R2PipeBase, R2PipeCmdInterface} from "./base.js";
+import {R2PipeBase} from "./base.js";
 
 export class R2PipeHttp extends R2PipeBase {
   private baseUrl: string;
@@ -20,7 +20,7 @@ export class R2PipeHttp extends R2PipeBase {
     return new Promise((resolve, reject) => {
       const url = `${uri}/cmd/${cmd}`;
       // console.error("==> " + url);
-      http.get(url, (res: any) => {
+      http.get(url, (res: http.IncomingMessage) => {
         if (res.statusCode !== 200) {
           reject(new Error(`Request Failed. Status Code: ${res.statusCode}`));
           res.resume(); // Consume response data to free up memory
@@ -32,7 +32,7 @@ export class R2PipeHttp extends R2PipeBase {
         res.on('end', () => {
           resolve(rawData);
         });
-      }).on('error', (e: any) => {
+      }).on('error', (e: Error) => {
         reject(new Error(`Error making HTTP request: ${e.message}`));
       });
     });

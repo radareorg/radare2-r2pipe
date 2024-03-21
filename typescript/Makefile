@@ -12,3 +12,6 @@ vs vsc:
 
 test:
 	make -C examples/hello
+
+lint:
+	./node_modules/.bin/eslint --fix r2pipe/*.ts
