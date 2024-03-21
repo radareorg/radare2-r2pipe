@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "r2pipe",
     "moduleResolution": "nodenext",
-    "target": "esnext",
+    "target": "es5",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "module": "commonjs",
@@ -10,7 +10,8 @@
     "declaration": true,
     "strict": false,
     "skipLibCheck": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./r2pipe"
   },
   "paths": {
       "*": ["node_modules/*", "src/types/*"]

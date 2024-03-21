@@ -15,8 +15,13 @@ export class R2PipeLocal extends R2PipeBase {
       // TODO: we just need the read and write methods, but net.Socket doesnt have path or close()
       this.stream = new R2PipeQueue(client, client);
     } else {
-      const IN = parseInt(process.env.R2PIPE_IN);
-      const OUT = parseInt(process.env.R2PIPE_OUT);
+      const envIn = process.env.R2PIPE_IN;
+      const envOut = process.env.R2PIPE_OUT;
+      if (!envIn || !envOut) {
+        throw new Error('This script must be executed from r2 -c "#!pipe node foo.js"');
+      }
+      const IN = parseInt(envIn);
+      const OUT = parseInt(envOut);
       if (!IN || !OUT) {
         throw new Error('This script must be executed from r2 -c "#!pipe node foo.js"');
       }

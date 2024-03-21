@@ -1,4 +1,5 @@
 all:
+	tsc
 	tsc -d r2pipe/index.ts
 #	tsc
 	tsc test-spawn.ts

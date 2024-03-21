@@ -1,7 +1,7 @@
 // tsc test-http.ts
 // node --insecure-http-parser test-http.js
 
-import * as r2pipe from "./r2pipe/index.js";
+import * as r2pipe from "./dist/index.js";
 // import * as r2pipe from "r2pipe-ts";
 
 async function main() {

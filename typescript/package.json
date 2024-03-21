@@ -1,6 +1,6 @@
 {
   "name": "r2pipe-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript r2pipe API",
   "type": "commonjs",
   "main": "./r2pipe/index.js",
@@ -18,10 +18,14 @@
   },
   "files": [
     "README.md",
-    "r2pipe/base.js",
-    "r2pipe/index.js",
-    "r2pipe/http.js",
-    "r2pipe/spawn.js"
+    "package.json",
+    "package-lock.json",
+    "dist/base.js",
+    "dist/index.js",
+    "dist/http.js",
+    "dist/queue.js",
+    "dist/local.js",
+    "dist/spawn.js"
   ],
   "keywords": [
     "radare",
