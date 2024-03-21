@@ -1,13 +1,13 @@
 {
   "name": "r2pipe-ts",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "TypeScript r2pipe API",
   "type": "commonjs",
   "main": "./r2pipe/index.js",
   "types": "./r2pipe/index.d.js",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0"
+    "node": ">=18.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.28",
@@ -16,7 +16,22 @@
     "eslint": "^8.34.0",
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-    "wtfnode": "^0.9.1"
-  }
+  "files": [
+    "README.md",
+    "r2pipe/base.js",
+    "r2pipe/index.js",
+    "r2pipe/http.js",
+    "r2pipe/spawn.js"
+  ],
+  "keywords": [
+    "radare",
+    "radare2",
+    "r2",
+    "reversing",
+    "disassembler",
+    "hexadecimal",
+    "editor",
+    "exploit",
+    "exploiting"
+  ]
 }
