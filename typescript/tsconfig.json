@@ -5,7 +5,7 @@
     "target": "es5",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "module": "commonjs",
+    "module": "nodenext",
     "lib": ["es2017"],
     "declaration": true,
     "strict": false,
