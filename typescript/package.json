@@ -1,6 +1,6 @@
 {
   "name": "r2pipe-ts",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "TypeScript r2pipe API",
   "type": "commonjs",
   "main": "./dist/index.js",
