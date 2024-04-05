@@ -2,11 +2,11 @@
   "compilerOptions": {
     "baseUrl": "r2pipe",
     "moduleResolution": "nodenext",
-    "target": "es5",
+    "target": "esnext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "module": "nodenext",
-    "lib": ["es2017"],
+    "lib": ["esnext"],
     "declaration": true,
     "strict": false,
     "skipLibCheck": true,

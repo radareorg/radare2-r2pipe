@@ -7,12 +7,21 @@ interface R2PipeQueueItem {
   error: Error;
 }
 
+/**
+ * Manages a queue of R2Pipe commands and their corresponding results.
+ *
+ * The `R2PipeQueue` class is responsible for sending commands to the
+ * R2Pipe input stream and handling the responses from the output stream.
+ *
+ * It maintains a queue of pending commands and their associated callbacks,
+ * and processes the responses in the order they were sent.
+ */
 export class R2PipeQueue {
   private pipeQueue: R2PipeQueueItem[];
   private output: fs.ReadStream;
   private input: fs.WriteStream;
 
-  constructor(input:fs.WriteStream, output:fs.ReadStream) {
+  constructor(input: fs.WriteStream, output: fs.ReadStream) {
     this.pipeQueue = [];
     this.input = input;
     this.output = output;

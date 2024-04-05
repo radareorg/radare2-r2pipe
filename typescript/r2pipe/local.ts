@@ -31,6 +31,12 @@ export class R2PipeLocal extends R2PipeBase {
     }
   }
 
+/**
+ * Executes a command in the radare2 pipe and returns the output as a Promise.
+ *
+ * @param command - The command to execute in the radare2 pipe.
+ * @returns A Promise that resolves with the output of the command, or rejects with an error.
+ */
   async cmd(command: string): Promise<string> {
     return new Promise((resolve, reject) => {
       this.stream.cmd(command, (error, res) => {
