@@ -15,3 +15,5 @@ test:
 
 lint:
 	./node_modules/.bin/eslint --fix r2pipe/*.ts
+pub:
+	npm pub
