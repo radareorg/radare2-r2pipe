@@ -30,6 +30,8 @@ extension String {
     }
 }
 
+typealias open = R2Pipe
+
 public class R2Pipe {
     var mode: R2PipeChannel = .Unknown
     var path = ""

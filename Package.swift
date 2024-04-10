@@ -5,12 +5,12 @@ import PackageDescription
 let package = Package(
     name: "r2pipe",
     products: [
-        .library(name: "r2pipe", targets: ["r2pipeLibrary"]),
+        .library(name: "r2pipe", targets: ["R2Pipe"]),
     ],
     dependencies: [],
     targets: [
         .target(
-            name: "r2pipeLibrary",
+            name: "R2Pipe",
             path: "swift/Sources"
         )
     ]

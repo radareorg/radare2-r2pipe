@@ -1,14 +1,14 @@
-// swift-tools-version:5.10
+// swift-tools-version:5.8
 
 import PackageDescription
 
 let package = Package(
     name: "r2pipe",
     products: [
-        .library(name: "r2pipe", targets: ["r2pipe"]),
+        .library(name: "r2pipe", targets: ["R2Pipe"]),
     ],
     dependencies: [],
     targets: [
-        .target(name: "r2pipe")
+        .target(name: "R2Pipe")
     ]
 )
