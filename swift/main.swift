@@ -88,7 +88,7 @@ private func testCcall() {
 
 print("Hello r2pipe.swift!")
 
-testSpawn()
+//  testSpawn()
 testCcall()
 // if let r2p = R2Pipe() { //"#!pipe") {
 /*

@@ -1,4 +1,4 @@
-// swift-tools-version:5.8
+// swift-tools-version:5.10
 
 import PackageDescription
 
@@ -9,6 +9,6 @@ let package = Package(
     ],
     dependencies: [],
     targets: [
-        .target(name: "r2pipe", path: ".", sources: ["r2pipe.swift", "r2pipeNative.swift"]),
+        .target(name: "r2pipe")
     ]
 )

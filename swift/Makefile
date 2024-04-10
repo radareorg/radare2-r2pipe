@@ -3,7 +3,7 @@ TARGET=osx
 
 SDKROOT=SDKROOT="$(shell xcrun --show-sdk-path --sdk ${SDK})"
 SC=$(SDKROOT) xcrun -sdk $(SDK) swiftc
-SFILES=r2pipe.swift
+SFILES=Sources/r2pipe/r2pipe.swift
 
 USE_SPAWN=1
 USE_CCALL=1
@@ -32,7 +32,7 @@ SFLAGS+=-D USE_ENV_PIPE
 endif
 ifeq ($(USE_SPAWN),1)
 SFLAGS+=-D USE_SPAWN
-SFILES+=r2pipeNative.swift
+SFILES+=Sources/r2pipe/r2pipeNative.swift
 endif
 ifeq ($(USE_NSURL_SESSION),1)
 SFLAGS+=-D USE_NSURL_SESSION
