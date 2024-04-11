@@ -63,7 +63,7 @@ private func testCcall() {
     print("Testing r2pipe Ccall method")
     if let r2p = R2Pipe("#!ccall") {
         if let str = r2p.cmdSync("?V") {
-            log("http-sync", str)
+            log("ccall-sync", str)
         } else {
             print("ERROR: Ccall Sync Call failed")
         }
@@ -71,9 +71,9 @@ private func testCcall() {
         r2p.cmd("pi 5 @ entry0", closure: {
             (str: String?) in
             if let s = str {
-                log("http-async", s)
+                log("ccall-async", s)
             } else {
-                log("error", "network")
+                log("error", "ccall")
             }
             exit(0)
         })
