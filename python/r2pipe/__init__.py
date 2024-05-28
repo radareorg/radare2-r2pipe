@@ -24,12 +24,7 @@ Example:
   > r.quit()
 """
 
-import os
-import sys
-import time
-from r2pipe.open_sync import open as r2pipe_open
-
-open = r2pipe_open
+from r2pipe.open_sync import open
 
 try:
     import r2lang
@@ -41,6 +36,7 @@ VERSION = "1.8.8"
 def inr2():
     """Return wheter r2pipe is called from radare2 environment or the system shell
         """
+    import os
     a = int(os.environ["R2PIPE_IN"]),
     b = int(os.environ["R2PIPE_OUT"]),
     return a > 0 and b > 0
@@ -53,10 +49,14 @@ def version():
 
 # Open class is now in open_base.py
 if __name__ == "__main__":
+    import os
+    import sys
+    from r2pipe.open_sync import open as r2pipe_open
     print("[+] Spawning r2 tcp and http servers")
     os.system("pkill r2")
     os.system("radare2 -qc.:9080 /bin/ls &")
     os.system("radare2 -qc=h /bin/ls &")
+    import time
     time.sleep(1)
 
     if sys.version_info <= (3, 0):
