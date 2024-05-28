@@ -11,6 +11,7 @@ import sys
 import json
 import shutil
 import platform
+from types import SimpleNamespace
 
 from subprocess import Popen, PIPE
 
@@ -235,7 +236,21 @@ class OpenBase(object):
                 import asyncio
                 asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
+    # r2pipe2
+    def cmd2(self, cmd, **kwargs):
+        s = { "cmd": cmd }
+        r = self.call(json.dumps(s))
+        return json.loads(r, object_hook=lambda d: SimpleNamespace(**d))
+
+    def cmd2j(self, cmd, **kwargs):
+        s = { "cmd": cmd, "trim": True, "json": True }
+        r = self.call(json.dumps(s))
+        return json.loads(r, object_hook=lambda d: SimpleNamespace(**d))
+
     # r2 commands
+    def call(self, cmd, **kwargs):
+        return self.cmd("'" + cmd)
+
     def cmd(self, cmd, **kwargs):
         """Run an r2 command return string with result
                 Args:
