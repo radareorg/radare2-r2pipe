@@ -38,6 +38,12 @@ except ImportError:
 
 VERSION = "1.8.8"
 
+def inr2():
+    """Return wheter r2pipe is called from radare2 environment or the system shell
+        """
+    a = int(os.environ["R2PIPE_IN"]),
+    b = int(os.environ["R2PIPE_OUT"]),
+    return a > 0 and b > 0
 
 def version():
     """Return string with the version of the r2pipe library
