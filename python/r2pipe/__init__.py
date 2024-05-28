@@ -31,7 +31,7 @@ try:
 except ImportError:
     r2lang = None
 
-VERSION = "1.9.0"
+VERSION = "1.9.2"
 
 def in_r2():
     """Return wheter r2pipe is called from radare2 environment or the system shell
