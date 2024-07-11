@@ -20,8 +20,7 @@ Example:
   > import r2pipe
   > r = r2pipe.open("/bin/ls")
   > print(r.cmd("pd 10"))
-  > print(r.cmdj("aoj")[0]['size'])
-  > r.quit()
+  > print(r.cmdj("aoj")[0]['size']) > r.quit()
 """
 
 from r2pipe.open_sync import open
@@ -31,15 +30,15 @@ try:
 except ImportError:
     r2lang = None
 
-VERSION = "1.9.3"
+VERSION = "1.9.4"
 
 def in_r2():
     """Return wheter r2pipe is called from radare2 environment or the system shell
         """
     try:
       import os
-      a = int(os.environ["R2PIPE_IN"]),
-      b = int(os.environ["R2PIPE_OUT"]),
+      a = int(os.environ["R2PIPE_IN"])
+      b = int(os.environ["R2PIPE_OUT"])
       return a > 0 and b > 0
     except:
       return False

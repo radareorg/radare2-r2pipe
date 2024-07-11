@@ -51,8 +51,8 @@ def in_r2():
         """
     try:
       import os
-      a = int(os.environ["R2PIPE_IN"]),
-      b = int(os.environ["R2PIPE_OUT"]),
+      a = int(os.environ["R2PIPE_IN"])
+      b = int(os.environ["R2PIPE_OUT"])
       return a > 0 and b > 0
     except:
       return False
