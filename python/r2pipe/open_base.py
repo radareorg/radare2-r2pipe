@@ -46,6 +46,16 @@ if os.name == "nt":
 def in_rlang():
     return r2lang is not None and r2lang.cmd is not None
 
+def in_r2():
+    """Return wheter r2pipe is called from radare2 environment or the system shell
+        """
+    try:
+      import os
+      a = int(os.environ["R2PIPE_IN"]),
+      b = int(os.environ["R2PIPE_OUT"]),
+      return a > 0 and b > 0
+    except:
+      return False
 
 def jo2po(jo):
     from collections import namedtuple
@@ -89,8 +99,6 @@ def get_radare_path():
 class OpenBase(object):
     """Class representing an r2pipe connection with a running radare2 instance
         Class body derived from __init__.py "open" class.
-    
-    
         """
 
     def __init__(self, filename="", flags=[]):
@@ -112,9 +120,12 @@ class OpenBase(object):
         self.use_cache = False
         self.cache = {}
         self.asyn = False
-        if not filename and in_rlang():
-            self._cmd = self._cmd_rlang
-            return
+        if not filename:
+            if in_rlang():
+                self._cmd = self._cmd_rlang
+                return
+            if not in_r2():
+                raise Exception("No R2PIPE_IN or R2PIPE_OUT defined")
         try:
             if os.name == "nt":
                 # if r2pipe_path environment is not set then fail below

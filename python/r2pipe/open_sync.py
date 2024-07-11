@@ -27,7 +27,6 @@ try:
 except ImportError:
     fcntl = None
 
-
 class open(OpenBase):
     def __enter__(self):
         return
