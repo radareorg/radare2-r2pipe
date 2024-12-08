@@ -9,6 +9,25 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
+    <name>r2pipe</name>
+    <description>Radare2 pipe interface library for Java</description>
+    <url>https://github.com/radareorg/radare2-r2pipe</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>pancake</id>
+            <name>pancake</name>
+            <email>pancake@nopcode.org</email>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>javax.json</groupId>
@@ -25,6 +44,11 @@
     <!-- Build Configuration -->
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M1</version>
+            </plugin>
             <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
