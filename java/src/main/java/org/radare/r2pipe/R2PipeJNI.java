@@ -34,9 +34,11 @@ public class R2PipeJNI {
 		return r2pipeCmd(this.core, str);
 	}
 
+	/*
 	protected void finalize() throws Throwable {
 		quit();
 	}
+	*/
 
 	public void quit() throws Exception {
 		r2pipeFree(this.core);

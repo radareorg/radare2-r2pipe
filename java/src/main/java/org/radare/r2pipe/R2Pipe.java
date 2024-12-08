@@ -4,7 +4,11 @@ import java.io.*;
 import java.net.*;
 
 // java7
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+// import jakarta.json.Json;
+// import jakarta.json.JsonObject;
 
 public class R2Pipe {
 	private boolean viaHttp;
@@ -90,9 +94,11 @@ public class R2Pipe {
 		return output;
 	}
 
+	/*
 	protected void finalize() throws Throwable {
 		quit();
 	}
+	*/
 
 	public void quit() throws Exception {
 		if (!viaHttp) {

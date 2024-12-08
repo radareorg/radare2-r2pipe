@@ -1,11 +1,17 @@
 JARPATH=$(shell pwd)
+JAVASRC=src/main/java/org/radare/r2pipe
+JAVAC?=javac
 include config.mk
 
 all:
-	javac $(JAVACFLAGS) org/radare/r2pipe/*.java examples/Test.java
-	jar cvf r2pipe.jar org
-	$(MAKE) -C jni
+	$(JAVAC) $(JAVACFLAGS) $(JAVASRC)/*.java examples/Test.java
+	cd src/main/java && jar cvf ../../../r2pipe.jar org
+#	$(MAKE) -C jni
 	$(MAKE) -C examples
+
+maven:
+	mvn clean compile
+	mvn install
 
 run:
 	$(MAKE) -C examples run
