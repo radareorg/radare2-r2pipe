@@ -1,17 +1,16 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <!-- Project Details -->
     <groupId>org.radare</groupId>
     <artifactId>r2pipe</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <scm>
         <developerConnection>scm:git:https://github.com/radareorg/radare2-r2pipe.git</developerConnection>
-    </scm>
+      <tag>r2pipe-1.0.0</tag>
+  </scm>
     <name>r2pipe</name>
     <description>Radare2 pipe interface library for Java</description>
     <url>https://github.com/radareorg/radare2-r2pipe</url>
