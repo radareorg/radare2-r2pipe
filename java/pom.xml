@@ -4,12 +4,12 @@
     <!-- Project Details -->
     <groupId>org.radare</groupId>
     <artifactId>r2pipe</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <scm>
         <developerConnection>scm:git:https://github.com/radareorg/radare2-r2pipe.git</developerConnection>
-      <tag>r2pipe-1.0.0</tag>
+      <tag>HEAD</tag>
   </scm>
     <name>r2pipe</name>
     <description>Radare2 pipe interface library for Java</description>
