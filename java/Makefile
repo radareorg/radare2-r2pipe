@@ -9,7 +9,7 @@ all:
 #	$(MAKE) -C jni
 	$(MAKE) -C examples
 
-maven:
+m mvn maven:
 	mvn clean compile
 	mvn install
 
