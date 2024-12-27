@@ -5,13 +5,15 @@ include config.mk
 
 all:
 	$(JAVAC) $(JAVACFLAGS) $(JAVASRC)/*.java examples/Test.java
-	cd src/main/java && jar cvf ../../../r2pipe.jar org
+	$(MAKE) mvn
+#	cd src/main/java && jar cvf ../../../r2pipe.jar org
 #	$(MAKE) -C jni
 	$(MAKE) -C examples
 
 m mvn maven:
 	mvn clean compile
 	mvn install
+	cp target/*.jar .
 
 run:
 	$(MAKE) -C examples run

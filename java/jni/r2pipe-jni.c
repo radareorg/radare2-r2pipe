@@ -1,4 +1,4 @@
-/* jni interface for r2pipe -- pancake 2016 */
+/* jni interface for r2pipe -- pancake 2016-2024 */
 
 #include "org_radare_r2pipe_R2PipeJNI.h"
 #include <string.h>
