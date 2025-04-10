@@ -58,11 +58,10 @@ export class R2PipeSpawn extends R2PipeBase {
 }
 
 function pipeCmdOutput(r2, proc, data) {
-  r2.running = true;
   let len = data.length;
 
   if (r2.pipeQueue.length < 1) {
-    return new Error('r2pipe error: No pending commands for incomming data');
+    return new Error('r2pipe error: No pending commands for incoming data');
   }
 
   if (data.length > 1 && data[0] === 0x00) {
@@ -71,8 +70,7 @@ function pipeCmdOutput(r2, proc, data) {
   if (data[len - 1] !== 0x00) {
     r2.pipeQueue[0].result += data.toString();
     data = "";
-  //  return;
-    /// return r2.pipeQueue[0].result;
+    return;
   }
 
   while (data[len - 1] == 0x00) {
@@ -93,8 +91,9 @@ function pipeCmdOutput(r2, proc, data) {
     } catch (e) {
       r2.pipeQueue[0].cb(e, null);
     }
+  } else {
+    r2.running = false;
   }
-  r2.running = false;
 }
 
 function r2bind(child, cb, r2cmd) {
@@ -118,14 +117,14 @@ function r2bind(child, cb, r2cmd) {
     },
     /* Run cmd and return plaintext output */
     cmd: (command, commandCallback) => {
-      // s = util.cleanCmd(s);
       r2.pipeQueue.push({
         cmd: command,
         cb: commandCallback,
         result: '',
         error: null
       });
-      if (r2.pipeQueue.length === 1) {
+      if (!r2.running && r2.pipeQueue.length === 1) {
+        r2.running = true;
         child.stdin.write(command + '\n');
       }
     },
@@ -142,48 +141,10 @@ function r2bind(child, cb, r2cmd) {
     }
   };
 
-  /* handle SDTERR message */
-  if (child.stderr !== null) {
-    child.stderr.on('data', function (data) {
-      /* Set as running for connect & launch methods */
-      if (typeof errmsg === 'string') {
-        errmsg += data.toString();
-        if (errmsg.length > 1024 * 32) {
-          errmsg = null;
-        }
-      }
-      if (!r2.running && (typeof r2cmd !== 'string')) {
-        r2.running = true;
-        if (typeof cb === 'function') {
-          cb(null, r2);
-        } else {
-          throw new Error('Callback in .cmd() is not a function');
-        }
-      }
-    });
-  }
-
-  /* handle STDOUT nessages */
+  /* handle STDOUT messages */
   if (child.stdout !== null) {
     child.stdout.on('data', data => {
-      if (r2.running) {
-        console.error("race");
-      }
       pipeCmdOutput(r2, child, data);
-      /*
-        // console.log("received data: " + data);
-        // Set as running for pipe method
-        if (running) {
-          console.log("RUNING");
-          if (typeof r2cmd === 'string') {
-            pipeCmdOutput.bind(r2)(child, data, cb);
-          }
-        } else {
-          console.log("not RUNING");
-          running = true;
-          cb(null, r2);
-        }
-       */
     });
   } else {
     cb(null, r2); // Callback for connect
