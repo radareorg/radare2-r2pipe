@@ -3,6 +3,8 @@
 # -- pancake
 
 PCS="${PYTHON_CONFIG}
+	python3.12
+	python3.11
 	python3
 	python39
 	python3.9

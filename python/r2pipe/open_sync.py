@@ -121,45 +121,70 @@ class open(OpenBase):
         return res != 0
 
     def _cmd_process(self, cmd):
-        cmd = cmd.strip().replace("\n", ";")
-        try:
-            self.process.stdin.write((cmd + "\n").encode("utf8"))
-        except:
-            return ''
-        r = self.process.stdout
-        self.process.stdin.flush()
-        out = bytearray()
-        foo = None
-        while True:
-            if self.process.poll() is not None:
-                raise RuntimeError(f"Process terminated unexpectedly trying to run the command {cmd}\n{self.process}")
+        # Add a simple mutex-like lock mechanism using threading
+        import threading
+        if not hasattr(self, '_cmd_lock'):
+            self._cmd_lock = threading.Lock()
+        
+        # Acquire lock to ensure commands don't interfere with each other
+        with self._cmd_lock:
+            # Ensure pending buffer is cleared before starting a new command to avoid mixing
+            old_pending = self.pending
+            self.pending = b""
+            
+            cmd = cmd.strip().replace("\n", ";")
             try:
-                null_start = False
-                if len(self.pending) > 0:
-                    foo = self.pending
-                    self.pending = b""
-                else:
-                    foo = r.read(4096)
-                    if os.name == "nt":
-                        if foo.startswith(b"\x00"):
-                            foo = foo[1:]
-                            null_start = True
-                if foo:
-                    zro = foo.find(b"\x00")
-                    if zro != -1:
-                        out += foo[0:zro]
-                        if zro  < len(foo):
-                            self.pending = foo[zro + 1:]
-                        break
-                    out += foo
-                elif null_start:
-                    break
-
-            except KeyboardInterrupt as e:
-                raise e
+                self.process.stdin.write((cmd + "\n").encode("utf8"))
             except:
-                pass
-        return out.decode("utf-8", errors="ignore")
+                self.pending = old_pending  # Restore pending on failure
+                return ''
+                
+            r = self.process.stdout
+            self.process.stdin.flush()
+            out = bytearray()
+            foo = None
+            
+            # First read any pending data from previous commands if exists
+            if old_pending:
+                zro = old_pending.find(b"\x00")
+                if zro != -1:
+                    # This is a complete response from previous command, process it first
+                    out += old_pending[0:zro]
+                    if zro + 1 < len(old_pending):
+                        self.pending = old_pending[zro + 1:]
+                    return out.decode("utf-8", errors="ignore")
+            
+            # Main read loop for current command
+            while True:
+                if self.process.poll() is not None:
+                    raise RuntimeError(f"Process terminated unexpectedly trying to run the command {cmd}\n{self.process}")
+                try:
+                    null_start = False
+                    if len(self.pending) > 0:
+                        foo = self.pending
+                        self.pending = b""
+                    else:
+                        foo = r.read(4096)
+                        if os.name == "nt":
+                            if foo.startswith(b"\x00"):
+                                foo = foo[1:]
+                                null_start = True
+                    if foo:
+                        zro = foo.find(b"\x00")
+                        if zro != -1:
+                            out += foo[0:zro]
+                            if zro + 1 < len(foo):
+                                self.pending = foo[zro + 1:]
+                            break
+                        out += foo
+                    elif null_start:
+                        break
+
+                except KeyboardInterrupt as e:
+                    raise e
+                except:
+                    pass
+            return out.decode("utf-8", errors="ignore")
 
     def _cmd_http(self, cmd):
         try:
