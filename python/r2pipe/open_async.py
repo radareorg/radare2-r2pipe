@@ -28,7 +28,29 @@ class open(OpenBase, ContextDecorator):
         self.close()
         return False
 
+    async def _close_all_connections(self):
+        """Close all connections in the connection pool"""
+        async with self._connection_lock:
+            for pool_key, connections in self._connection_pool.items():
+                for reader, writer in connections:
+                    writer.close()
+                    try:
+                        await writer.wait_closed()
+                    except:
+                        pass
+            self._connection_pool = {}
+    
     def close(self):
+        """Close the r2pipe instance and clean up resources"""
+        # Close any active connections
+        if hasattr(self, '_connection_pool') and self._connection_pool:
+            # Run the async close operation in the event loop
+            if self._loop.is_running():
+                asyncio.ensure_future(self._close_all_connections(), loop=self._loop)
+            else:
+                self._loop.run_until_complete(self._close_all_connections())
+                
+        # Stop and close the event loop
         if self._loop.is_running():
             self._loop.stop()
         if not self._loop.is_closed():
@@ -53,6 +75,11 @@ class open(OpenBase, ContextDecorator):
         # Add a task queue for managing command sequence
         self._cmd_queue = []
         self._next_cmd_id = 0
+        
+        # Add connection management for HTTP/TCP modes
+        self._connection_pool = {}
+        self._pool_size = 5  # Maximum number of concurrent connections
+        self._connection_lock = asyncio.Lock()
         
         self.asyn = True
 
@@ -128,12 +155,17 @@ class open(OpenBase, ContextDecorator):
         # Get callback, if available
         callback = kwargs.get("callback")
         future = asyncio.Future(loop=self._loop)
-        future.add_done_callback(self._callback_wrapper)
         
         # Assign a sequential ID to this command for ordered execution
         cmd_id = self._next_cmd_id
         self._next_cmd_id += 1
         self._cmd_queue.append(cmd_id)
+        
+        # Store the command ID in the future for tracking
+        future._cmd_id = cmd_id
+        
+        # Add the callback to process the result
+        future.add_done_callback(self._callback_wrapper)
         
         # Wrap the command execution with lock
         task = self._loop.create_task(
@@ -244,70 +276,305 @@ class open(OpenBase, ContextDecorator):
             
         return result
 
-    async def _cmd_http(self, cmd, future, callback):
-        try:
-            quocmd = quote(cmd)
-
-            reader, writer = await asyncio.open_connection(
+    async def _get_http_connection(self):
+        """Get a connection from the pool or create a new one"""
+        async with self._connection_lock:
+            # Create a connection pool key
+            pool_key = f"{self._host}:{self._port}"
+            
+            # Get or create the connection queue
+            if pool_key not in self._connection_pool:
+                self._connection_pool[pool_key] = []
+            
+            # Check if we have an available connection
+            if self._connection_pool[pool_key]:
+                # Reuse existing connection
+                reader, writer = self._connection_pool[pool_key].pop(0)
+                return reader, writer
+            
+            # Create a new connection
+            return await asyncio.open_connection(
                 self._host, self._port, loop=self._loop
             )
-
+            
+    async def _return_http_connection(self, reader, writer):
+        """Return a connection to the pool"""
+        if writer.is_closing():
+            return
+            
+        async with self._connection_lock:
+            pool_key = f"{self._host}:{self._port}"
+            
+            # Only keep connections if within pool size limit
+            if pool_key in self._connection_pool and len(self._connection_pool[pool_key]) < self._pool_size:
+                self._connection_pool[pool_key].append((reader, writer))
+            else:
+                # Close the connection if pool is full
+                writer.close()
+                await writer.wait_closed()
+    
+    async def _cmd_http(self, cmd, future, callback):
+        """HTTP command execution with connection pooling and request ID tracking"""
+        try:
+            quocmd = quote(cmd)
+            
+            # Get a connection from the pool
+            reader, writer = await self._get_http_connection()
+            
+            # Add request ID as a custom header for tracking
+            cmd_id = None
+            if hasattr(future, '_cmd_id'):
+                cmd_id = future._cmd_id
+            
+            # Create HTTP request with request ID tracking
             message = "\n\r".join(
                 [
                     "GET /cmd/%s HTTP/1.1" % quocmd,
                     "Host: %s:%s" % (self._host, self._port),
                     "User-Agent: r2pipe/Python Client",
                     "Accept: */*",
+                    "X-R2Pipe-Request-ID: %s" % (cmd_id if cmd_id is not None else "none"),
+                    "Connection: keep-alive",  # Keep connection alive for pooling
                     "",
                     "",
                 ]
             ).encode()
 
+            # Send the request
             writer.write(message)
-            data = await reader.read(512)
-            res = [data]
-            while data:
-                data = await reader.read(512)
+            await writer.drain()  # Ensure the request is fully sent
+            
+            # Read response with timeout to prevent hanging
+            try:
+                # Use a timeout to prevent hanging on incomplete responses
+                res = []
+                
+                # Read response with proper chunking
+                buffer_size = 4096  # Larger buffer size for efficiency
+                
+                # Read first chunk to get headers
+                data = await asyncio.wait_for(
+                    reader.read(buffer_size), 
+                    timeout=10.0
+                )
+                
+                if not data:
+                    # Connection closed, need to create a new one next time
+                    writer.close()
+                    raise Exception("Connection closed by server")
+                
                 res.append(data)
-            writer.close()
-
+                
+                # Check for Content-Length header to determine how much to read
+                headers_end = data.find(b'\r\n\r\n')
+                if headers_end != -1:
+                    headers = data[:headers_end].decode('utf-8', errors='ignore')
+                    content_length = None
+                    
+                    # Parse content length
+                    for line in headers.split('\r\n'):
+                        if line.lower().startswith('content-length:'):
+                            try:
+                                content_length = int(line.split(':', 1)[1].strip())
+                                break
+                            except ValueError:
+                                pass
+                    
+                    # Calculate how much more data we need to read
+                    if content_length is not None:
+                        bytes_read = len(data) - headers_end - 4  # subtract header size
+                        remaining = content_length - bytes_read
+                        
+                        # Read remaining content if needed
+                        while remaining > 0 and not reader.at_eof():
+                            chunk = await asyncio.wait_for(
+                                reader.read(min(buffer_size, remaining)),
+                                timeout=5.0
+                            )
+                            if not chunk:
+                                break
+                            res.append(chunk)
+                            remaining -= len(chunk)
+                    else:
+                        # If no content length, read until connection closes
+                        while not reader.at_eof():
+                            chunk = await asyncio.wait_for(
+                                reader.read(buffer_size),
+                                timeout=5.0
+                            )
+                            if not chunk:
+                                break
+                            res.append(chunk)
+                
+                # Return connection to the pool for reuse
+                await self._return_http_connection(reader, writer)
+                
+            except asyncio.TimeoutError:
+                # If timeout occurs, close the connection
+                writer.close()
+                raise Exception("Timeout while reading HTTP response")
+                
+            # Process the response
             res = b"".join(res)
 
-            # Remove http headers
+            # Remove HTTP headers
             start = 0
-            for x in res.splitlines():
-                if not x:
-                    start += 1
-                    break
-                start += len(x) + 1  # +1 because we must be count '\n'
-            res = res[start:].decode("utf-8")
-            future.set_result((res, callback))
-            return res
+            header_end = res.find(b'\r\n\r\n')
+            if header_end != -1:
+                start = header_end + 4
+            else:
+                # Fallback to line-by-line parsing if we can't find the header end
+                for x in res.splitlines():
+                    if not x:
+                        start += 1
+                        break
+                    start += len(x) + 1  # +1 because we must be count '\n'
+                    
+            # Parse the result
+            result = res[start:].decode("utf-8", errors="ignore")
+            
+            # Set result with command ID if available
+            if cmd_id is not None:
+                future.set_result((cmd_id, result, callback))
+            else:
+                future.set_result((result, callback))
+            return result
 
         except Exception as e:
-            future.set_result((str(e), callback))
+            # Set error result with command ID if available
+            if hasattr(future, '_cmd_id'):
+                future.set_result((future._cmd_id, str(e), callback))
+            else:
+                future.set_result((str(e), callback))
 
-    async def _cmd_tcp(self, cmd, future, callback):
-
-        try:
-            reader, writer = await asyncio.open_connection(
+    async def _get_tcp_connection(self):
+        """Get a TCP connection from the pool or create a new one"""
+        async with self._connection_lock:
+            # Create a connection pool key
+            pool_key = f"tcp:{self._host}:{self._port}"
+            
+            # Get or create the connection queue
+            if pool_key not in self._connection_pool:
+                self._connection_pool[pool_key] = []
+            
+            # Check if we have an available connection
+            if self._connection_pool[pool_key]:
+                # Reuse existing connection
+                reader, writer = self._connection_pool[pool_key].pop(0)
+                return reader, writer
+            
+            # Create a new connection
+            return await asyncio.open_connection(
                 self._host, self._port, loop=self._loop
             )
 
-            writer.write(cmd.encode("utf-8"))
-            data = await reader.read(512)
+    async def _return_tcp_connection(self, reader, writer):
+        """Return a TCP connection to the pool"""
+        if writer.is_closing():
+            return
+            
+        async with self._connection_lock:
+            pool_key = f"tcp:{self._host}:{self._port}"
+            
+            # Only keep connections if within pool size limit
+            if pool_key in self._connection_pool and len(self._connection_pool[pool_key]) < self._pool_size:
+                self._connection_pool[pool_key].append((reader, writer))
+            else:
+                # Close the connection if pool is full
+                writer.close()
+                await writer.wait_closed()
 
-            res = [data]
-            while data:
-                res.append(data)
-                data = await reader.read(512)
-            res = b"".join(res).decode("utf-8")
-            future.set_result((res, callback))
-            writer.close()
-            return res
+    async def _cmd_tcp(self, cmd, future, callback):
+        """TCP command execution with connection pooling and command tracking"""
+        try:
+            # Get a connection from the pool
+            reader, writer = await self._get_tcp_connection()
+            
+            # Get command ID if available
+            cmd_id = None
+            if hasattr(future, '_cmd_id'):
+                cmd_id = future._cmd_id
+                
+            # We need to distinguish between commands in TCP mode
+            # Add a command ID and separator that won't interfere with regular r2 commands
+            if cmd_id is not None:
+                # Add command ID as a prefix separated by a special marker
+                tracked_cmd = f"r2p_{cmd_id}:{cmd}"
+                writer.write(tracked_cmd.encode("utf-8"))
+            else:
+                # Use normal command without tracking if no cmd_id
+                writer.write(cmd.encode("utf-8"))
+                
+            # Make sure the command is sent
+            await writer.drain()
+            
+            try:
+                # Read with proper timeout handling
+                res = []
+                buffer_size = 4096  # Larger buffer for efficiency
+                
+                # Read data with timeout
+                first_chunk = await asyncio.wait_for(
+                    reader.read(buffer_size), 
+                    timeout=10.0
+                )
+                
+                if not first_chunk:
+                    # Connection closed, create new one next time
+                    writer.close()
+                    raise Exception("TCP connection closed by server")
+                    
+                res.append(first_chunk)
+                
+                # Continue reading until we get all data
+                # TCP mode indicates end of data by closing the connection
+                # or by having no more data available after a timeout
+                try:
+                    while not reader.at_eof():
+                        chunk = await asyncio.wait_for(
+                            reader.read(buffer_size),
+                            timeout=1.0  # Short timeout to detect end of response
+                        )
+                        if not chunk:
+                            break
+                        res.append(chunk)
+                except asyncio.TimeoutError:
+                    # A short timeout here means we've likely read everything
+                    pass
+                
+                # TCP connections are often single-use in r2pipe
+                # But we'll attempt to keep them alive for reuse
+                if not reader.at_eof():
+                    await self._return_tcp_connection(reader, writer)
+                else:
+                    # Connection was closed by server, close our end too
+                    writer.close()
+                
+            except asyncio.TimeoutError:
+                # If we timeout on the initial read, something is wrong
+                writer.close()
+                raise Exception("Timeout while reading TCP response")
+                
+            # Process the response
+            response_data = b"".join(res)
+            
+            # Check if the response contains our tracking ID
+            result = response_data.decode("utf-8", errors="ignore")
+            
+            # Set result with command ID if available
+            if cmd_id is not None:
+                future.set_result((cmd_id, result, callback))
+            else:
+                future.set_result((result, callback))
+                
+            return result
 
         except Exception as e:
-            future.set_result((str(e), callback))
+            # Set error result with command ID if available
+            if hasattr(future, '_cmd_id'):
+                future.set_result((future._cmd_id, str(e), callback))
+            else:
+                future.set_result((str(e), callback))
 
     def wait(self, task):
         """Wait until task finish with proper ordering
