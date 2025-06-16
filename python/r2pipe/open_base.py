@@ -50,12 +50,12 @@ def in_r2():
     """Return wheter r2pipe is called from radare2 environment or the system shell
         """
     try:
-      import os
-      a = int(os.environ["R2PIPE_IN"])
-      b = int(os.environ["R2PIPE_OUT"])
-      return a > 0 and b > 0
-    except:
-      return False
+        import os
+        a = int(os.environ["R2PIPE_IN"])
+        b = int(os.environ["R2PIPE_OUT"])
+        return a > 0 and b > 0
+    except (ValueError, KeyError, TypeError):
+        return False
 
 def jo2po(jo):
     from collections import namedtuple
@@ -125,7 +125,7 @@ class OpenBase(object):
                 self._cmd = self._cmd_rlang
                 return
             if not in_r2():
-                raise Exception("No R2PIPE_IN or R2PIPE_OUT defined")
+                raise EnvironmentError("No R2PIPE_IN or R2PIPE_OUT defined")
         try:
             if os.name == "nt":
                 # if r2pipe_path environment is not set then fail below
@@ -160,10 +160,10 @@ class OpenBase(object):
             self._cmd = self._cmd_pipe
             self.url = "#!pipe"
             return
-        except:
+        except (KeyError, ValueError, OSError, NameError) as e:
             pass
         if filename.startswith("#!pipe"):
-            raise Exception("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
+            raise EnvironmentError("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
 
     def invalidate_cache(self):
         self.cache = {}
@@ -208,7 +208,7 @@ class OpenBase(object):
             return self.cache[cmd]
         cmd = cmd.strip().replace("\n", ";")
         if not has_native:
-            raise Exception("No native ctypes connector available")
+            raise ImportError("No native ctypes connector available")
         if not hasattr(self, "native"):
             self.native = RCore()
             self.native.cmd_str("o " + self.uri)
@@ -293,7 +293,7 @@ class OpenBase(object):
         try:
             data = json.loads(result)
         except (ValueError, KeyError, TypeError) as e:
-            sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
+            sys.stderr.write(f"r2pipe.cmdj.Error: {e}\n")
             data = None
         return data
 
@@ -308,7 +308,7 @@ class OpenBase(object):
         try:
             return jo2po(result)
         except (ValueError, KeyError, TypeError) as e:
-            sys.stderr.write("r2pipe.cmdj.Error: %s\n" % (e))
+            sys.stderr.write(f"r2pipe.cmdj.Error: {e}\n")
         return None
 
     def syscmd(self, cmd):
@@ -332,7 +332,7 @@ class OpenBase(object):
         try:
             data = json.loads(self.syscmd(cmd))
         except (ValueError, KeyError, TypeError) as e:
-            sys.stderr.write("r2pipe.syscmdj.Error %s\n" % (e))
+            sys.stderr.write(f"r2pipe.syscmdj.Error {e}\n")
             data = None
         return data
 

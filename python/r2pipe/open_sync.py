@@ -13,13 +13,13 @@ from subprocess import Popen, PIPE
 from r2pipe.open_base import OpenBase
 
 def no_urlopen():
-  raise IOError
+    raise IOError
 try:
-  from urllib.error import URLError
-  from urllib.request import urlopen
-except:
-  URLError = IOError
-  urlopen = no_urlopen
+    from urllib.error import URLError
+    from urllib.request import urlopen
+except ImportError:
+    URLError = IOError
+    urlopen = no_urlopen
 
 
 try:
@@ -45,7 +45,7 @@ class open(OpenBase):
         elif filename.startswith("tcp://"):
             r = re.match(r"tcp://(\d+\.\d+.\d+.\d+):(\d+)/?", filename)
             if not r:
-                raise Exception("String doesn't match tcp format")
+                raise ValueError("String doesn't match tcp format")
             self._cmd = self._cmd_tcp
             self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.conn.connect((r.group(1), int(r.group(2))))
@@ -53,7 +53,7 @@ class open(OpenBase):
             self._cmd = self._cmd_process
             if radare2home is not None:
                 if not os.path.isdir(radare2home):
-                    raise Exception(
+                    raise ValueError(
                         "`radare2home` passed is invalid, leave it None or put a valid path to r2 folder"
                     )
                 r2e = os.path.join(radare2home, "radare2")
@@ -71,8 +71,8 @@ class open(OpenBase):
                 self.process = Popen(
                     cmd, shell=False, stdin=PIPE, stdout=PIPE, bufsize=0
                 )
-            except:
-                raise Exception("ERROR: Cannot find radare2 in PATH")
+            except (OSError, FileNotFoundError) as e:
+                raise FileNotFoundError("ERROR: Cannot find radare2 in PATH") from e
 
             if os.name == "nt":
                 # On windows-spawn method we need to read the null byte twice
@@ -87,8 +87,8 @@ class open(OpenBase):
                         ch = r.read(1)
                         if ch == b'\x00':
                             break
-                except:
-                    raise Exception("ERROR: Cannot open %s" % filename)
+                except (IOError, OSError) as e:
+                    raise IOError(f"ERROR: Cannot open {filename}") from e
 
     @staticmethod
     def __make_non_blocking(fd):
@@ -106,7 +106,7 @@ class open(OpenBase):
 
         try:
             from ctypes import POINTER
-        except:
+        except ImportError:
             from ctypes.wintypes import POINTER
 
         LPDWORD = POINTER(DWORD)
@@ -189,7 +189,7 @@ class open(OpenBase):
     def _cmd_http(self, cmd):
         try:
             quocmd = urllib.parse.quote(cmd)
-            response = urlopen("{uri}/{cmd}".format(uri=self.uri, cmd=quocmd))
+            response = urlopen(f"{self.uri}/{quocmd}")
             return response.read().decode("utf-8", errors="ignore")
         except URLError:
             pass

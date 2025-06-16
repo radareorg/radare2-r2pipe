@@ -2,20 +2,45 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from ctypes import Structure, addressof, c_char_p, c_void_p
+from ctypes import Structure, addressof, c_char_p, c_void_p, c_int, c_uint, c_float, c_double, c_long, POINTER
 from ctypes.util import find_library
 
 try:
     from ctypes import CDLL
-except:
+except ImportError:
     pass
 
 try:
     from ctypes import WinDLL
-except:
+except ImportError:
     pass
 
 lib = None
+
+# Safe mapping of type names to actual types
+CTYPES_MAP = {
+    'c_void_p': c_void_p,
+    'c_char_p': c_char_p,
+    'c_int': c_int,
+    'c_uint': c_uint,
+    'c_float': c_float,
+    'c_double': c_double,
+    'c_long': c_long,
+    'POINTER': POINTER
+}
+
+def get_ctype_from_name(name):
+    """Safely convert a string type name to an actual ctypes type"""
+    name = name.strip()
+    if name in CTYPES_MAP:
+        return CTYPES_MAP[name]
+    elif name.startswith('POINTER(') and name.endswith(')'):
+        # Handle pointer types like POINTER(c_void_p)
+        inner_type = name[8:-1]  # Extract the inner type
+        if inner_type in CTYPES_MAP:
+            return POINTER(CTYPES_MAP[inner_type])
+    # If we don't know this type, raise an error
+    raise ValueError(f"Unsupported type: {name}")
 
 def r2lib():
     global lib
@@ -59,8 +84,8 @@ class WrappedRMethod(object):
     def __call__(self, *a):
         if not self.args_set:
             if self.args:
-                self.method.argtypes = [eval(x.strip()) for x in self.args.split(",")]
-            self.method.restype = eval(self.ret) if self.ret else None
+                self.method.argtypes = [get_ctype_from_name(x) for x in self.args.split(",")]
+            self.method.restype = get_ctype_from_name(self.ret) if self.ret else None
             self.args_set = True
         a = list(a)
         for i, argt in enumerate(self.method.argtypes):
@@ -84,7 +109,7 @@ class WrappedApiMethod(object):
             if self.ret2 == "c_char_p":
                 return result
             else:
-                result = eval(self.ret2)(result)
+                result = get_ctype_from_name(self.ret2)(result)
         if self.last:
             return getattr(result, self.last)
         return result
