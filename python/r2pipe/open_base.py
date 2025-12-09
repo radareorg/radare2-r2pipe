@@ -335,3 +335,22 @@ class OpenBase(object):
             sys.stderr.write("r2pipe.syscmdj.Error %s\n" % (e))
             data = None
         return data
+
+    @staticmethod
+    def local_sessions():
+        """Return list of local r2agent sessions
+                Returns:
+                    Returns a list of dictionaries containing session information (uri, pid, file)
+                """
+        try:
+            result = Popen("r2agent -Lj", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            out, err = result.communicate()
+            if result.returncode != 0:
+                return []
+            try:
+                data = json.loads(out.decode("utf-8"))
+                return data if isinstance(data, list) else []
+            except (ValueError, KeyError, TypeError):
+                return []
+        except:
+            return []

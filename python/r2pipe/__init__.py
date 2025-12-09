@@ -24,6 +24,7 @@ Example:
 """
 
 from r2pipe.open_sync import open
+from r2pipe.open_base import OpenBase
 
 try:
     import r2lang
@@ -49,6 +50,13 @@ def version():
     """Return string with the version of the r2pipe library
         """
     return VERSION
+
+def local_sessions():
+    """Return list of local r2agent sessions
+        Returns:
+            Returns a list of dictionaries containing session information (uri, pid, file)
+        """
+    return OpenBase.local_sessions()
 
 
 # Open class is now in open_base.py
