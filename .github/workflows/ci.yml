@@ -25,7 +25,7 @@ jobs:
     - name: Testing r2
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.pl
-      run: make -C perl test
+      run: make && make -C perl test
   build-python:
     name: r2pipe-py
     runs-on: ubuntu-24.04
