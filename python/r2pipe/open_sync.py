@@ -35,6 +35,18 @@ class open(OpenBase):
         self.quit()
         return False
     def __init__(self, filename="", flags=None, radare2home=None):
+        # Handle filename as list: r2pipe.open(["/bin/ls", "arg1", "arg2"])
+        file_args = []
+        if isinstance(filename, (list, tuple)):
+            if len(filename) > 1:
+                file_args = list(filename[1:])
+            filename = filename[0] if filename else ""
+        elif isinstance(filename, str) and ' ' in filename \
+                and not filename.startswith(("http://", "tcp://", "ccall://", "#!pipe")):
+            parts = filename.split(' ')
+            filename = parts[0]
+            file_args = parts[1:]
+
         super(open, self).__init__(filename, flags)
         if flags is None:
             flags = []
@@ -70,8 +82,9 @@ class open(OpenBase):
                 hello_cmd = False
             else:
                 hello_cmd = True
+            r_args = [f"-Rarg{i+1}={a}" for i, a in enumerate(file_args)]
             cmd = [r2e, "-q0", filename]
-            cmd = cmd[:1] + flags + cmd[1:]
+            cmd = cmd[:1] + flags + r_args + cmd[1:]
             try:
                 self.process = Popen(
                     cmd, shell=False, stdin=PIPE, stdout=PIPE, bufsize=0

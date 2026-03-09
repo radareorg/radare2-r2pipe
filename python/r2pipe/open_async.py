@@ -104,6 +104,18 @@ class open(OpenBase, ContextDecorator):
             self._loop.close()
 
     def __init__(self, filename="", flags=None, radare2home=None):
+        # Handle filename as list: r2pipe.open(["/bin/ls", "arg1", "arg2"])
+        file_args = []
+        if isinstance(filename, (list, tuple)):
+            if len(filename) > 1:
+                file_args = list(filename[1:])
+            filename = filename[0] if filename else ""
+        elif isinstance(filename, str) and ' ' in filename \
+                and not filename.startswith(("http://", "tcp://", "ccall://", "#!pipe")):
+            parts = filename.split(' ')
+            filename = parts[0]
+            file_args = parts[1:]
+
         super(open, self).__init__(filename, flags)
         if flags is None:
             flags = []
@@ -163,8 +175,9 @@ class open(OpenBase, ContextDecorator):
 
             self._cmd_coro = self._cmd_process
 
+            r_args = [f"-Rarg{i+1}={a}" for i, a in enumerate(file_args)]
             cmd = ["-q0", filename]
-            cmd = cmd[:1] + flags + cmd[1:]
+            cmd = cmd[:1] + flags + r_args + cmd[1:]
             self._process_start_cmd = cmd
 
         else:

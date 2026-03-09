@@ -124,3 +124,32 @@ class TestR2PipeIntegration(unittest.TestCase):
         for i in range(10):
             res = self.r2.cmd(f"?e cmd{i}")
             self.assertEqual(res, f"cmd{i}\n")
+
+    def test_open_with_filename_args_string(self):
+        """Test r2pipe.open with arguments in the filename string (PR #91)"""
+        # "malloc://1024 arg1 arg2" should split into filename + -R args
+        r2 = r2pipe.open("malloc://1024 arg1 arg2")
+        res = r2.cmd("?e hello")
+        self.assertEqual(res, "hello\n")
+        r2.quit()
+
+    def test_open_with_filename_args_list(self):
+        """Test r2pipe.open with filename as a list (PR #91)"""
+        r2 = r2pipe.open(["malloc://1024", "arg1", "arg2"])
+        res = r2.cmd("?e hello")
+        self.assertEqual(res, "hello\n")
+        r2.quit()
+
+    def test_open_with_list_no_args(self):
+        """Test r2pipe.open with single-element list"""
+        r2 = r2pipe.open(["malloc://1024"])
+        res = r2.cmd("?e hello")
+        self.assertEqual(res, "hello\n")
+        r2.quit()
+
+    def test_open_filename_string_no_spaces_unchanged(self):
+        """Test that a normal filename without spaces still works"""
+        r2 = r2pipe.open("malloc://1024")
+        res = r2.cmd("?e ok")
+        self.assertEqual(res, "ok\n")
+        r2.quit()
