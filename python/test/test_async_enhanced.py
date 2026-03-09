@@ -1,7 +1,9 @@
 import unittest
+import gc
 import os
 import tempfile
 import time
+import warnings
 import r2pipe
 from r2pipe.open_async import open as async_open
 
@@ -122,9 +124,25 @@ class TestR2PipeAsyncEnhanced(unittest.TestCase):
         """Test proper cleanup after closing"""
         r2 = async_open(self.test_binary, [])
         r2.cmd("i")
+        process = r2.process
+        transport = getattr(process, "_transport", None)
         r2.close()
-        with self.assertRaises(Exception):
-            r2.cmd("i")
+
+        self.assertIsNotNone(process.returncode)
+        if transport is not None and hasattr(transport, "is_closing"):
+            self.assertTrue(transport.is_closing())
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with self.assertRaises(RuntimeError):
+                r2.cmd("i")
+            gc.collect()
+
+        never_awaited = [
+            warning for warning in caught
+            if "was never awaited" in str(warning.message)
+        ]
+        self.assertEqual(never_awaited, [])
 
     # Test pending output handling
     def test_pending_output_handling(self):

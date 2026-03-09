@@ -12,7 +12,7 @@ import sys
 # whole file doesn't have any profit of asyncio usage, TODO: refactor
 
 from collections.abc import Iterable
-from contextlib import ContextDecorator
+from contextlib import ContextDecorator, suppress
 from urllib.parse import quote, urlparse
 
 from r2pipe.open_base import OpenBase, get_radare_path
@@ -37,24 +37,70 @@ class open(OpenBase, ContextDecorator):
                     writer.close()
                     try:
                         await writer.wait_closed()
-                    except:
+                    except Exception:
                         pass
             self._connection_pool = {}
 
+    async def _close_process(self):
+        """Terminate the async subprocess and close its transport before the loop."""
+        process = getattr(self, "process", None)
+        if process is None:
+            return
+
+        stdin = getattr(process, "stdin", None)
+        if stdin is not None:
+            with suppress(Exception):
+                if not stdin.is_closing():
+                    stdin.close()
+
+        if process.returncode is None:
+            with suppress(ProcessLookupError):
+                process.terminate()
+            try:
+                await asyncio.wait_for(process.wait(), timeout=1.0)
+            except asyncio.TimeoutError:
+                with suppress(ProcessLookupError):
+                    process.kill()
+                with suppress(Exception):
+                    await process.wait()
+        else:
+            with suppress(Exception):
+                await process.wait()
+
+        transport = getattr(process, "_transport", None)
+        if transport is not None:
+            with suppress(Exception):
+                transport.close()
+
+        delattr(self, "process")
+        self._pending_output = b""
+
+    async def _shutdown(self):
+        """Tear down all async resources while the loop is still alive."""
+        await self._close_all_connections()
+        await self._close_process()
+
+    def _ensure_open(self):
+        if getattr(self, "_closed", False) or self._loop.is_closed():
+            raise RuntimeError("r2pipe is closed")
+
     def close(self):
         """Close the r2pipe instance and clean up resources"""
-        # Close any active connections
-        if hasattr(self, '_connection_pool') and self._connection_pool:
-            # Run the async close operation in the event loop
-            if self._loop.is_running():
-                asyncio.ensure_future(self._close_all_connections())
-            else:
-                self._loop.run_until_complete(self._close_all_connections())
+        if getattr(self, "_closed", False):
+            return
 
-        # Stop and close the event loop
+        if self._loop.is_closed():
+            self._closed = True
+            return
+
         if self._loop.is_running():
-            self._loop.stop()
-        if not self._loop.is_closed():
+            raise RuntimeError("Cannot close r2pipe while its event loop is running")
+
+        self._closed = True
+        try:
+            self._loop.run_until_complete(self._shutdown())
+        finally:
+            self._connection_pool = {}
             self._loop.close()
 
     def __init__(self, filename="", flags=None, radare2home=None):
@@ -69,11 +115,11 @@ class open(OpenBase, ContextDecorator):
             asyncio.set_event_loop(self._loop)
         else:
             self._loop = asyncio.new_event_loop()
-            if hasattr(asyncio, "get_child_watcher"):
+            if sys.version_info < (3, 12) and hasattr(asyncio, "get_child_watcher"):
                 try:
                     watcher = asyncio.get_child_watcher()
                     watcher.attach_loop(self._loop)
-                except (DeprecationWarning, RuntimeError):
+                except RuntimeError:
                     pass
 
         # Add a lock for synchronizing command execution
@@ -87,6 +133,7 @@ class open(OpenBase, ContextDecorator):
         self._connection_pool = {}
         self._pool_size = 5  # Maximum number of concurrent connections
         self._connection_lock = asyncio.Lock()
+        self._closed = False
 
         self.asyn = True
 
@@ -159,6 +206,8 @@ class open(OpenBase, ContextDecorator):
             return result, cmd_id
 
     def _cmd(self, cmd, **kwargs):
+        self._ensure_open()
+
         # Get callback, if available
         callback = kwargs.get("callback")
         future = self._loop.create_future()
@@ -174,16 +223,13 @@ class open(OpenBase, ContextDecorator):
         # Add the callback to process the result
         future.add_done_callback(self._callback_wrapper)
 
-        # Wrap the command execution with lock
-        task = self._loop.create_task(
-            self._execute_cmd_with_lock(cmd, future, callback, cmd_id)
-        )
-
-        # Create and start a new task (coroutine)
-        self._loop.run_until_complete(task)
-
-        # In sequential mode, we should always have the result by now
-        return task.result()[0] if task else None
+        coro = self._execute_cmd_with_lock(cmd, future, callback, cmd_id)
+        try:
+            result, _ = self._loop.run_until_complete(coro)
+            return result
+        except Exception:
+            coro.close()
+            raise
 
     async def _cmd_process(self, cmd, future, callback):
         # Process initialization if needed
