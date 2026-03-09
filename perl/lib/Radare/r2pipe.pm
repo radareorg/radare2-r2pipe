@@ -5,21 +5,59 @@ package Radare::r2pipe;
 use strict;
 use warnings;
 
-# Local r2 connection
-use IO::Pty::Easy;
+use Encode qw(encode);
+use HTTP::Tiny;
+use IO::Handle;
 
-# r2 using TCP sockets
 use IO::Socket::INET;
-
-# r2 using HTTP web server
-use LWP::UserAgent;
-use URI::Escape;
-
-# JSON support
-use JSON;
+use IPC::Open2;
+use JSON::PP qw(decode_json);
 
 # Version
-our $VERSION = 0.3;
+our $VERSION = 0.4;
+
+sub _uri_escape {
+	my ($value) = @_;
+	my $bytes = encode('UTF-8', defined $value ? $value : '');
+	$bytes =~ s/([^A-Za-z0-9\-\._~])/sprintf("%%%02X", ord($1))/ge;
+	return $bytes;
+}
+
+sub _shell_quote {
+	my ($value) = @_;
+	return "''" if !defined($value) || $value eq '';
+	$value =~ s/'/'"'"'/g;
+	return "'$value'";
+}
+
+sub _read_from_r2 {
+	my ($self, $single_read) = @_;
+	my $output = delete($self->{r2_pending}) // '';
+	my $nul = index($output, "\x00");
+	if ($nul >= 0) {
+		$self->{r2_pending} = substr($output, $nul + 1);
+		return substr($output, 0, $nul);
+	}
+
+	my $fh = $self->{r2_read};
+	while (1) {
+		my $buffer = '';
+		my $bytes_read = sysread($fh, $buffer, 4096);
+		die "cmd_file(): Failed reading radare2 output: $!\n" if !defined $bytes_read;
+		last if $bytes_read == 0;
+
+		$nul = index($buffer, "\x00");
+		if ($nul >= 0) {
+			$output .= substr($buffer, 0, $nul);
+			$self->{r2_pending} = substr($buffer, $nul + 1);
+			last;
+		}
+
+		$output .= $buffer;
+		last if $single_read;
+	}
+	return $output;
+}
 
 sub new {
 	my $class = shift;
@@ -76,7 +114,7 @@ sub r2pipe_http {
 	# Store type and URI in instance variables
 	$self->{type} = 'http';
 	$self->{uri} = $base_uri;
-	$self->{ua} = LWP::UserAgent->new;
+	$self->{ua} = HTTP::Tiny->new;
 }
 
 sub r2pipe_tcp {
@@ -108,27 +146,39 @@ sub r2pipe_file {
 }
 
 sub r2_exists {
-	`which r2`;
+	for my $candidate (qw(radare2 r2)) {
+		my $path = `command -v $candidate 2>/dev/null`;
+		$path =~ s/\s+$//;
+		return $candidate if $path ne '';
+	}
+	return;
 }
 
 sub spawn_r2 {
 	my ($self, $file) = @_;
-	die "spawn_r2(): No radare2 found in PATH\n" if ! r2_exists();
-
-	# Create PTY and store
-	my $r2pipe = IO::Pty::Easy->new;
-	$self->{r2} = $r2pipe;
+	my $r2 = r2_exists();
+	die "spawn_r2(): No radare2 found in PATH\n" if !$r2;
 
 	# Setup command...
-	my $cmd = 'radare2 -q0 ';
-	$cmd .= '-d ' if $self->{arguments}->{debug};
-	$cmd .= '-w ' if $self->{arguments}->{writable} || $self->{arguments}->{writeable};
-	$cmd .= $file;
-	$cmd .= ' 2>/dev/null';
+	my @cmd = ($r2, '-q0');
+	push @cmd, '-d' if $self->{arguments}->{debug};
+	push @cmd, '-w' if $self->{arguments}->{writable} || $self->{arguments}->{writeable};
+	push @cmd, $file;
+	my $command = join(' ', map { _shell_quote($_) } @cmd) . ' 2>/dev/null';
 
-	# Spawn
-	$self->{r2}->spawn($cmd);
-	$self->{r2}->read();
+	my ($r2_read, $r2_write);
+	my $pid = eval { open2($r2_read, $r2_write, '/bin/sh', '-c', $command) };
+	die "spawn_r2(): Could not spawn '$r2': $@\n" if $@;
+
+	binmode($r2_read);
+	binmode($r2_write);
+	$r2_write->autoflush(1);
+
+	$self->{r2_read} = $r2_read;
+	$self->{r2_write} = $r2_write;
+	$self->{r2_pid} = $pid;
+	$self->{r2_pending} = '';
+	$self->_read_from_r2(0);
 
 	# -A doesn't work with -q0 at this point, so just manually do it ;)
 	if($self->{arguments}->{analyse} || $self->{arguments}->{analyze}) {
@@ -164,10 +214,9 @@ sub cmdj {
 
 sub cmd_http {
 	my ($self, $command, $dontloop) = @_;
-	my $url = $self->{uri} . uri_escape($command);
-	my $req = HTTP::Request->new(GET => $url);
-	my $response = $self->{ua}->request($req)->content;
-	return $response;
+	my $url = $self->{uri} . _uri_escape($command);
+	my $response = $self->{ua}->get($url);
+	return $response->{content};
 }
 
 sub cmd_tcp {
@@ -190,19 +239,13 @@ sub cmd_tcp {
 
 sub cmd_file {
 	my ($self, $command, $dontloop) = @_;
-	my $pty_result = $self->{r2}->write($command . "\n", 1);
+	my $payload = $command . "\n";
+	local $SIG{PIPE} = 'IGNORE';
+	my $bytes_written = syswrite($self->{r2_write}, $payload);
+	die "cmd_file(): Failed writing to radare2: $!\n" if !defined $bytes_written;
 
-	# Read the output...
-	my $output = $self->{r2}->read(1);
-	if($dontloop == 0) { # We loop
-		while(!$output || $output !~ /\x00$/) {
-			$output .= $self->{r2}->read();
-		}
-	}
-	# Clean up...
+	my $output = $self->_read_from_r2($dontloop);
 	$output =~ s/^\x00//;
-
-	# Return
 	return $output;
 }
 
@@ -219,8 +262,20 @@ sub quit {
 
 sub quit_file {
 	my $self = shift;
-	$self->{r2}->close();
+	if ($self->{r2_write}) {
+		local $SIG{PIPE} = 'IGNORE';
+		eval {
+			syswrite($self->{r2_write}, "q!\n");
+			close($self->{r2_write});
+		};
+	}
+	close($self->{r2_read}) if $self->{r2_read};
+	waitpid($self->{r2_pid}, 0) if $self->{r2_pid};
 	$self->{file} = undef;
+	$self->{r2_pid} = undef;
+	$self->{r2_read} = undef;
+	$self->{r2_write} = undef;
+	$self->{r2_pending} = '';
 }
 
 sub quit_tcp {

@@ -1,3 +1,9 @@
+Makefile
+README.md
 lib/Radare/r2pipe.pm
 Makefile.PL
+t/00-load.t
+t/01-constructor.t
+t/02-r2-smoke.t
+t/readme_example.pl
 t/test.pl
