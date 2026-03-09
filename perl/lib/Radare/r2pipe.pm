@@ -19,7 +19,7 @@ use URI::Escape;
 use JSON;
 
 # Version
-our $VERSION = 0.3;
+our $VERSION = 0.4;
 
 sub new {
 	my $class = shift;
@@ -108,19 +108,25 @@ sub r2pipe_file {
 }
 
 sub r2_exists {
-	`which r2`;
+	for my $candidate (qw(radare2 r2)) {
+		my $path = `command -v $candidate 2>/dev/null`;
+		$path =~ s/\s+$//;
+		return $candidate if $path ne '';
+	}
+	return;
 }
 
 sub spawn_r2 {
 	my ($self, $file) = @_;
-	die "spawn_r2(): No radare2 found in PATH\n" if ! r2_exists();
+	my $r2 = r2_exists();
+	die "spawn_r2(): No radare2 found in PATH\n" if !$r2;
 
 	# Create PTY and store
 	my $r2pipe = IO::Pty::Easy->new;
 	$self->{r2} = $r2pipe;
 
 	# Setup command...
-	my $cmd = 'radare2 -q0 ';
+	my $cmd = $r2 . ' -q0 ';
 	$cmd .= '-d ' if $self->{arguments}->{debug};
 	$cmd .= '-w ' if $self->{arguments}->{writable} || $self->{arguments}->{writeable};
 	$cmd .= $file;
