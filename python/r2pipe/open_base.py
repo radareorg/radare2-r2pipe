@@ -101,7 +101,7 @@ class OpenBase(object):
         Class body derived from __init__.py "open" class.
         """
 
-    def __init__(self, filename="", flags=[]):
+    def __init__(self, filename="", flags=None):
         """Open a new r2 pipe
                 The 'filename' can be one of the following:
 
@@ -117,6 +117,8 @@ class OpenBase(object):
                 Returns:
                     Returns an object with methods to interact with r2 via commands
                 """
+        if flags is None:
+            flags = []
         self.use_cache = False
         self.cache = {}
         self.asyn = False

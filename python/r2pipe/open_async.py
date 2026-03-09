@@ -56,7 +56,7 @@ class open(OpenBase, ContextDecorator):
         if not self._loop.is_closed():
             self._loop.close()
 
-    def __init__(self, filename="", flags=[], radare2home=None):
+    def __init__(self, filename="", flags=None, radare2home=None):
         super(open, self).__init__(filename, flags)
 
         self.r2home = radare2home
