@@ -26,13 +26,6 @@ jobs:
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.py
       run: make -C python test
-    - name: Testing r2pipe.ts
-      run: |
-        node --version
-        tsc --version
-        cd typescript
-        mkdir node_modules && npm i
-        make
   build-ts:
     name: r2pipe-ts
     runs-on: ubuntu-24.04
