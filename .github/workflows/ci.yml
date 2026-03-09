@@ -1,21 +1,54 @@
 name: CI
 
+env:
+  R2V: 6.1.0
+
 on: push
 
 jobs:
-  build:
-    name: r2pipe
-    runs-on: ubuntu-latest
+  build-python:
+    name: r2pipe-py
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - name: Install python
       run: sudo apt-get --assume-yes install python3-wheel python3-setuptools
-    - name: Building Radare2
-      run: git clone --depth=1 https://github.com/radareorg/radare2 r2 && r2/sys/install.sh /usr > /dev/null
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+        sudo pip install frida-tools
+#    - name: Building Radare2 from git
+#      run: git clone --depth=1 https://github.com/radareorg/radare2 r2 && r2/sys/install.sh /usr > /dev/null
     - name: Testing r2
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.py
       run: make -C python test
+    - name: Testing r2pipe.ts
+      run: |
+        node --version
+        tsc --version
+        cd typescript
+        mkdir node_modules && npm i
+        make
+  build-ts:
+    name: r2pipe-ts
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+        sudo pip install frida-tools
+#    - name: Building Radare2 from git
+#      run: git clone --depth=1 https://github.com/radareorg/radare2 r2 && r2/sys/install.sh /usr > /dev/null
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.ts
       run: |
         node --version
