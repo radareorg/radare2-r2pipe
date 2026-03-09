@@ -30,17 +30,19 @@ test2: testpy3
 
 testpy2:
 	@echo "Testing $(PYTHON)"
-	PYTHONPATH=$$PWD $(PYTHON) -m pip install coverage pytest
+	PYTHONPATH=$$PWD $(PYTHON) -m pytest --version >/dev/null 2>&1 && \
+		PYTHONPATH=$$PWD $(PYTHON) -m coverage --version >/dev/null 2>&1 || \
+		PYTHONPATH=$$PWD $(PYTHON) -m pip install --user coverage pytest
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage run --omit="*.local*" -m pytest -k "test_" test
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage report
-	$(PYTHON) lint
+	$(MAKE) lint
 
 lint:
-	-pylint r2pipe/*.py
+	pylint r2pipe/*.py
 
 test-examples:
-	$(PYTHON) examples/test.py
-	$(PYTHON) examples/test2.py
+	PYTHONPATH=$$PWD $(PYTHON) examples/test.py
+	PYTHONPATH=$$PWD $(PYTHON) examples/test2.py
 
 testpy3:
 	@$(MAKE) testpy2 PYTHON=$(PYTHON3)
