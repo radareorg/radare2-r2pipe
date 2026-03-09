@@ -194,10 +194,8 @@ class OpenBase(object):
                 pos = res.find(b"\x00"[0])
                 if pos != -1:
                     out += res[0:pos]
-                else:
-                    out += res
-                if len(res) < 4096:
                     break
+                out += res
         res = out.decode("utf-8")
         if self.use_cache:
             self.cache[cmd] = res
