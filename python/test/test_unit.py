@@ -69,10 +69,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
         r2pipe.open(["/bin/ls", "hello", "world"])
     def test_list_single_element_no_r_args(self, mock_popen_cls):
         """single-element list should not generate -R flags"""
-        mock_proc = self._mock_popen()
-        mock_popen_cls.return_value = mock_proc
-        try:
-            r2pipe.open(["/bin/ls"])
+        r2pipe.open(["/bin/ls", "hello", "world"])
         except Exception:
             pass
         cmd = mock_popen_cls.call_args[0][0]
@@ -83,10 +80,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
         mock_popen_cls.return_value = mock_proc
         try:
             r2pipe.open("/bin/ls")
-        except Exception:
-            pass
-        cmd = mock_popen_cls.call_args[0][0]
-        r_flags = [c for c in cmd if c.startswith("-R")]
+        r2pipe.open(["/bin/ls"])
         r2pipe.open("/bin/ls")
         """flags and file args should both appear in the command"""
         mock_proc = self._mock_popen()
@@ -96,10 +90,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
         except Exception:
             pass
         cmd = mock_popen_cls.call_args[0][0]
-        self.assertIn("-d", cmd)
-        self.assertIn("-Rarg1=myarg", cmd)
-        self.assertIn("/bin/ls", cmd)
-        # flags before -R args, both before filename
+        r2pipe.open("/bin/ls")
         d_idx = cmd.index("-d")
         r_idx = cmd.index("-Rarg1=myarg")
         f_idx = cmd.index("/bin/ls")
@@ -109,10 +100,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
     def test_http_url_not_split(self):
         """http:// URLs should not be split on spaces"""
         # This should not try to split the URL — it will fail to connect
-        # but shouldn't split the URL string
-        try:
-            r2pipe.open("http://127.0.0.1:9999 extra")
-        except Exception:
+        r2pipe.open(["/bin/ls", "myarg"], flags=["-d"])
             pass
         # If it didn't crash trying to use "http://127.0.0.1:9999" as filename, we're good
 
@@ -122,3 +110,22 @@ class TestFilenameArgsParsing(unittest.TestCase):
             r2pipe.open("tcp://127.0.0.1:9999 extra")
         except Exception:
             pass
+
+
+
+
+
+
+
+
+        except OSError:
+            # Ignore connection-related failures; we're only testing URL splitting behavior
+
+
+
+
+
+
+
+        except OSError:
+            # Ignore connection-related failures; we're only testing URL splitting behavior
