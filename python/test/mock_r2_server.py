@@ -45,7 +45,7 @@ class MockR2Handler(http.server.BaseHTTPRequestHandler):
         """,
         
         # JSON info
-        "ij": {"core":{"type":"mock","file":"mock","fd":42,"size":1024,"humansz":"1K","iorw":true,"mode":"r-x","obsz":0,"block":256,"format":"elf64"},"bin":{"arch":"x86","bits":64,"os":"linux"}},
+        "ij": {"core":{"type":"mock","file":"mock","fd":42,"size":1024,"humansz":"1K","iorw":True,"mode":"r-x","obsz":0,"block":256,"format":"elf64"},"bin":{"arch":"x86","bits":64,"os":"linux"}},
         
         # Disassembly
         "pd 1": "            0x00400000      55             push rbp\n",

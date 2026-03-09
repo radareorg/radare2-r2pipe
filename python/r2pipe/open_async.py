@@ -6,6 +6,7 @@ This script use code from r2pipe-async/open_p3.py script.
 import asyncio
 import os
 import re
+import sys
 
 
 # whole file doesn't have any profit of asyncio usage, TODO: refactor
@@ -46,7 +47,7 @@ class open(OpenBase, ContextDecorator):
         if hasattr(self, '_connection_pool') and self._connection_pool:
             # Run the async close operation in the event loop
             if self._loop.is_running():
-                asyncio.ensure_future(self._close_all_connections(), loop=self._loop)
+                asyncio.ensure_future(self._close_all_connections())
             else:
                 self._loop.run_until_complete(self._close_all_connections())
 
@@ -58,6 +59,8 @@ class open(OpenBase, ContextDecorator):
 
     def __init__(self, filename="", flags=None, radare2home=None):
         super(open, self).__init__(filename, flags)
+        if flags is None:
+            flags = []
 
         self.r2home = radare2home
 
@@ -65,9 +68,13 @@ class open(OpenBase, ContextDecorator):
             self._loop = asyncio.ProactorEventLoop()
             asyncio.set_event_loop(self._loop)
         else:
-            watcher = asyncio.get_child_watcher()
             self._loop = asyncio.new_event_loop()
-            watcher.attach_loop(self._loop)
+            if hasattr(asyncio, "get_child_watcher"):
+                try:
+                    watcher = asyncio.get_child_watcher()
+                    watcher.attach_loop(self._loop)
+                except (DeprecationWarning, RuntimeError):
+                    pass
 
         # Add a lock for synchronizing command execution
         self._cmd_lock = asyncio.Lock()
@@ -154,7 +161,7 @@ class open(OpenBase, ContextDecorator):
     def _cmd(self, cmd, **kwargs):
         # Get callback, if available
         callback = kwargs.get("callback")
-        future = asyncio.Future(loop=self._loop)
+        future = self._loop.create_future()
 
         # Assign a sequential ID to this command for ordered execution
         cmd_id = self._next_cmd_id
@@ -195,10 +202,8 @@ class open(OpenBase, ContextDecorator):
             create = asyncio.create_subprocess_exec(
                 r2path,
                 *self._process_start_cmd,
-                shell=False,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
-                loop=self._loop
             )
 
             self.process = await create  # Init the process
@@ -294,7 +299,7 @@ class open(OpenBase, ContextDecorator):
 
             # Create a new connection
             return await asyncio.open_connection(
-                self._host, self._port, loop=self._loop
+                self._host, self._port
             )
 
     async def _return_http_connection(self, reader, writer):
@@ -465,7 +470,7 @@ class open(OpenBase, ContextDecorator):
 
             # Create a new connection
             return await asyncio.open_connection(
-                self._host, self._port, loop=self._loop
+                self._host, self._port
             )
 
     async def _return_tcp_connection(self, reader, writer):
@@ -581,7 +586,7 @@ class open(OpenBase, ContextDecorator):
         # Create a function to wait for all tasks in order
         async def wait_ordered():
             # Wait for all tasks to complete
-            done, _ = await asyncio.wait(_tasks, loop=self._loop)
+            done, _ = await asyncio.wait(_tasks)
 
             # Sort results by command ID if available
             results = []
@@ -608,6 +613,6 @@ class open(OpenBase, ContextDecorator):
 
         # Run the ordered wait function
         if self._loop.is_running():
-            return asyncio.ensure_future(wait_ordered(), loop=self._loop)
+            return asyncio.ensure_future(wait_ordered())
         else:
             return self._loop.run_until_complete(wait_ordered())

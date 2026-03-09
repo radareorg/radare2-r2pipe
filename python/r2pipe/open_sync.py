@@ -30,11 +30,14 @@ except ImportError:
 
 class open(OpenBase):
     def __enter__(self):
-        return
-    def __exit__(self):
-        return
+        return self
+    def __exit__(self, *exc):
+        self.quit()
+        return False
     def __init__(self, filename="", flags=None, radare2home=None):
         super(open, self).__init__(filename, flags)
+        if flags is None:
+            flags = []
         self.pipe_read_sleep = 0.001
         self.pending = b''
         self._cmd_lock = threading.Lock()

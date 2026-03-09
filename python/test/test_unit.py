@@ -1,5 +1,6 @@
 import unittest
 import os
+import sys
 
 import r2pipe
 from r2pipe.native import *
