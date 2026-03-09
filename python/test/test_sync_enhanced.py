@@ -32,6 +32,10 @@ class TestR2PipeSyncEnhanced(unittest.TestCase):
         self.r2_null.quit()
 
     # Basic command tests
+    def test_cmd_lock_initialized_in_constructor(self):
+        """Test the process command lock is created during initialization"""
+        self.assertTrue(hasattr(self.r2_ls, "_cmd_lock"))
+
     def test_cmd_basic_commands(self):
         """Test various basic r2 commands"""
         # Test standard commands

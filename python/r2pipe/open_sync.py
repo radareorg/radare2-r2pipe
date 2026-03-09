@@ -7,6 +7,7 @@ This script use code from old __init__.py open object
 
 import re
 import socket
+import threading
 import urllib
 import os
 from subprocess import Popen, PIPE
@@ -36,6 +37,7 @@ class open(OpenBase):
         super(open, self).__init__(filename, flags)
         self.pipe_read_sleep = 0.001
         self.pending = b''
+        self._cmd_lock = threading.Lock()
         if filename.startswith("http://"):
             self._cmd = self._cmd_http
             self.uri = filename + "/cmd"
@@ -121,11 +123,6 @@ class open(OpenBase):
         return res != 0
 
     def _cmd_process(self, cmd):
-        # Add a simple mutex-like lock mechanism using threading
-        import threading
-        if not hasattr(self, '_cmd_lock'):
-            self._cmd_lock = threading.Lock()
-        
         # Acquire lock to ensure commands don't interfere with each other
         with self._cmd_lock:
             # Ensure pending buffer is cleared before starting a new command to avoid mixing
