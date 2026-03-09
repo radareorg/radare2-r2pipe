@@ -6,6 +6,26 @@ env:
 on: push
 
 jobs:
+  build-perl:
+    name: r2pipe-pl
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install python
+      run: sudo apt-get --assume-yes install python3-wheel python3-setuptools
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+        sudo pip install frida-tools
+#    - name: Building Radare2 from git
+#      run: git clone --depth=1 https://github.com/radareorg/radare2 r2 && r2/sys/install.sh /usr > /dev/null
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
+    - name: Testing r2pipe.pl
+      run: make -C perl test
   build-python:
     name: r2pipe-py
     runs-on: ubuntu-24.04
