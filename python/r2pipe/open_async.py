@@ -412,7 +412,7 @@ class open(OpenBase, ContextDecorator):
             except asyncio.TimeoutError:
                 # If timeout occurs, close the connection
                 writer.close()
-                raise TimeoutError("Timeout while reading HTTP response") from exc
+                raise TimeoutError("Timeout while reading HTTP response")
 
             # Process the response
             res = b"".join(res)
@@ -495,15 +495,7 @@ class open(OpenBase, ContextDecorator):
             if hasattr(future, '_cmd_id'):
                 cmd_id = future._cmd_id
 
-            # We need to distinguish between commands in TCP mode
-            # Add a command ID and separator that won't interfere with regular r2 commands
-            if cmd_id is not None:
-                # Add command ID as a prefix separated by a special marker
-                tracked_cmd = f"r2p_{cmd_id}:{cmd}"
-                writer.write(tracked_cmd.encode("utf-8"))
-            else:
-                # Use normal command without tracking if no cmd_id
-                writer.write(cmd.encode("utf-8"))
+            writer.write(cmd.encode("utf-8"))
 
             # Make sure the command is sent
             await writer.drain()
@@ -553,7 +545,7 @@ class open(OpenBase, ContextDecorator):
             except asyncio.TimeoutError:
                 # If we timeout on the initial read, something is wrong
                 writer.close()
-                raise TimeoutError("Timeout while reading TCP response") from exc
+                raise TimeoutError("Timeout while reading TCP response")
 
             # Process the response
             response_data = b"".join(res)
