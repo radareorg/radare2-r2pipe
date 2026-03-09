@@ -10,7 +10,7 @@ jobs:
     name: r2pipe-py
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Install python
       run: sudo apt-get --assume-yes install python3-wheel python3-setuptools
     - name: Installing radare2
@@ -30,7 +30,7 @@ jobs:
     name: r2pipe-ts
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Installing radare2
       run: |
         wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
