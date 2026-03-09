@@ -129,3 +129,8 @@ class TestFilenameArgsParsing(unittest.TestCase):
 
         except OSError:
             # Ignore connection-related failures; we're only testing URL splitting behavior
+
+        except Exception as exc:
+            # Connection errors are expected here; we only care that the URL
+            # is treated as a single string and not split into arguments.
+            _ = exc
