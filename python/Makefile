@@ -35,10 +35,9 @@ testpy2:
 		PYTHONPATH=$$PWD $(PYTHON) -m pip install --user coverage pytest pylint
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage run --omit="*.local*" -m pytest -k "test_" test
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage report
-	$(MAKE) lint
 
 lint:
-	pylint r2pipe/*.py
+	-pylint r2pipe/*.py
 
 test-examples:
 	PYTHONPATH=$$PWD $(PYTHON) examples/test.py

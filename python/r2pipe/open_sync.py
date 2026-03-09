@@ -131,19 +131,16 @@ class open(OpenBase):
             # Ensure pending buffer is cleared before starting a new command to avoid mixing
             old_pending = self.pending
             self.pending = b""
-            
             cmd = cmd.strip().replace("\n", ";")
             try:
                 self.process.stdin.write((cmd + "\n").encode("utf8"))
             except:
                 self.pending = old_pending  # Restore pending on failure
                 return ''
-                
             r = self.process.stdout
             self.process.stdin.flush()
             out = bytearray()
             foo = None
-            
             # First read any pending data from previous commands if exists
             if old_pending:
                 zro = old_pending.find(b"\x00")
@@ -153,7 +150,6 @@ class open(OpenBase):
                     if zro + 1 < len(old_pending):
                         self.pending = old_pending[zro + 1:]
                     return out.decode("utf-8", errors="ignore")
-            
             # Main read loop for current command
             while True:
                 if self.process.poll() is not None:

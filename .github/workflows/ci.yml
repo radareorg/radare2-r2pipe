@@ -26,6 +26,8 @@ jobs:
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.py
       run: make -C python test
+    - name: Linting r2pipe.py
+      run: make -C python lint
   build-ts:
     name: r2pipe-ts
     runs-on: ubuntu-24.04

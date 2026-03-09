@@ -34,11 +34,10 @@ if [ "$1" = "-n" ]; then
 fi
 
 STATUSFILE=$(mktemp "${TMPDIR:-/tmp}/python-wrapper.XXXXXX") || exit 1
-{
+(
 	"${PYCFG}" "$@"
 	echo $? >"${STATUSFILE}"
-} | sed -e 's/-arch [^\s]*//g' | \
-	sed s,-Wstrict-prototypes,,g 2>/dev/null
+) | sed -e 's/-arch [^[:space:]]*//g' | sed 's/-Wstrict-prototypes//g' 2>/dev/null
 
 STATUS=$(cat "${STATUSFILE}" 2>/dev/null)
 rm -f "${STATUSFILE}"
