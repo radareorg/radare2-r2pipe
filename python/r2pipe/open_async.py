@@ -327,7 +327,7 @@ class open(OpenBase, ContextDecorator):
                 cmd_id = future._cmd_id
 
             # Create HTTP request with request ID tracking
-            message = "\n\r".join(
+            message = "\r\n".join(
                 [
                     "GET /cmd/%s HTTP/1.1" % quocmd,
                     "Host: %s:%s" % (self._host, self._port),
