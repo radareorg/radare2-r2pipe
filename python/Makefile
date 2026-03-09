@@ -32,7 +32,7 @@ testpy2:
 	@echo "Testing $(PYTHON)"
 	PYTHONPATH=$$PWD $(PYTHON) -m pytest --version >/dev/null 2>&1 && \
 		PYTHONPATH=$$PWD $(PYTHON) -m coverage --version >/dev/null 2>&1 || \
-		PYTHONPATH=$$PWD $(PYTHON) -m pip install --user coverage pytest
+		PYTHONPATH=$$PWD $(PYTHON) -m pip install --user coverage pytest pylint
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage run --omit="*.local*" -m pytest -k "test_" test
 	PYTHONPATH=$$PWD $(PYTHON) -m coverage report
 	$(MAKE) lint
