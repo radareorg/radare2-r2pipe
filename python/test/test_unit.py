@@ -51,10 +51,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
         """filename string with spaces should generate -R flags"""
         mock_proc = self._mock_popen()
         mock_popen_cls.return_value = mock_proc
-        try:
-            r2pipe.open("/bin/ls arg1 arg2")
-        except Exception:
-            pass
+        r2pipe.open("/bin/ls arg1 arg2")
         cmd = mock_popen_cls.call_args[0][0]
         self.assertIn("-Rarg1=arg1", cmd)
         self.assertIn("-Rarg2=arg2", cmd)
@@ -69,10 +66,7 @@ class TestFilenameArgsParsing(unittest.TestCase):
         """filename as list should generate -R flags from extra elements"""
         mock_proc = self._mock_popen()
         mock_popen_cls.return_value = mock_proc
-        try:
-            r2pipe.open(["/bin/ls", "hello", "world"])
-        except Exception:
-            pass
+        r2pipe.open(["/bin/ls", "hello", "world"])
         cmd = mock_popen_cls.call_args[0][0]
         self.assertIn("-Rarg1=hello", cmd)
         self.assertIn("-Rarg2=world", cmd)
