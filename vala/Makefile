@@ -1,23 +1,69 @@
-include ../../config.mk
+PREFIX ?= /usr/local
+LIBDIR ?= $(PREFIX)/lib
+VERSION ?= 6.1.0
+VALAC ?= valac
+AR ?= ar
 
-all:
-	valac -g -X -O3 main.vala r2pipe.vala
-	valac -g -X -O3 --library=r2pipe -H r2pipe.h r2pipe.vala -X -fPIC -c
-	rm -f libr2pipe.a
-	ar q libr2pipe.a r2pipe.vala.o
+.SUFFIXES:
 
-install:
-	mkdir -p $(DESTDIR)/${PREFIX}/lib/pkgconfig
-	cp -f r2pipe.pc $(DESTDIR)/${PREFIX}/lib/pkgconfig/r2pipe.pc
-	mkdir -p $(DESTDIR)/${PREFIX}/share/vala/vapi
-	cp -f r2pipe.vapi $(DESTDIR)/${PREFIX}/share/vala/vapi/r2pipe.vapi
-	mkdir -p $(DESTDIR)/${PREFIX}/include/r2pipe
-	cp -f r2pipe.h $(DESTDIR)/${PREFIX}/include/r2pipe/r2pipe.h
-	mkdir -p $(DESTDIR)/${PREFIX}/lib
-	cp -f libr2pipe.a $(DESTDIR)/${PREFIX}/lib/libr2pipe.a
+PKGS = --pkg gio-2.0 --pkg gio-unix-2.0 --pkg json-glib-1.0 --pkg posix
+VALAFLAGS = -g -X -O3 $(PKGS)
+LIBRARY = r2pipe
+STATIC_LIB = libr2pipe.a
+PKGCONFIG = r2pipe.pc
+TEST_BIN = test-vala
+
+all: main $(STATIC_LIB) $(PKGCONFIG)
+
+main: main.vala r2pipe.vala
+	$(VALAC) $(VALAFLAGS) -o $@ main.vala r2pipe.vala
+
+$(STATIC_LIB): r2pipe.vala
+	$(VALAC) $(VALAFLAGS) --library=$(LIBRARY) --header=r2pipe.h --vapi=r2pipe.vapi -X -fPIC -c r2pipe.vala
+	rm -f $(STATIC_LIB)
+	$(AR) rcs $(STATIC_LIB) r2pipe.vala.o
+
+$(PKGCONFIG): r2pipe.pc.acr
+	sed \
+		-e 's|@PREFIX@|$(PREFIX)|g' \
+		-e 's|@LIBDIR@|$(LIBDIR)|g' \
+		-e 's|@VERSION@|$(VERSION)|g' \
+		$< > $@
+
+$(TEST_BIN): tests.vala r2pipe.vala
+	$(VALAC) $(VALAFLAGS) -o $@ tests.vala r2pipe.vala
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+install: $(STATIC_LIB) $(PKGCONFIG)
+	mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
+	cp -f $(PKGCONFIG) $(DESTDIR)$(PREFIX)/lib/pkgconfig/$(PKGCONFIG)
+	mkdir -p $(DESTDIR)$(PREFIX)/share/vala/vapi
+	cp -f r2pipe.vapi $(DESTDIR)$(PREFIX)/share/vala/vapi/r2pipe.vapi
+	mkdir -p $(DESTDIR)$(PREFIX)/include/r2pipe
+	cp -f r2pipe.h $(DESTDIR)$(PREFIX)/include/r2pipe/r2pipe.h
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	cp -f $(STATIC_LIB) $(DESTDIR)$(LIBDIR)/$(STATIC_LIB)
 
 uninstall:
-	rm -f $(DESTDIR)/${PREFIX}/lib/pkgconfig/r2pipe.pc
-	rm -f $(DESTDIR)/${PREFIX}/share/vala/vapi/r2pipe.vapi
-	rm -rf $(DESTDIR)/${PREFIX}/include/r2pipe
-	rm -f $(DESTDIR)/${PREFIX}/lib/libr2pipe.a
+	rm -f $(DESTDIR)$(PREFIX)/lib/pkgconfig/$(PKGCONFIG)
+	rm -f $(DESTDIR)$(PREFIX)/share/vala/vapi/r2pipe.vapi
+	rm -rf $(DESTDIR)$(PREFIX)/include/r2pipe
+	rm -f $(DESTDIR)$(LIBDIR)/$(STATIC_LIB)
+
+clean:
+	rm -f main
+	rm -f $(TEST_BIN)
+	rm -f $(STATIC_LIB)
+	rm -f $(PKGCONFIG)
+	rm -f r2pipe.h
+	rm -f r2pipe.vapi
+	rm -f r2pipe.c
+	rm -f r2pipe.vala.c
+	rm -f r2pipe.vala.o
+	rm -f tests.c
+	rm -rf main.dSYM
+	rm -rf test-vala.dSYM
+
+.PHONY: all test install uninstall clean

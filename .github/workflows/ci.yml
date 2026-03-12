@@ -90,6 +90,25 @@ jobs:
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.rb
       run: make -C ruby test
+  build-vala:
+    name: r2pipe-vala
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install vala toolchain
+      run: sudo apt-get --assume-yes install valac libglib2.0-dev libjson-glib-dev
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_core.so /usr/lib/libr_util.so
+    - name: Building r2pipe.vala
+      run: make -C vala
+    - name: Testing r2pipe.vala
+      run: make -C vala test
   build-swift:
     name: r2pipe-swift
     runs-on: macos-15
