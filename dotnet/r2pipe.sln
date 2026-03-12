@@ -1,14 +1,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "r2pipe", "r2pipe\r2pipe.csproj", "{D5B3F257-E13E-42B5-A77E-AA0F809311FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R2Pipe", "r2pipe\r2pipe.csproj", "{AE49335E-59BE-4C6B-B497-A13E68D67F6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpExample", "HttpExample\HttpExample.csproj", "{46CDE875-0070-4E62-B38D-267375321570}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalExample", "LocalExample\LocalExample.csproj", "{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "r2pipe-portable", "r2pipe-portable\r2pipe-portable.csproj", "{73640705-0261-4565-9170-8D413E881B41}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "R2Pipe.Tests", "tests\R2Pipe.Tests\R2Pipe.Tests.csproj", "{13A52833-6375-4120-8C4C-B567A203770A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,22 +12,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5B3F257-E13E-42B5-A77E-AA0F809311FD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{46CDE875-0070-4E62-B38D-267375321570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{46CDE875-0070-4E62-B38D-267375321570}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{46CDE875-0070-4E62-B38D-267375321570}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{46CDE875-0070-4E62-B38D-267375321570}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AAD0715E-0E37-4904-B54C-61DBC24BCD3A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73640705-0261-4565-9170-8D413E881B41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73640705-0261-4565-9170-8D413E881B41}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73640705-0261-4565-9170-8D413E881B41}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73640705-0261-4565-9170-8D413E881B41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE49335E-59BE-4C6B-B497-A13E68D67F6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE49335E-59BE-4C6B-B497-A13E68D67F6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE49335E-59BE-4C6B-B497-A13E68D67F6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE49335E-59BE-4C6B-B497-A13E68D67F6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13A52833-6375-4120-8C4C-B567A203770A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A52833-6375-4120-8C4C-B567A203770A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A52833-6375-4120-8C4C-B567A203770A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A52833-6375-4120-8C4C-B567A203770A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,30 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Nodes;
 
-namespace r2pipe
+namespace R2Pipe;
+
+public interface IR2Pipe : IDisposable, IAsyncDisposable
 {
-    public interface IR2Pipe : IDisposable
-    {
+    string Cmd(string command);
 
-        /// <summary>
-        /// Executes given RunCommand in radare2
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>Returns a string </returns>
-        string RunCommand(string command);
+    Task<string> CmdAsync(string command, CancellationToken cancellationToken = default);
 
-#if !OLDNETFX
-        /// <summary>
-        /// Executes given RunCommand in radare2 asynchronously
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>
-        /// Returns a string
-        /// </returns>
-        Task<string> RunCommandAsync(string command);
-#endif
-    }
+    JsonNode? CmdJson(string command);
+
+    Task<JsonNode?> CmdJsonAsync(string command, CancellationToken cancellationToken = default);
+
+    T? CmdJson<T>(string command);
+
+    Task<T?> CmdJsonAsync<T>(string command, CancellationToken cancellationToken = default);
+
+    Task QuitAsync(CancellationToken cancellationToken = default);
 }

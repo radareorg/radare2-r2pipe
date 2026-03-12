@@ -47,6 +47,7 @@ The most popular implementations of r2pipe are:
 * NodeJS / TypeScript
 * Python
 * Swift
+* .NET / C# (`dotnet/README.md`)
 * C/Nim/Vala/C++
 
 But there is r2pipe for:
@@ -55,7 +56,7 @@ But there is r2pipe for:
 	AWK         X     -     -    -    -   -    -    -   -   -
 	C           X     X     -    X    X   X    X    X   X   X
 	C++/Qt      X     X     -    -    -   -    X    -   X   -
-	C# / F#     X     X     X    X    -   -    -    -   X   -
+	C# / F#     X     X     X    X    -   -    X    -   X   -
 	Crystal     -     -     -    -    -   -    X    -   X   -
 	D           X     -     -    -    -   -    X    -   -   -
 	Erlang      X     X     -    -    -   -    -    -   -   -
