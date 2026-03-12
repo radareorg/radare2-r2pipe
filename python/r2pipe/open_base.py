@@ -96,6 +96,33 @@ def get_radare_path():
             raise IOError("radare2 can't be found in your system")
 
 
+def _coerce_path_value(value):
+    if isinstance(value, (str, bytes, os.PathLike)):
+        return os.fsdecode(value)
+    return value
+
+
+def normalize_open_target(filename):
+    file_args = []
+
+    if isinstance(filename, (list, tuple)):
+        if len(filename) > 1:
+            file_args = [_coerce_path_value(arg) for arg in filename[1:]]
+        filename = _coerce_path_value(filename[0] if filename else "")
+        return filename, file_args
+
+    original_filename = filename
+    filename = _coerce_path_value(filename)
+
+    if isinstance(original_filename, str) and " " in filename \
+            and not filename.startswith(("http://", "tcp://", "ccall://", "#!pipe")):
+        parts = filename.split(" ")
+        filename = parts[0]
+        file_args = parts[1:]
+
+    return filename, file_args
+
+
 class OpenBase(object):
     """Class representing an r2pipe connection with a running radare2 instance
         Class body derived from __init__.py "open" class.
@@ -117,6 +144,7 @@ class OpenBase(object):
                 Returns:
                     Returns an object with methods to interact with r2 via commands
                 """
+        filename = _coerce_path_value(filename)
         if flags is None:
             flags = []
         self.use_cache = False

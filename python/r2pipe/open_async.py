@@ -15,7 +15,7 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator, suppress
 from urllib.parse import quote, urlparse
 
-from r2pipe.open_base import OpenBase, get_radare_path
+from r2pipe.open_base import OpenBase, get_radare_path, normalize_open_target
 
 
 class open(OpenBase, ContextDecorator):
@@ -104,17 +104,8 @@ class open(OpenBase, ContextDecorator):
             self._loop.close()
 
     def __init__(self, filename="", flags=None, radare2home=None):
-        # Handle filename as list: r2pipe.open(["/bin/ls", "arg1", "arg2"])
         file_args = []
-        if isinstance(filename, (list, tuple)):
-            if len(filename) > 1:
-                file_args = list(filename[1:])
-            filename = filename[0] if filename else ""
-        elif isinstance(filename, str) and ' ' in filename \
-                and not filename.startswith(("http://", "tcp://", "ccall://", "#!pipe")):
-            parts = filename.split(' ')
-            filename = parts[0]
-            file_args = parts[1:]
+        filename, file_args = normalize_open_target(filename)
 
         super(open, self).__init__(filename, flags)
         if flags is None:
