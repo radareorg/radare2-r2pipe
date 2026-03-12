@@ -1,11 +1,13 @@
 import ctypes
 import os
+from pathlib import Path
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
 import r2pipe
 from r2pipe.native import *
+from r2pipe.open_async import open as async_open
 
 
 class TestR2PipeUnit(unittest.TestCase):
@@ -103,6 +105,42 @@ class TestFilenameArgsParsing(unittest.TestCase):
         self.assertLess(cmd.index("-Rarg1=myarg"), cmd.index("/bin/ls"))
 
     @patch("r2pipe.open_sync.Popen")
+    def test_pathlike_filename_is_accepted(self, mock_popen_cls):
+        mock_popen_cls.return_value = self._mock_popen()
+
+        filename = Path("/tmp/test-bin")
+        r2pipe.open(filename)
+
+        cmd = mock_popen_cls.call_args[0][0]
+        self.assertIn(os.fspath(filename), cmd)
+        r_flags = [part for part in cmd if part.startswith("-R")]
+        self.assertEqual(r_flags, [])
+
+    @patch("r2pipe.open_sync.Popen")
+    def test_pathlike_filename_with_spaces_is_not_split(self, mock_popen_cls):
+        mock_popen_cls.return_value = self._mock_popen()
+
+        filename = Path("/tmp/path with spaces/test-bin")
+        r2pipe.open(filename)
+
+        cmd = mock_popen_cls.call_args[0][0]
+        self.assertIn(os.fspath(filename), cmd)
+        r_flags = [part for part in cmd if part.startswith("-R")]
+        self.assertEqual(r_flags, [])
+
+    @patch("r2pipe.open_sync.Popen")
+    def test_pathlike_list_filename_and_args_are_coerced(self, mock_popen_cls):
+        mock_popen_cls.return_value = self._mock_popen()
+
+        filename = Path("/tmp/test-bin")
+        arg = Path("relative-arg")
+        r2pipe.open([filename, arg])
+
+        cmd = mock_popen_cls.call_args[0][0]
+        self.assertIn(os.fspath(filename), cmd)
+        self.assertIn(f"-Rarg1={os.fspath(arg)}", cmd)
+
+    @patch("r2pipe.open_sync.Popen")
     def test_http_url_not_split(self, mock_popen_cls):
         r2 = r2pipe.open("http://127.0.0.1:9999 extra")
 
@@ -120,3 +158,19 @@ class TestFilenameArgsParsing(unittest.TestCase):
         self.assertIs(r2.conn, mock_conn)
         mock_conn.connect.assert_called_once_with(("127.0.0.1", 9999))
         mock_popen_cls.assert_not_called()
+
+    def test_async_pathlike_filename_is_accepted(self):
+        filename = Path("/tmp/test-bin")
+        r2 = async_open(filename)
+
+        self.assertEqual(r2._process_start_cmd[-1], os.fspath(filename))
+        self.assertEqual([part for part in r2._process_start_cmd if part.startswith("-R")], [])
+        r2.close()
+
+    def test_async_pathlike_filename_with_spaces_is_not_split(self):
+        filename = Path("/tmp/path with spaces/test-bin")
+        r2 = async_open(filename)
+
+        self.assertEqual(r2._process_start_cmd[-1], os.fspath(filename))
+        self.assertEqual([part for part in r2._process_start_cmd if part.startswith("-R")], [])
+        r2.close()
