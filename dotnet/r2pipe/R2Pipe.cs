@@ -1,149 +1,62 @@
-namespace r2pipe
+namespace R2Pipe;
+
+public static class R2Pipe
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Net;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    //using r2pipe.OldApi;
-
-    public class R2Pipe : IR2Pipe, IDisposable
+    public static IR2Pipe Open(string? target = null, R2PipeOpenOptions? options = null)
     {
-        /// <summary>
-        /// Gets the radare2 path.
-        /// </summary>
-        /// <value>
-        /// The radare2 path.
-        /// </value>
-        public string Radare2Path { get; private set; }
-
-        [Obsolete("Please use RunCommandAsync() or the QueuedR2Pipe class")]
-        public bool doAsync { get; set; }
-
-        /// <summary>
-        /// The r2 process
-        /// </summary>
-        internal Process r2Process;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="R2Pipe"/> class.
-        /// </summary>
-        /// <param name="file">The file.</param>
-        public R2Pipe()
-		: this("-", "radare2") {
-	}
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="R2Pipe"/> class.
-        /// </summary>
-        /// <param name="file">The file.</param>
-        public R2Pipe(string file)
-            : this(file, "radare2")
-        { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="R2Pipe"/> class.
-        /// </summary>
-        /// <param name="file">The file.</param>
-        /// <param name="r2executable">The r2executable.</param>
-        public R2Pipe(string file, string r2executable)
-        {
-            if (file == null)
-                file = "-";
-
-            r2Process = new Process();
-            r2Process.StartInfo = new ProcessStartInfo()
-            {
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardInput = true,
-                UseShellExecute = false,
-                Arguments = "-q0 " + file,
-                FileName = r2executable
-            };
-
-            r2Process.Start();
-            r2Process.StandardInput.AutoFlush = true;
-            r2Process.StandardInput.NewLine = "\n";
-            // ignore first run
-            r2Process.StandardOutput.Read();
-            // Console.WriteLine(r2Process.StandardOutput.Read());
-        }
-
-        /// <summary>
-        /// Disposes this object. Exits r2 (if not already done) and disposes the process object too.
-        /// </summary>
-        public void Dispose()
-        {
-            if (!r2Process.HasExited)
-            {
-                this.RunCommand("q!");
-                r2Process.WaitForExit();
-            }
-            r2Process.Dispose();
-        }
-
-        /// <summary>
-        /// Executes given RunCommand in radare2
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>
-        /// Returns a string
-        /// </returns>
-        public string RunCommand(string command)
-        {
-            var sb = new StringBuilder();
-            r2Process.StandardInput.WriteLine(command);
-            r2Process.StandardInput.Flush();
-            
-            while (true)
-            {
-                int buffer = r2Process.StandardOutput.Read();
-
-                if (buffer == -1)
-                    break;
-
-                sb.Append((char)buffer);
-            }
-            return sb.ToString();
-        }
-
-#if !OLDNETFX
-        /// <summary>
-        /// Executes given RunCommand in radare2 asynchronously
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>
-        /// Returns a string
-        /// </returns>
-        public async Task<string> RunCommandAsync(string command)
-        {
-            StringBuilder builder = new StringBuilder();
-            await r2Process.StandardInput.WriteLineAsync(command);
-            await r2Process.StandardInput.FlushAsync();
-            while (true)
-            {
-                char[] buffer = new char[1024];
-
-                int length = await r2Process.StandardOutput.ReadAsync(buffer, 0, 1024);
-
-                for (int i = 0; i < length; i++)
-                {
-                    if (buffer[i] == 0x00)
-                        goto outer;
-
-                    builder.Append(buffer[i]);
-                }
-            }
-        outer:
-            return builder.ToString();
-        }
-#endif
+        return OpenAsync(target, options).GetAwaiter().GetResult();
     }
 
+    public static async Task<IR2Pipe> OpenAsync(
+        string? target = null,
+        R2PipeOpenOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            if (!LocalR2Pipe.IsAvailable)
+            {
+                throw new InvalidOperationException(
+                    "No target was provided and the local r2pipe environment is not available.");
+            }
 
+            return OpenLocal(options);
+        }
 
+        if (Uri.TryCreate(target, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            return OpenHttp(uri, options);
+        }
+
+        return await OpenSpawnAsync(target, options, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static Task<SpawnR2Pipe> OpenSpawnAsync(
+        string? target = null,
+        R2PipeOpenOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        return SpawnR2Pipe.OpenAsync(target ?? "-", options, cancellationToken);
+    }
+
+    public static HttpR2Pipe OpenHttp(string target, R2PipeOpenOptions? options = null)
+    {
+        return new HttpR2Pipe(target, options);
+    }
+
+    public static HttpR2Pipe OpenHttp(Uri target, R2PipeOpenOptions? options = null)
+    {
+        return new HttpR2Pipe(target, options);
+    }
+
+    public static LocalR2Pipe OpenLocal(R2PipeOpenOptions? options = null)
+    {
+        return new LocalR2Pipe(options);
+    }
+
+    public static InProcessR2Pipe OpenInProcess(string? target = null, R2PipeOpenOptions? options = null)
+    {
+        return new InProcessR2Pipe(target, options);
+    }
 }

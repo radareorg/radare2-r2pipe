@@ -109,3 +109,29 @@ jobs:
       run: make -C swift
     - name: Testing r2pipe.swift
       run: make -C swift test
+  build-dotnet:
+    name: r2pipe-dotnet
+    runs-on: ubuntu-24.04
+    env:
+      DOTNET_CLI_HOME: /tmp/dotnet-cli-home
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: 1
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_core.so /usr/lib/libr_util.so
+    - name: Restoring r2pipe dotnet
+      run: dotnet restore dotnet/tests/R2Pipe.Tests/R2Pipe.Tests.csproj
+    - name: Building r2pipe dotnet
+      run: dotnet build dotnet/tests/R2Pipe.Tests/R2Pipe.Tests.csproj --no-restore -p:UseSharedCompilation=false /nr:false
+    - name: Testing r2pipe dotnet
+      run: dotnet test dotnet/tests/R2Pipe.Tests/R2Pipe.Tests.csproj --no-build --no-restore -p:UseSharedCompilation=false /nr:false
