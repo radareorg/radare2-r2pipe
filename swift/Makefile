@@ -41,6 +41,8 @@ endif
 all:
 	$(SC) $(SFLAGS) main.swift $(SFILES)
 
+MODULE_CACHE?=$(CURDIR)/.build/ModuleCache.noindex
+
 repl: lib
 	@echo
 	@echo
@@ -67,4 +69,7 @@ clean:
 	rm -f main
 	rm -rf main.dSYM
 
-.PHONY: lib repl all clean
+test:
+	CLANG_MODULE_CACHE_PATH="$(MODULE_CACHE)" SWIFTPM_MODULECACHE_OVERRIDE="$(MODULE_CACHE)" swift test --disable-sandbox
+
+.PHONY: lib repl all clean test

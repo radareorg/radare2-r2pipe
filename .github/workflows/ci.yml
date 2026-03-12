@@ -71,3 +71,22 @@ jobs:
         cd typescript
         mkdir node_modules && npm i
         make
+  build-swift:
+    name: r2pipe-swift
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v6
+    - name: Installing radare2
+      run: |
+        git clone --branch "${{env.R2V}}" --depth=1 https://github.com/radareorg/radare2 r2
+        cd r2
+        sudo sys/install.sh /usr/local > /dev/null
+    - name: Testing r2
+      run: |
+        r2 -v
+        type r2
+        ls -l /usr/local/include/libr/r2naked.h /usr/local/lib/libr2.dylib /usr/local/lib/libr_core.dylib
+    - name: Building r2pipe.swift
+      run: make -C swift
+    - name: Testing r2pipe.swift
+      run: make -C swift test

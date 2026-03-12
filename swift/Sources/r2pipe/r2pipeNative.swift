@@ -1,15 +1,15 @@
 #if USE_SPAWN
     import Foundation
 
-    private struct Stack<T> {
+    private struct Queue<T> {
         var items = [T]()
-        mutating func push(item: T) {
+        mutating func enqueue(_ item: T) {
             items.append(item)
         }
 
-        mutating func pop() -> T? {
-            if items.count > 0 {
-                return items.removeLast()
+        mutating func dequeue() -> T? {
+            if !items.isEmpty {
+                return items.removeFirst()
             }
             return nil
         }
@@ -20,12 +20,22 @@
     class R2PipeNative {
         var taskNotLaunched = true
         var initState = true
-        private var stack = Stack<Closure>()
+        private var queue = Queue<Closure>()
         private let pipe = Pipe()
         private let pipeIn = Pipe()
         private let task = Process()
         private var bufferedString = ""
         private var inHandle: FileHandle?
+        private var observers = [NSObjectProtocol]()
+
+        private static func resolveRadare2Command() -> (String, [String]) {
+            let env = ProcessInfo.processInfo.environment
+            let command = env["R2PIPE_R2"] ?? "r2"
+            if command.contains("/") {
+                return (command, [])
+            }
+            return ("/usr/bin/env", [command])
+        }
 
         init?(file: String?) {
             var outHandle: FileHandle
@@ -55,17 +65,29 @@
                     return nil
                 #endif
             } else {
-                task.launchPath = "/usr/bin/radare2"
-                task.arguments = ["-q0", file!]
+                let (launchPath, launchArguments) = Self.resolveRadare2Command()
+                task.executableURL = URL(fileURLWithPath: launchPath)
+                task.arguments = launchArguments + [
+                    "-q0",
+                    "-e", "scr.color=0",
+                    "-e", "scr.interactive=false",
+                    "-e", "bin.relocs.apply=true",
+                    file!,
+                ]
                 task.standardOutput = pipe
                 task.standardInput = pipeIn
+                var environment = ProcessInfo.processInfo.environment
+                if environment["R2_NOPLUGINS"] == nil {
+                    environment["R2_NOPLUGINS"] = "1"
+                }
+                task.environment = environment
                 outHandle = pipe.fileHandleForReading
                 inHandle = pipeIn.fileHandleForWriting
             }
             outHandle.waitForDataInBackgroundAndNotify()
 
-            NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable,
-                                                   object: outHandle, queue: nil)
+            observers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable,
+                                                                    object: outHandle, queue: nil)
             {
                 _ in
                 var data = outHandle.availableData
@@ -136,35 +158,51 @@
                 } else {
                     // EOF happened
                 }
-            }
+            })
 
-            NotificationCenter.default.addObserver(forName: Process.didTerminateNotification,
-                                                   object: outHandle, queue: nil)
+            observers.append(NotificationCenter.default.addObserver(forName: Process.didTerminateNotification,
+                                                                    object: task, queue: nil)
             {
                 _ in
-                print("Terminated")
-                /* TODO: Terminate properly */
                 self.taskNotLaunched = true
+            })
+        }
+
+        deinit {
+            for observer in observers {
+                NotificationCenter.default.removeObserver(observer)
             }
         }
 
         private func runCallback(_ str: String) {
-            if let closure = stack.pop() {
+            if let closure = queue.dequeue() {
                 closure(str)
             }
         }
 
-        func sendCommand(_ str: String, closure: @escaping Closure) -> Bool {
-            let cmd = str + "\n"
-            if let data = cmd.data(using: .utf8) {
-                inHandle!.write(data)
-                stack.push(item: closure)
-            }
+        private func launchTaskIfNeeded() -> Bool {
             if taskNotLaunched {
-                task.launch()
-                taskNotLaunched = false
-                initState = true
+                do {
+                    try task.run()
+                    taskNotLaunched = false
+                    initState = true
+                } catch {
+                    return false
+                }
             }
+            return true
+        }
+
+        func sendCommand(_ str: String, closure: @escaping Closure) -> Bool {
+            guard launchTaskIfNeeded(), let inHandle else {
+                return false
+            }
+            let cmd = str + "\n"
+            guard let data = cmd.data(using: .utf8) else {
+                return false
+            }
+            queue.enqueue(closure)
+            inHandle.write(data)
             return true
         }
 

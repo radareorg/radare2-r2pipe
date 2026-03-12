@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
 #if USE_SWIFTY_JSON
     import SwiftyJSON
 #endif
@@ -74,12 +77,13 @@ public class R2Pipe {
             }
         } else {
             #if USE_SPAWN
-                print("RUNNING ANTIVE SPAWN")
                 mode = .Native
                 path = url!
                 r2p = R2PipeNative(file: url!)
+                if r2p == nil {
+                    return nil
+                }
             #else
-                print("NO SPAWN")
                 return nil
             #endif
         }
@@ -108,33 +112,41 @@ public class R2Pipe {
 
     func cmdHttp(_ str: String, closure: @escaping (String?) -> Void) -> Bool {
         let urlstr = path.ToR2WebURL(str)
-        let request = URLRequest(url: URL(string: urlstr)!)
-        URLSession.shared.dataTask(with: request, completionHandler: {
+        guard let url = URL(string: urlstr) else {
+            closure(nil)
+            return false
+        }
+        let request = URLRequest(url: url)
+        let task = URLSession.shared.dataTask(with: request, completionHandler: {
             (data: Data?, _: URLResponse?, _: Error?) in
-            let str = String(data: data!, encoding: String.Encoding.utf8)
+            guard let data else {
+                closure(nil)
+                return
+            }
+            let str = String(data: data, encoding: String.Encoding.utf8)
             closure(str as String?)
         })
+        task.resume()
         return true
     }
 
     func cmdHttpSync(_ str: String) -> String? {
-        #if USE_NSURL_SESSION
-            /* not yet supported */
-        #endif
         let urlstr = path.ToR2WebURL(str)
-        let url = URL(string: urlstr)
-        let request = URLRequest(url: url!)
-        var responseStr: String!
-        DispatchQueue.main.async {
-            let session = URLSession.shared
-            let task = session.dataTask(with: request) { data, _, _ in
-                if let rstr = String(data: data!, encoding: String.Encoding.utf8) {
-                    responseStr = rstr
-                    return
-                }
-            }
-            task.resume()
+        guard let url = URL(string: urlstr) else {
+            return nil
         }
+        let request = URLRequest(url: url)
+        let semaphore = DispatchSemaphore(value: 0)
+        var responseStr: String?
+        let task = URLSession.shared.dataTask(with: request) { data, _, _ in
+            defer { semaphore.signal() }
+            guard let data else {
+                return
+            }
+            responseStr = String(data: data, encoding: String.Encoding.utf8)
+        }
+        task.resume()
+        _ = semaphore.wait(timeout: .now() + 10)
         return responseStr
     }
 
@@ -193,11 +205,14 @@ public class R2Pipe {
             return nil
         }
 
-        public func cmdj(_ str: String, _ closure: (NSDictionary) -> Void) -> Bool {
+        public func cmdj(_ str: String, _ closure: @escaping (NSDictionary?) -> Void) -> Bool {
             cmd(str, closure: {
-                (_: String?) in
-                if let js = JSON(obj) {
-                    closure(js)
+                (s: String?) in
+                if let s {
+                    let js = JSON(parseJSON: s)
+                    closure(js.dictionaryObject as NSDictionary?)
+                } else {
+                    closure(nil)
                 }
             })
             return true
@@ -229,10 +244,8 @@ public class R2Pipe {
         public func cmdj(_ str: String, _ closure: @escaping (NSDictionary?) -> Void) -> Bool {
             _ = cmd(str, closure: {
                 (s: String?) in
-                if s != nil {
-                    if let obj = self.jsonParse(s!) {
-                        closure(obj)
-                    }
+                if let s, let obj = self.jsonParse(s) {
+                    closure(obj)
                 } else {
                     closure(nil)
                 }

@@ -11,7 +11,15 @@ let package = Package(
     targets: [
         .target(
             name: "R2Pipe",
-            path: "swift/Sources"
-        )
+            path: "swift/Sources/r2pipe",
+            swiftSettings: [
+                .define("USE_SPAWN"),
+            ]
+        ),
+        .testTarget(
+            name: "R2PipeTests",
+            dependencies: ["R2Pipe"],
+            path: "swift/Tests/R2PipeTests"
+        ),
     ]
 )
