@@ -70,7 +70,7 @@ But there is r2pipe for:
 	Perl        X     X     -    X    X   -    X    -   -   -
 	PHP         -     X     -    -    -   -    -    -   -   -
 	Python      X     X     X    X    X   X    X    X   X   -
-	Ruby        X     X     -    -    -   -    X    -   -   -
+	Ruby        X     X     -    X    X   -    X    -   -   -
 	Rust        X     X     -    X    X   -    X    -   -   -
 	Swift       X     X     X    X    -   -    X    -   X   -
 	PosixShell  X     X     -    X    -   -    X    -   -   -

@@ -71,6 +71,25 @@ jobs:
         cd typescript
         mkdir node_modules && npm i
         make
+  build-ruby:
+    name: r2pipe-rb
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+        sudo pip install frida-tools
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
+    - name: Testing r2pipe.rb
+      run: make -C ruby test
   build-swift:
     name: r2pipe-swift
     runs-on: macos-15
