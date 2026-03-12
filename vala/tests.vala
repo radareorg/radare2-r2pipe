@@ -214,7 +214,7 @@ private void test_pipe_transport (string executable_path) {
 	string[] argv = {
 		find_r2_binary (),
 		"-q0",
-		"-c", "#!pipe %s --pipe-probe".printf (Shell.quote (executable_path)),
+		"-c", "#!pipe %s --pipe-probe".printf (executable_path),
 		TEST_FILE,
 		null
 	};
@@ -241,7 +241,12 @@ private void test_pipe_transport (string executable_path) {
 	if (status != 0) {
 		fail_test ("env-pipe probe failed with status %d\n%s".printf (status, standard_error));
 	}
-	assert (standard_output.contains ("vala-pipe-ok"));
+	if (!standard_output.contains ("vala-pipe-ok")) {
+		fail_test ("env-pipe probe did not emit success marker\nstdout:%s\nstderr:%s".printf (
+			standard_output,
+			standard_error
+		));
+	}
 }
 
 private void test_env_pipe_transport () {
@@ -262,13 +267,20 @@ private int run_pipe_probe () {
 	}
 }
 
+private string resolve_executable_path (string arg0) {
+	if (GLib.Path.is_absolute (arg0)) {
+		return arg0;
+	}
+	return GLib.Path.build_filename (Environment.get_current_dir (), arg0);
+}
+
 int main (string[] args) {
 	if (args.length > 1 && args[1] == "--pipe-probe") {
 		return run_pipe_probe ();
 	}
 
 	Test.init (ref args);
-	pipe_probe_executable = args[0];
+	pipe_probe_executable = resolve_executable_path (args[0]);
 
 	Test.add_func ("/vala/spawn", test_spawn_transport);
 	Test.add_func ("/vala/json_failure", test_json_failure);

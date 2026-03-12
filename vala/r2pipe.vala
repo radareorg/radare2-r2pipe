@@ -61,7 +61,6 @@ private abstract class BufferedTransport : R2Transport {
 			} catch (Error e) {
 				throw new R2PipeError.IO ("failed to read response: %s".printf (e.message));
 			}
-
 			if (count <= 0) {
 				throw new R2PipeError.IO ("unexpected end of stream while reading response");
 			}
@@ -119,6 +118,7 @@ private class PipeTransport : BufferedTransport {
 private class SpawnTransport : BufferedTransport {
 	public Pid child_pid = 0;
 	private bool closed = false;
+	private int stderr_fd = -1;
 
 	public SpawnTransport (string target) throws R2PipeError {
 		base ();
@@ -148,20 +148,17 @@ private class SpawnTransport : BufferedTransport {
 		} catch (SpawnError e) {
 			throw new R2PipeError.SPAWN ("failed to spawn radare2: %s".printf (e.message));
 		}
-
 		set_streams (
 			new UnixInputStream (stdout_fd, true),
 			new UnixOutputStream (stdin_fd, true)
 		);
 		child_pid = spawned_pid;
-		if (stderr_fd >= 0) {
-			Posix.close (stderr_fd);
-		}
-
+		this.stderr_fd = stderr_fd;
 		try {
 			read_response ();
 		} catch (R2PipeError e) {
 			close_streams ();
+			close_stderr ();
 			reap_child ();
 			throw e;
 		}
@@ -177,6 +174,7 @@ private class SpawnTransport : BufferedTransport {
 		} catch (R2PipeError e) {
 		}
 		close_streams ();
+		close_stderr ();
 		reap_child ();
 	}
 
@@ -188,6 +186,13 @@ private class SpawnTransport : BufferedTransport {
 		Posix.waitpid ((int) child_pid, out status, 0);
 		Process.close_pid (child_pid);
 		child_pid = 0;
+	}
+
+	private void close_stderr () {
+		if (stderr_fd >= 0) {
+			Posix.close (stderr_fd);
+			stderr_fd = -1;
+		}
 	}
 }
 
@@ -230,11 +235,12 @@ private class HttpTransport : R2Transport {
 		}
 
 		try {
-			var escaped = Uri.escape_string (normalize_command (command), null, true);
-			var request = "GET %s%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n".printf (
+			var payload = normalize_command (command);
+			var request = "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s".printf (
 				path,
-				escaped,
-				host
+				host,
+				payload.length,
+				payload
 			);
 			uint8[] request_bytes = request.data;
 			size_t written = 0;
@@ -242,13 +248,25 @@ private class HttpTransport : R2Transport {
 			connection.output_stream.write_all (request_bytes[0:request.length], out written);
 			connection.output_stream.flush ();
 
-			var input = new DataInputStream (connection.input_stream);
-			size_t line_length = 0;
-			var status_line = input.read_line_utf8 (out line_length, null);
-			if (status_line == null || status_line == "") {
+			var raw_response = read_text_stream (connection.input_stream);
+			if (raw_response == "") {
 				throw new R2PipeError.HTTP ("empty HTTP response");
 			}
 
+			int header_end = raw_response.index_of ("\r\n\r\n");
+			int separator_length = 4;
+			if (header_end < 0) {
+				header_end = raw_response.index_of ("\n\n");
+				separator_length = 2;
+			}
+			if (header_end < 0) {
+				throw new R2PipeError.HTTP ("invalid HTTP response: missing header separator");
+			}
+
+			var header_text = raw_response.substring (0, header_end);
+			var body = raw_response.substring (header_end + separator_length);
+			var header_lines = header_text.split ("\n");
+			var status_line = header_lines[0].strip ();
 			var status_parts = status_line.split (" ");
 			if (status_parts.length < 2) {
 				throw new R2PipeError.HTTP ("invalid HTTP status line: %s".printf (status_line));
@@ -259,16 +277,11 @@ private class HttpTransport : R2Transport {
 				throw new R2PipeError.HTTP ("invalid HTTP status code: %s".printf (status_parts[1]));
 			}
 
-			string? line = null;
-			do {
-				line = input.read_line_utf8 (out line_length, null);
-			} while (line != null && line != "");
-
 			if (status_code < 200 || status_code >= 300) {
 				throw new R2PipeError.HTTP ("HTTP request failed with status %d".printf (status_code));
 			}
 
-			return read_text_stream (input);
+			return body;
 		} catch (R2PipeError e) {
 			throw e;
 		} catch (Error e) {
