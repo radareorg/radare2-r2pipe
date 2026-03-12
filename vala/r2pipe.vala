@@ -25,7 +25,10 @@ private abstract class BufferedTransport : R2Transport {
 	protected InputStream input;
 	protected OutputStream output;
 
-	protected BufferedTransport (InputStream input, OutputStream output) {
+	protected BufferedTransport () {
+	}
+
+	protected void set_streams (InputStream input, OutputStream output) {
 		this.input = input;
 		this.output = output;
 	}
@@ -86,7 +89,8 @@ private abstract class BufferedTransport : R2Transport {
 
 private class PipeTransport : BufferedTransport {
 	public PipeTransport () throws R2PipeError {
-		base (
+		base ();
+		set_streams (
 			new UnixInputStream (parse_fd ("R2PIPE_IN"), false),
 			new UnixOutputStream (parse_fd ("R2PIPE_OUT"), false)
 		);
@@ -117,6 +121,8 @@ private class SpawnTransport : BufferedTransport {
 	private bool closed = false;
 
 	public SpawnTransport (string target) throws R2PipeError {
+		base ();
+		Pid spawned_pid = 0;
 		int stdin_fd = -1;
 		int stdout_fd = -1;
 		int stderr_fd = -1;
@@ -134,7 +140,7 @@ private class SpawnTransport : BufferedTransport {
 				Environ.get (),
 				SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD,
 				null,
-				out child_pid,
+				out spawned_pid,
 				out stdin_fd,
 				out stdout_fd,
 				out stderr_fd
@@ -143,10 +149,14 @@ private class SpawnTransport : BufferedTransport {
 			throw new R2PipeError.SPAWN ("failed to spawn radare2: %s".printf (e.message));
 		}
 
-		base (
+		set_streams (
 			new UnixInputStream (stdout_fd, true),
 			new UnixOutputStream (stdin_fd, true)
 		);
+		child_pid = spawned_pid;
+		if (stderr_fd >= 0) {
+			Posix.close (stderr_fd);
+		}
 
 		try {
 			read_response ();

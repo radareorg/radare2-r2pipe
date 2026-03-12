@@ -8,10 +8,12 @@ AR ?= ar
 
 PKGS = --pkg gio-2.0 --pkg gio-unix-2.0 --pkg json-glib-1.0 --pkg posix
 VALAFLAGS = -g -X -O3 $(PKGS)
+ASANFLAGS = -g -X -O0 -X -fsanitize=address -X -fno-omit-frame-pointer $(PKGS)
 LIBRARY = r2pipe
 STATIC_LIB = libr2pipe.a
 PKGCONFIG = r2pipe.pc
 TEST_BIN = test-vala
+ASAN_BIN = test-vala-asan
 
 all: main $(STATIC_LIB) $(PKGCONFIG)
 
@@ -33,8 +35,13 @@ $(PKGCONFIG): r2pipe.pc.acr
 $(TEST_BIN): tests.vala r2pipe.vala
 	$(VALAC) $(VALAFLAGS) -o $@ tests.vala r2pipe.vala
 
+$(ASAN_BIN): tests.vala r2pipe.vala
+	$(VALAC) $(ASANFLAGS) -o $@ tests.vala r2pipe.vala
+
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+asan: $(ASAN_BIN)
 
 install: $(STATIC_LIB) $(PKGCONFIG)
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
@@ -55,6 +62,7 @@ uninstall:
 clean:
 	rm -f main
 	rm -f $(TEST_BIN)
+	rm -f $(ASAN_BIN)
 	rm -f $(STATIC_LIB)
 	rm -f $(PKGCONFIG)
 	rm -f r2pipe.h
@@ -65,5 +73,6 @@ clean:
 	rm -f tests.c
 	rm -rf main.dSYM
 	rm -rf test-vala.dSYM
+	rm -rf test-vala-asan.dSYM
 
-.PHONY: all test install uninstall clean
+.PHONY: all test asan install uninstall clean
