@@ -109,8 +109,8 @@ jobs:
       run: make -C swift
     - name: Testing r2pipe.swift
       run: make -C swift test
-  build-dotnet:
-    name: r2pipe-dotnet
+  build-cs:
+    name: r2pipe-cs
     runs-on: ubuntu-24.04
     env:
       DOTNET_CLI_HOME: /tmp/dotnet-cli-home
