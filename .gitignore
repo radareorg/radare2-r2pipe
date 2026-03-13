@@ -1,1 +1,106 @@
 __pycache__
+Makefile
+.DS_Store
+*.dSYM/
+
+# Shared build caches
+.build/
+node_modules/
+*.swp
+
+# Crystal
+crystal/core
+crystal/core.dwarf
+
+# Dart
+dart/.dart_tool/
+dart/_r2pipe.r2.js
+dart/_r2pipe.r2.js.deps
+dart/_r2pipe.r2.js.map
+dart/json.dart
+dart/pubspec.lock
+dart/r2pipe.r2.js
+dart/r2pipe.r2.js.deps
+dart/r2pipe.r2.js.map
+
+# Java
+java/**/*.class
+java/jni/*.dylib
+java/jni/org/
+java/jni/org_radare_r2pipe_R2PipeJNI.h
+java/pom.xml.releaseBackup
+java/r2pipe-*.jar
+java/r2pipe.jar
+java/release.properties
+java/target/
+
+# Nim
+nim/js/
+
+# Perl
+perl/MYMETA.json
+perl/MYMETA.yml
+perl/Makefile.perl
+perl/blib/
+perl/pm_to_blib
+
+# Python
+python/build/
+python/dist/
+python/r2pipe.egg-info/
+
+# Ruby
+ruby/tmp-r2-http-*.log
+
+# Swift
+swift/.swiftpm/
+swift/main
+swift/r2plugin/*.dylib
+swift/r2plugin/*.o
+swift/r2plugin/main
+
+# Node.js
+nodejs/r2pipe/package-lock.json
+nodejs/r2pipe/r2.js
+nodejs/r2pipe-promise/package-lock.json
+
+# TypeScript
+typescript/.vscode/
+typescript/dist/
+typescript/r2pipe/*.d.ts
+typescript/r2pipe/*.js
+typescript/test-http.js
+typescript/test-local.js
+typescript/test-spawn.js
+
+# V
+v-r2/
+v/.tmp.v
+v/a
+v/a.c
+v/test
+v/test.c
+v/test.o
+
+# Vala
+vala/http-probe
+vala/libr2pipe.a
+vala/main
+vala/r2pipe.c
+vala/r2pipe.h
+vala/r2pipe.pc
+vala/r2pipe.vala.c
+vala/r2pipe.vala.o
+vala/r2pipe.vapi
+vala/test-vala
+vala/test-vala-asan
+vala/tests.c
+
+# Zig
+zig/main
+zig/main.o
+zig/src/zig-cache/
+zig/test
+zig/wip/apicall
+zig/wip/apicall.o
+zig/zig-cache/
