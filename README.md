@@ -74,6 +74,7 @@ But there is r2pipe for:
 	Ruby        X     X     -    X    X   -    X    -   -   -
 	Rust        X     X     -    X    X   -    X    -   -   -
 	Swift       X     X     X    X    -   -    X    -   X   -
+	Tcl         X     X     -    -    -   -    -    -   -   -
 	PosixShell  X     X     -    X    -   -    X    -   -   -
 	Vala        X     X     X    -    -   -    -    -   -   -
 	V           X     X     -    -    -   -    -    X   -   -

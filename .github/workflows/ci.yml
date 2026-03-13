@@ -7,7 +7,7 @@ on: push
 
 jobs:
   build-perl:
-    name: r2pipe-pl
+    name: r2pipe-perl
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
@@ -27,7 +27,7 @@ jobs:
     - name: Testing r2pipe.pl
       run: cd perl && make && make test
   build-python:
-    name: r2pipe-py
+    name: r2pipe-python
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
@@ -48,8 +48,8 @@ jobs:
       run: make -C python test
     - name: Linting r2pipe.py
       run: make -C python lint
-  build-ts:
-    name: r2pipe-ts
+  build-typescript:
+    name: r2pipe-typescript
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
@@ -72,7 +72,7 @@ jobs:
         mkdir node_modules && npm i
         make
   build-ruby:
-    name: r2pipe-rb
+    name: r2pipe-ruby
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
@@ -90,6 +90,25 @@ jobs:
       run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
     - name: Testing r2pipe.rb
       run: make -C ruby test
+  build-tcl:
+    name: r2pipe-tcl
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install Tcl toolchain
+      run: sudo apt-get --assume-yes install tcl tcllib
+    - name: Installing radare2
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2_${{env.R2V}}_amd64.deb
+        sudo dpkg -i radare2-dev_${{env.R2V}}_amd64.deb
+    - name: Testing r2
+      run: r2 -v; type r2 ; ls -l /usr/lib/libr_*.so
+    - name: Building r2pipe.tcl
+      run: make -C tcl build
+    - name: Testing r2pipe.tcl
+      run: make -C tcl test
   build-vala:
     name: r2pipe-vala
     runs-on: ubuntu-24.04
@@ -128,8 +147,8 @@ jobs:
       run: make -C swift
     - name: Testing r2pipe.swift
       run: make -C swift test
-  build-cs:
-    name: r2pipe-cs
+  build-dotnet:
+    name: r2pipe-dotnet
     runs-on: ubuntu-24.04
     env:
       DOTNET_CLI_HOME: /tmp/dotnet-cli-home
