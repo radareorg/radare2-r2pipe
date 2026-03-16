@@ -24,9 +24,17 @@ proc test_pipe {} {
     $r2 close
 }
 
-set mode [expr {$argc > 0 ? [lindex $argv 0] : "spawn"}]
+if {[info exists ::env(R2PIPE_IN)] && [info exists ::env(R2PIPE_OUT)]} {
+    set mode pipe
+} elseif {[info exists argc] && $argc > 0} {
+    set mode [lindex $argv 0]
+} else {
+    set mode spawn
+}
+
 if {$mode eq "pipe"} {
     test_pipe
 } else {
     test_spawn
 }
+puts [string cat "mode: " $mode "  OK"]

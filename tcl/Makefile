@@ -12,6 +12,7 @@ test-spawn:
 	$(TCLSH) test.tcl spawn
 
 test-pipe:
+	$(R2) -qi test.tcl /bin/ls
 	$(R2) -q0 -c '#!pipe $(TCLSH) test.tcl pipe' /bin/ls
 
 clean:
