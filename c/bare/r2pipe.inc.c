@@ -1,5 +1,7 @@
 /* r2pipe.inc.c - zero-dependency single-file r2pipe for C (unix+windows)
  *
+ * source https://github.com/radareorg/radare2-r2pipe under `/c/bare/r2pipe.inc.c`
+ *
  * Include directly into one of your .c files:
  *
  *     #define R2P_ENABLE_DLOPEN 1
@@ -430,16 +432,32 @@ static R2Pipe *r2p__open_spawn(const char *file, const char *flags) {
 		close(out_pipe[1]);
 		int nf = 0;
 		char **fa = r2p__split(flags, &nf);
+		/* r2 cli is order-sensitive: when "-0" appears BEFORE the quit
+		 * flag, NUL framing comes out broken (zero bytes on stdout). To
+		 * stay safe regardless of what the caller passed, we always put
+		 * "-q0" first — and skip it if the caller already gave -0 / -q0
+		 * to avoid double quit. */
+		int has_zero = 0;
+		for (int i = 0; i < nf; i++) {
+			if (!strcmp(fa[i], "-0") || !strcmp(fa[i], "-q0")) {
+				has_zero = 1;
+				break;
+			}
+		}
 		int ac = 0;
 		char **av = (char **)calloc((size_t)(nf + 4), sizeof(char *));
 		if (!av) {
 			_exit(127);
 		}
 		av[ac++] = (char *)"radare2";
+		av[ac++] = (char *)"-q0";
 		for (int i = 0; i < nf; i++) {
+			/* drop a redundant -q0 from the caller; -0 is fine after -q0 */
+			if (has_zero && !strcmp(fa[i], "-q0")) {
+				continue;
+			}
 			av[ac++] = fa[i];
 		}
-		av[ac++] = (char *)"-q0";
 		if (file && *file) {
 			av[ac++] = (char *)file;
 		}
@@ -460,8 +478,21 @@ static R2Pipe *r2p__open_spawn(const char *file, const char *flags) {
 	r->pid = (int)pid;
 	r->in_fd = in_pipe[0];
 	r->out_fd = out_pipe[1];
+	/* Wait for the r2pipe banner (NUL terminator). If the child died
+	 * before sending it (typically execvp failing because radare2 is not
+	 * in PATH), the read returns 0 and we treat this as open failure. */
 	char c;
-	while (read(r->in_fd, &c, 1) == 1 && c != '\0') {}
+	int got_banner = 0;
+	while (read(r->in_fd, &c, 1) == 1) {
+		if (c == '\0') { got_banner = 1; break; }
+	}
+	if (!got_banner) {
+		close(r->in_fd);
+		close(r->out_fd);
+		waitpid((pid_t)r->pid, NULL, 0);
+		free(r);
+		return NULL;
+	}
 	return r;
 }
 
