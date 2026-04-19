@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": "r2pipe",
+    "ignoreDeprecations": "6.0",
     "moduleResolution": "nodenext",
     "target": "esnext",
     "esModuleInterop": true,
