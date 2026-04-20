@@ -13,11 +13,11 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@types/node": "^20.19.37",
+    "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "eslint": "^8.57.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "files": [
     "README.md",

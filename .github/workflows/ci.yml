@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '24'
     - name: Installing radare2
       run: |
         wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
@@ -67,9 +70,9 @@ jobs:
     - name: Testing r2pipe.ts
       run: |
         node --version
-        tsc --version
         cd typescript
-        mkdir node_modules && npm i
+        npm i
+        ./node_modules/.bin/tsc --version
         make
   build-ruby:
     name: r2pipe-ruby

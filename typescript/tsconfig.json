@@ -1,24 +1,19 @@
 {
   "compilerOptions": {
-    "baseUrl": "r2pipe",
-    "ignoreDeprecations": "6.0",
     "moduleResolution": "nodenext",
     "target": "esnext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "module": "nodenext",
     "lib": ["esnext"],
+    "types": ["node"],
     "declaration": true,
     "strict": false,
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./r2pipe"
   },
-  "paths": {
-      "*": ["node_modules/*", "src/types/*"]
-    },
   "include": [
-    "r2pipe/index.ts",
-    "test.ts"
+    "r2pipe/**/*.ts"
   ]
 }

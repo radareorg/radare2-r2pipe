@@ -1,10 +1,10 @@
+TSC=./node_modules/.bin/tsc
+
 all:
-	tsc
-	tsc -d r2pipe/index.ts
-#	tsc
-	tsc test-spawn.ts
+	$(TSC)
+	$(TSC) --ignoreConfig test-spawn.ts
 	node test-spawn.js
-	tsc test-local.ts
+	$(TSC) --ignoreConfig test-local.ts
 	r2 -q -i test-local.js /bin/ls
 
 vs vsc:
