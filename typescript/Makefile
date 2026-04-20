@@ -2,9 +2,8 @@ TSC=./node_modules/.bin/tsc
 
 all:
 	$(TSC)
-	$(TSC) --ignoreConfig test-spawn.ts
+	$(TSC) -p tsconfig.tests.json
 	node test-spawn.js
-	$(TSC) --ignoreConfig test-local.ts
 	r2 -q -i test-local.js /bin/ls
 
 vs vsc:
