@@ -10,7 +10,7 @@ jobs:
     name: r2pipe-perl
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install python
       run: sudo apt-get --assume-yes install python3-wheel python3-setuptools
     - name: Installing radare2
@@ -30,7 +30,7 @@ jobs:
     name: r2pipe-python
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install python
       run: sudo apt-get update && sudo apt-get --assume-yes install python3-wheel python3-setuptools
     - name: Installing radare2
@@ -52,7 +52,7 @@ jobs:
     name: r2pipe-typescript
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-node@v6
       with:
         node-version: '24'
@@ -78,7 +78,7 @@ jobs:
     name: r2pipe-ruby
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.3'
@@ -97,7 +97,7 @@ jobs:
     name: r2pipe-tcl
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install Tcl toolchain
       run: sudo apt-get update && sudo apt-get --assume-yes install tcl tcllib
     - name: Installing radare2
@@ -116,7 +116,7 @@ jobs:
     name: r2pipe-vala
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install vala toolchain
       run: sudo apt update && sudo apt-get --assume-yes install valac libglib2.0-dev libjson-glib-dev
     - name: Installing radare2
@@ -135,7 +135,7 @@ jobs:
     name: r2pipe-swift
     runs-on: macos-15
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Installing radare2
       run: |
         git clone --branch "${{env.R2V}}" --depth=1 https://github.com/radareorg/radare2 r2
@@ -158,7 +158,7 @@ jobs:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
       DOTNET_NOLOGO: 1
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
