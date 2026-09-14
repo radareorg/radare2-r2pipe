@@ -34,6 +34,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <limits.h>
+#include <stdint.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 #  define R2P_WINDOWS 1
@@ -116,12 +118,16 @@ static char **r2p__split(const char *s, int *n_out) {
 		}
 		size_t len = (size_t)(p - start);
 		if (n + 2 > cap) {
-			cap *= 2;
-			char **nb = (char **)realloc(argv, (size_t)cap * sizeof(char *));
+			if (cap > (INT_MAX / 2) || (size_t)cap > (SIZE_MAX / (2 * sizeof(char *)))) {
+				break;
+			}
+			int newcap = cap * 2;
+			char **nb = (char **)realloc(argv, (size_t)newcap * sizeof(char *));
 			if (!nb) {
 				break;
 			}
 			argv = nb;
+			cap = newcap;
 		}
 		argv[n] = (char *)malloc(len + 1);
 		if (!argv[n]) {
