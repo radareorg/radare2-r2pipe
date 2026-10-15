@@ -285,7 +285,7 @@ class open(OpenBase, ContextDecorator):
             started[0] = True
             self._used = True
             result = await self._cmd_coro(cmd, future, None)
-            if callback and future.done():
+            if callback is not None and future.done():
                 try:
                     callback(future.result()[1])
                 except Exception as error:
@@ -360,24 +360,17 @@ class open(OpenBase, ContextDecorator):
             return super(open, self).cmdJ(cmd, **kwargs)
         return self._dispatch(self._object_command, cmd, kwargs)
 
-    def call(self, cmd, **kwargs):
-        return self.cmd("'" + cmd, **kwargs)
-
-    def _r2pipe2(self, request, kwargs):
+    def _r2pipe2(self, cmd, kwargs):
+        request, transport_kwargs = self._r2pipe2_request(cmd, kwargs)
         cmd = "'" + json.dumps(request)
         return self._dispatch(
-            self._json_command, cmd, kwargs, lambda value: SimpleNamespace(**value)
+            self._json_command, cmd, transport_kwargs, lambda value: SimpleNamespace(**value)
         )
 
     def cmd2(self, cmd, **kwargs):
         if not self.asyn:
             return super(open, self).cmd2(cmd, **kwargs)
-        return self._r2pipe2({"cmd": cmd}, kwargs)
-
-    def cmd2j(self, cmd, **kwargs):
-        if not self.asyn:
-            return super(open, self).cmd2j(cmd, **kwargs)
-        return self._r2pipe2({"cmd": cmd, "trim": True, "json": True}, kwargs)
+        return self._r2pipe2(cmd, kwargs)
 
     async def _cmd_native_async(self, cmd, future, callback):
         if self._native_executor is None:

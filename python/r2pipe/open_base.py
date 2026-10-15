@@ -278,19 +278,38 @@ class OpenBase(object):
                 asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
     # r2pipe2
+    @staticmethod
+    def _r2pipe2_request(cmd, kwargs):
+        options = kwargs.copy()
+        callback = options.pop("callback", None)
+        for name, value in options.items():
+            if name not in ("trim", "json"):
+                raise TypeError(f"Unexpected r2pipe2 option: {name}")
+            if not isinstance(value, bool):
+                raise TypeError(f"r2pipe2 option {name} must be a bool")
+        if callback is not None and not callable(callback):
+            raise TypeError("callback must be callable or None")
+        request = {"cmd": cmd}
+        request.update(options)
+        return request, {"callback": callback} if callback is not None else {}
+
     def cmd2(self, cmd, **kwargs):
-        s = { "cmd": cmd }
-        r = self.call(json.dumps(s))
+        """Run a JSON request with optional boolean trim/json flags and callback."""
+        request, transport_kwargs = self._r2pipe2_request(cmd, kwargs)
+        r = self.call(json.dumps(request), **transport_kwargs)
         return json.loads(r, object_hook=lambda d: SimpleNamespace(**d))
 
     def cmd2j(self, cmd, **kwargs):
-        s = { "cmd": cmd, "trim": True, "json": True }
-        r = self.call(json.dumps(s))
-        return json.loads(r, object_hook=lambda d: SimpleNamespace(**d))
+        """Run cmd2() with trim/json enabled by default; explicit flags override."""
+        kwargs.setdefault("trim", True)
+        kwargs.setdefault("json", True)
+        return self.cmd2(cmd, **kwargs)
 
     # r2 commands
-    def call(self, cmd, **kwargs):
-        return self.cmd("'" + cmd)
+    def call(self, cmd, *, callback=None):
+        if callback is None:
+            return self.cmd("'" + cmd)
+        return self.cmd("'" + cmd, callback=callback)
 
     def cmd(self, cmd, **kwargs):
         """Run an r2 command return string with result
@@ -305,9 +324,14 @@ class OpenBase(object):
                 return None
                 """
 
+        callback = kwargs.get("callback")
+        if callback is not None and not callable(callback):
+            raise TypeError("callback must be callable or None")
+        if not self.asyn:
+            kwargs.pop("callback", None)
         res = self._cmd(cmd, **kwargs)
-        if res is None:
-            return None
+        if not self.asyn and callback is not None:
+            callback(res)
         return res
 
     def cmdj(self, cmd, **kwargs):

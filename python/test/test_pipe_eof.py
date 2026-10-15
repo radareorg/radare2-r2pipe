@@ -9,6 +9,7 @@ from r2pipe.open_base import OpenBase
 class TestPipeEOF(unittest.TestCase):
     def setUp(self):
         self.r2 = OpenBase.__new__(OpenBase)
+        self.r2.asyn = False
         self.r2.pipe = [123, 124]
         self.r2.use_cache = True
         self.r2.cache = {}
