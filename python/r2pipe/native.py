@@ -138,21 +138,29 @@ def register(cname, args, ret):
 class RCore(Structure):
     def __init__(self):
         Structure.__init__(self)
+        self._o = None
         r2 = r2lib()
         if r2 is None:
-            return
-        r_core_new = r2.r_core_new
-        r_core_new.restype = c_void_p
-        self._o = r_core_new()
+            raise ImportError("Cannot use ccall: r_core library not available")
+        self._r_core_free = register("r_core_free", "c_void_p", None)
         self._r_core_cmd_str = register(
             "r_core_cmd_str", "c_void_p, c_char_p", "c_char_p"
         )
-        self._r_core_free = register("r_core_free", "c_void_p", "c_void_p")
+        r_core_new = r2.r_core_new
+        r_core_new.restype = c_void_p
+        self._o = r_core_new()
+        if not self._o:
+            raise MemoryError("Cannot create native RCore")
     def __del__(self):
         self.free()
     def free(self):
-        self._r_core_free[0](self._o)
+        core = getattr(self, "_o", None)
+        if core:
+            self._o = None
+            self._r_core_free[1](core)
     def cmd_str(self, cmd):
+        if not self._o:
+            raise RuntimeError("RCore is closed")
         return self._r_core_cmd_str[1](self._o, cmd)
 
 ### self._o = AddressHolder()

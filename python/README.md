@@ -52,6 +52,10 @@ can be used inside it; once commands have run, use that same loop for the
 rest of the session. Embedded `#!pipe` and `r2lang` commands retain their
 blocking behavior.
 
+Native `ccall://` sessions also support these awaitable methods. Each session
+runs core creation, commands, and cleanup on one dedicated worker thread so
+native calls leave the event loop responsive.
+
 Use `async with` or `await r2.close()` / `await r2.quit()` to clean up. Closing
 keeps the caller's event loop open. Commands on one client run in sequence,
 including commands submitted with `asyncio.gather`. Canceling a command that

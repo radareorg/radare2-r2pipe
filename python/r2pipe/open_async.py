@@ -11,6 +11,7 @@ import sys
 
 
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ContextDecorator, suppress
 from types import SimpleNamespace
 from urllib.parse import quote, urlparse
@@ -96,8 +97,25 @@ class open(OpenBase, ContextDecorator):
             async with self._cmd_lock:
                 await self._close_all_connections()
                 await self._close_process()
+                await self._close_native()
         finally:
             self._closed = True
+
+    def _free_native(self):
+        core = self.__dict__.pop("native", None)
+        if core is not None:
+            core.free()
+
+    async def _close_native(self):
+        executor = self._native_executor
+        if executor is None:
+            return
+        try:
+            await self._loop.run_in_executor(executor, self._free_native)
+        finally:
+            # The native call has finished; join the now-idle dedicated worker.
+            executor.shutdown(wait=True)
+            self._native_executor = None
 
     def _ensure_open(self):
         if self._closed or self._closing or self._loop.is_closed():
@@ -211,6 +229,7 @@ class open(OpenBase, ContextDecorator):
         self._used = False
         self._closing = False
         self._shutdown_task = None
+        self._native_executor = None
 
         # Add connection management for HTTP/TCP modes
         self._connection_pool = {}
@@ -234,7 +253,7 @@ class open(OpenBase, ContextDecorator):
             self._port = _tmp.port
 
         elif filename.startswith("ccall://"):
-            self._cmd_coro = self._cmd_native
+            self._cmd_coro = self._cmd_native_async
             self.uri = filename[8:]
 
         elif filename.startswith("tcp://"):
@@ -359,6 +378,18 @@ class open(OpenBase, ContextDecorator):
         if not self.asyn:
             return super(open, self).cmd2j(cmd, **kwargs)
         return self._r2pipe2({"cmd": cmd, "trim": True, "json": True}, kwargs)
+
+    async def _cmd_native_async(self, cmd, future, callback):
+        if self._native_executor is None:
+            self._native_executor = ThreadPoolExecutor(max_workers=1)
+        result = await self._loop.run_in_executor(
+            self._native_executor, super(open, self)._cmd_native, cmd
+        )
+        if hasattr(future, "_cmd_id"):
+            future.set_result((future._cmd_id, result, callback))
+        else:
+            future.set_result((result, callback))
+        return result
 
     async def _cmd_process(self, cmd, future, callback):
         # Process initialization if needed
