@@ -6,6 +6,8 @@ const { R2PipeHttp } = require("./dist/http.js");
 test("HTTP preserves literal commands and r2pipe2 JSON containing URL characters", async () => {
   const paths = [];
   const server = http.createServer((request, response) => {
+    response.setHeader("Content-Type", "text/plain; charset=utf-8");
+    response.setHeader("X-Content-Type-Options", "nosniff");
     paths.push(request.url);
     try {
       response.end(decodeURIComponent(request.url.slice("/cmd/".length)));
