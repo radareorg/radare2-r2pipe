@@ -221,6 +221,8 @@ class OpenBase(object):
             os.write(self.pipe[1], cmd.encode())
             while True:
                 res = os.read(self.pipe[0], 4096)
+                if not res:
+                    raise ConnectionError("r2pipe connection closed before response terminator")
                 pos = res.find(b"\x00"[0])
                 if pos != -1:
                     out += res[0:pos]
