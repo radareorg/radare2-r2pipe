@@ -11,15 +11,16 @@
   },
   "scripts": {
     "build": "tsc",
+    "lint": "eslint \"r2pipe/*.ts\"",
     "test": "npm run build && tsc -p tests/tsconfig.json && node --test tests/*.test.cjs",
     "prepack": "npm run build"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
-    "eslint": "^8.57.1",
-    "typescript": "^6.0.2"
+    "@types/node": "^24.19.2",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
+    "@typescript-eslint/parser": "^8.71.2",
+    "eslint": "^10.12.0",
+    "typescript": "^6.0.3"
   },
   "files": [
     "README.md",
