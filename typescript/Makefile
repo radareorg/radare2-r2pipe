@@ -3,6 +3,7 @@ TSC=./node_modules/.bin/tsc
 all:
 	$(TSC)
 	$(TSC) -p tsconfig.tests.json
+	node --test test-http-encoding.cjs
 	node test-spawn.js
 	r2 -q -i test-local.js /bin/ls
 
