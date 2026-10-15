@@ -36,7 +36,7 @@ export class R2PipeHttp extends R2PipeBase {
 
   private async httpCmd(uri: string, cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const url = `${uri}/cmd/${cmd}`;
+      const url = `${uri}/cmd/${encodeURIComponent(cmd)}`;
       http.get(url, (res: http.IncomingMessage) => {
         if (res.statusCode !== 200) {
           reject(new Error(`Request Failed. Status Code: ${res.statusCode}`));

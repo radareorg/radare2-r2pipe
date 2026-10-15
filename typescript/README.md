@@ -25,7 +25,7 @@ Note that stderr events are not handled by this API, process stdin/stdout is als
 
 ## Supported r2pipe methods
 
-* http (since node 18, plaintext http networking is not allowed unless you use the `--insecure-http-parser` flag)
+* http (command text is URL-encoded; radare2 versions that emit LF-only HTTP response headers require Node's `--insecure-http-parser` flag)
 * spawn (launch a new radare2 process and communicate with it sending async commands to collect the response)
 * local (the local pipe is used when launching scripts from `r2 -i too.ts` or `> . too.ts`
 
