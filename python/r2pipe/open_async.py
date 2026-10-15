@@ -103,6 +103,10 @@ class open(OpenBase, ContextDecorator):
             self._connection_pool = {}
             self._loop.close()
 
+    def quit(self):
+        """Use this client's event loop to finish the asynchronous shutdown."""
+        self.close()
+
     def __init__(self, filename="", flags=None, radare2home=None):
         file_args = []
         filename, file_args = normalize_open_target(filename)
