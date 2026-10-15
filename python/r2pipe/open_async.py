@@ -4,29 +4,42 @@ This script use code from r2pipe-async/open_p3.py script.
 
 """
 import asyncio
+import json
 import os
 import re
 import sys
 
 
-# whole file doesn't have any profit of asyncio usage, TODO: refactor
-
 from collections.abc import Iterable
 from contextlib import ContextDecorator, suppress
+from types import SimpleNamespace
 from urllib.parse import quote, urlparse
 
-from r2pipe.open_base import OpenBase, get_radare_path, normalize_open_target
+from r2pipe.open_base import OpenBase, get_radare_path, jo2po, normalize_open_target
 
 
 class open(OpenBase, ContextDecorator):
     # --------------------------------------------------------------------------
-    # Contenxt manager functions
+    # Context manager functions
     # --------------------------------------------------------------------------
     def __enter__(self):
+        if self._running_loop() is not None:
+            raise RuntimeError("Use 'async with' for r2pipe inside an event loop")
         return self
 
     def __exit__(self, *exc):
+        if self._running_loop() is not None:
+            raise RuntimeError("Use 'async with' for r2pipe inside an event loop")
         self.close()
+        return False
+
+    async def __aenter__(self):
+        self._bind_loop()
+        self._ensure_open()
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.aclose()
         return False
 
     async def _close_all_connections(self):
@@ -77,35 +90,94 @@ class open(OpenBase, ContextDecorator):
 
     async def _shutdown(self):
         """Tear down all async resources while the loop is still alive."""
-        await self._close_all_connections()
-        await self._close_process()
+        try:
+            if self._command_tasks:
+                await asyncio.gather(*tuple(self._command_tasks), return_exceptions=True)
+            async with self._cmd_lock:
+                await self._close_all_connections()
+                await self._close_process()
+        finally:
+            self._closed = True
 
     def _ensure_open(self):
-        if getattr(self, "_closed", False) or self._loop.is_closed():
+        if self._closed or self._closing or self._loop.is_closed():
             raise RuntimeError("r2pipe is closed")
 
-    def close(self):
-        """Close the r2pipe instance and clean up resources"""
-        if getattr(self, "_closed", False):
-            return
-
-        if self._loop.is_closed():
-            self._closed = True
-            return
-
-        if self._loop.is_running():
-            raise RuntimeError("Cannot close r2pipe while its event loop is running")
-
-        self._closed = True
+    @staticmethod
+    def _running_loop():
         try:
-            self._loop.run_until_complete(self._shutdown())
+            if hasattr(asyncio, "get_running_loop"):
+                return asyncio.get_running_loop()
+            loop = asyncio.get_event_loop()
+            return loop if loop.is_running() else None
+        except RuntimeError:
+            return None
+
+    def _bind_loop(self):
+        """Adopt the caller's loop before first use; transports cannot move loops."""
+        running = self._running_loop()
+        if running is not None and running is not self._loop:
+            if self._owns_loop and not self._used and not self._closing:
+                self._loop.close()
+                self._loop = running
+                self._owns_loop = False
+                self._cmd_lock = self._new_lock()
+                self._connection_lock = self._new_lock()
+            else:
+                raise RuntimeError("r2pipe belongs to a different event loop")
+        elif running is None and not self._owns_loop and not self._closed:
+            raise RuntimeError("Use r2pipe from its owning event loop")
+        return running
+
+    def _dispatch(self, coroutine, *args):
+        running = self._bind_loop()
+        self._ensure_open()
+        if running is not None:
+            return coroutine(*args)
+        return self._loop.run_until_complete(coroutine(*args))
+
+    async def aclose(self):
+        """Finish in-flight commands and close resources without closing the loop."""
+        if self._closed:
+            return
+        self._bind_loop()
+        if self._shutdown_task is None:
+            self._closing = True
+            self._shutdown_task = self._loop.create_task(self._shutdown())
+        canceled = False
+        while True:
+            try:
+                await asyncio.shield(self._shutdown_task)
+                break
+            except asyncio.CancelledError:
+                if self._shutdown_task.cancelled():
+                    raise
+                # Repeated cancellation must still let resource cleanup finish.
+                canceled = True
+        if canceled:
+            raise asyncio.CancelledError
+
+    def close(self):
+        """Close synchronously, or return an awaitable inside an event loop."""
+        if self._closed:
+            return self.aclose() if self._running_loop() is not None else None
+        running = self._bind_loop()
+        if running is not None:
+            return self.aclose()
+        try:
+            self._loop.run_until_complete(self.aclose())
         finally:
-            self._connection_pool = {}
-            self._loop.close()
+            if self._owns_loop:
+                self._loop.close()
 
     def quit(self):
         """Use this client's event loop to finish the asynchronous shutdown."""
-        self.close()
+        return self.close()
+
+    def _new_lock(self):
+        if sys.version_info < (3, 10):
+            return asyncio.Lock(loop=self._loop)
+        return asyncio.Lock()
 
     def __init__(self, filename="", flags=None, radare2home=None):
         file_args = []
@@ -117,10 +189,12 @@ class open(OpenBase, ContextDecorator):
 
         self.r2home = radare2home
 
-        if os.name == "nt":
+        self._loop = self._running_loop()
+        self._owns_loop = self._loop is None
+        if self._owns_loop and os.name == "nt":
             self._loop = asyncio.ProactorEventLoop()
             asyncio.set_event_loop(self._loop)
-        else:
+        elif self._owns_loop:
             self._loop = asyncio.new_event_loop()
             if sys.version_info < (3, 12) and hasattr(asyncio, "get_child_watcher"):
                 try:
@@ -130,19 +204,26 @@ class open(OpenBase, ContextDecorator):
                     pass
 
         # Add a lock for synchronizing command execution
-        self._cmd_lock = asyncio.Lock()
+        self._cmd_lock = self._new_lock()
 
-        # Add a task queue for managing command sequence
-        self._cmd_queue = []
         self._next_cmd_id = 0
+        self._command_tasks = set()
+        self._used = False
+        self._closing = False
+        self._shutdown_task = None
 
         # Add connection management for HTTP/TCP modes
         self._connection_pool = {}
         self._pool_size = 5  # Maximum number of concurrent connections
-        self._connection_lock = asyncio.Lock()
+        self._connection_lock = self._new_lock()
         self._closed = False
 
         self.asyn = True
+
+        if "_cmd" in self.__dict__:
+            # OpenBase selected the embedded #!pipe or r2lang transport.
+            self.asyn = False
+            return
 
         if filename.startswith("http://"):
             self._cmd_coro = self._cmd_http
@@ -178,66 +259,106 @@ class open(OpenBase, ContextDecorator):
         else:
             self.asyn = False
 
-    def _callback_wrapper(self, future):
-        result_data = future.result()
-
-        # Check if result contains command ID for ordered execution
-        if isinstance(result_data, tuple) and len(result_data) == 3:
-            cmd_id, result, callback = result_data
-
-            # Ensure commands are processed in sequence
-            if self._cmd_queue and self._cmd_queue[0] == cmd_id:
-                self._cmd_queue.pop(0)  # Remove this command from queue
-
-                # Process callback if provided
-                if callback:
-                    callback(result)
-
-                # Process any waiting callbacks that can now be executed
-                self._process_pending_callbacks()
-        else:
-            # Fallback for backward compatibility
-            result, callback = result_data
-            if callback:
-                callback(result)
-
-    def _process_pending_callbacks(self):
-        """Process any callbacks that are ready based on command ID ordering"""
-        # This would handle pending callbacks when their turn comes
-        # Implementation would depend on how we store pending results
-        pass
-
-    async def _execute_cmd_with_lock(self, cmd, future, callback, cmd_id):
+    async def _execute_cmd_with_lock(self, cmd, future, callback, started):
         """Execute command with proper synchronization"""
         async with self._cmd_lock:
-            result = await self._cmd_coro(cmd, future, callback)
-            return result, cmd_id
+            self._ensure_open()
+            started[0] = True
+            self._used = True
+            result = await self._cmd_coro(cmd, future, None)
+            if callback and future.done():
+                try:
+                    callback(future.result()[1])
+                except Exception as error:
+                    self._loop.call_exception_handler({
+                        "message": "Exception in r2pipe command callback",
+                        "exception": error,
+                    })
+            return result
 
     def _cmd(self, cmd, **kwargs):
-        self._ensure_open()
+        return self._dispatch(self._command, cmd, kwargs)
 
-        # Get callback, if available
+    async def _command(self, cmd, kwargs):
+        self._bind_loop()
+        self._ensure_open()
         callback = kwargs.get("callback")
         future = self._loop.create_future()
-
-        # Assign a sequential ID to this command for ordered execution
         cmd_id = self._next_cmd_id
         self._next_cmd_id += 1
-        self._cmd_queue.append(cmd_id)
-
-        # Store the command ID in the future for tracking
         future._cmd_id = cmd_id
-
-        # Add the callback to process the result
-        future.add_done_callback(self._callback_wrapper)
-
-        coro = self._execute_cmd_with_lock(cmd, future, callback, cmd_id)
+        started = [False]
+        task = self._loop.create_task(
+            self._execute_cmd_with_lock(cmd, future, callback, started)
+        )
+        self._command_tasks.add(task)
+        task.add_done_callback(self._command_done)
         try:
-            result, _ = self._loop.run_until_complete(coro)
-            return result
-        except Exception:
-            coro.close()
+            # A canceled caller must not interrupt reading a command's response.
+            return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            if not started[0]:
+                task.cancel()
             raise
+
+    def _command_done(self, task):
+        self._command_tasks.discard(task)
+        self._consume_task_error(task)
+
+    @staticmethod
+    def _consume_task_error(task):
+        if not task.cancelled():
+            # Retrieve errors even when a canceled caller no longer awaits the task.
+            task.exception()
+
+    async def _json_command(self, cmd, kwargs, object_hook=None, report_error=False):
+        result = await self._command(cmd, kwargs)
+        if report_error and result == "":
+            result = "{}"
+        try:
+            return json.loads(result, object_hook=object_hook)
+        except (ValueError, KeyError, TypeError) as error:
+            if not report_error:
+                raise
+            sys.stderr.write(f"r2pipe.cmdj.Error: {error}\n")
+            return None
+
+    def cmdj(self, cmd, **kwargs):
+        if not self.asyn:
+            return super(open, self).cmdj(cmd, **kwargs)
+        return self._dispatch(self._json_command, cmd, kwargs, None, True)
+
+    async def _object_command(self, cmd, kwargs):
+        result = await self._command(cmd, kwargs)
+        try:
+            return jo2po(result)
+        except (ValueError, KeyError, TypeError) as error:
+            sys.stderr.write(f"r2pipe.cmdj.Error: {error}\n")
+            return None
+
+    def cmdJ(self, cmd, **kwargs):
+        if not self.asyn:
+            return super(open, self).cmdJ(cmd, **kwargs)
+        return self._dispatch(self._object_command, cmd, kwargs)
+
+    def call(self, cmd, **kwargs):
+        return self.cmd("'" + cmd, **kwargs)
+
+    def _r2pipe2(self, request, kwargs):
+        cmd = "'" + json.dumps(request)
+        return self._dispatch(
+            self._json_command, cmd, kwargs, lambda value: SimpleNamespace(**value)
+        )
+
+    def cmd2(self, cmd, **kwargs):
+        if not self.asyn:
+            return super(open, self).cmd2(cmd, **kwargs)
+        return self._r2pipe2({"cmd": cmd}, kwargs)
+
+    def cmd2j(self, cmd, **kwargs):
+        if not self.asyn:
+            return super(open, self).cmd2j(cmd, **kwargs)
+        return self._r2pipe2({"cmd": cmd, "trim": True, "json": True}, kwargs)
 
     async def _cmd_process(self, cmd, future, callback):
         # Process initialization if needed
@@ -348,8 +469,13 @@ class open(OpenBase, ContextDecorator):
             # Check if we have an available connection
             if self._connection_pool[pool_key]:
                 # Reuse existing connection
-                reader, writer = self._connection_pool[pool_key].pop(0)
-                return reader, writer
+                while self._connection_pool[pool_key]:
+                    reader, writer = self._connection_pool[pool_key].pop(0)
+                    if not reader.at_eof() and not writer.is_closing():
+                        return reader, writer
+                    writer.close()
+                    with suppress(Exception):
+                        await writer.wait_closed()
 
             # Create a new connection
             return await asyncio.open_connection(
@@ -374,6 +500,8 @@ class open(OpenBase, ContextDecorator):
 
     async def _cmd_http(self, cmd, future, callback):
         """HTTP command execution with connection pooling and request ID tracking"""
+        writer = None
+        pooled = False
         try:
             quocmd = quote(cmd)
 
@@ -411,62 +539,52 @@ class open(OpenBase, ContextDecorator):
                 # Read response with proper chunking
                 buffer_size = 4096  # Larger buffer size for efficiency
 
-                # Read first chunk to get headers
+                # Header boundaries can span multiple transport reads.
                 data = await asyncio.wait_for(
-                    reader.read(buffer_size),
+                    reader.readuntil(b'\r\n\r\n'),
                     timeout=10.0
                 )
-
-                if not data:
-                    # Connection closed, need to create a new one next time
-                    writer.close()
-                    raise ConnectionError("Connection closed by server")
-
                 res.append(data)
+                header_lines = data[:-4].decode('utf-8', errors='ignore').split('\r\n')
+                content_length = None
+                connection = ""
+                for line in header_lines[1:]:
+                    if line.lower().startswith('content-length:'):
+                        content_length = int(line.split(':', 1)[1].strip())
+                        if content_length < 0:
+                            raise ValueError("Invalid HTTP Content-Length")
+                    elif line.lower().startswith('connection:'):
+                        connection = line.split(':', 1)[1].strip().lower()
+                keep_alive = content_length is not None and "close" not in connection and (
+                    header_lines[0].startswith("HTTP/1.1 ") or "keep-alive" in connection
+                )
 
-                # Check for Content-Length header to determine how much to read
-                headers_end = data.find(b'\r\n\r\n')
-                if headers_end != -1:
-                    headers = data[:headers_end].decode('utf-8', errors='ignore')
-                    content_length = None
+                if content_length is not None:
+                    remaining = content_length
+                    while remaining > 0:
+                        chunk = await asyncio.wait_for(
+                            reader.read(min(buffer_size, remaining)),
+                            timeout=5.0
+                        )
+                        if not chunk:
+                            raise ConnectionError("Incomplete HTTP response body")
+                        res.append(chunk)
+                        remaining -= len(chunk)
+                else:
+                    # Responses without a length are delimited by connection close.
+                    while True:
+                        chunk = await asyncio.wait_for(
+                            reader.read(buffer_size),
+                            timeout=5.0
+                        )
+                        if not chunk:
+                            break
+                        res.append(chunk)
 
-                    # Parse content length
-                    for line in headers.split('\r\n'):
-                        if line.lower().startswith('content-length:'):
-                            try:
-                                content_length = int(line.split(':', 1)[1].strip())
-                                break
-                            except ValueError:
-                                pass
-
-                    # Calculate how much more data we need to read
-                    if content_length is not None:
-                        bytes_read = len(data) - headers_end - 4  # subtract header size
-                        remaining = content_length - bytes_read
-
-                        # Read remaining content if needed
-                        while remaining > 0 and not reader.at_eof():
-                            chunk = await asyncio.wait_for(
-                                reader.read(min(buffer_size, remaining)),
-                                timeout=5.0
-                            )
-                            if not chunk:
-                                break
-                            res.append(chunk)
-                            remaining -= len(chunk)
-                    else:
-                        # If no content length, read until connection closes
-                        while not reader.at_eof():
-                            chunk = await asyncio.wait_for(
-                                reader.read(buffer_size),
-                                timeout=5.0
-                            )
-                            if not chunk:
-                                break
-                            res.append(chunk)
-
-                # Return connection to the pool for reuse
-                await self._return_http_connection(reader, writer)
+                # Reuse only responses whose framing and headers allow persistence.
+                if keep_alive and not reader.at_eof():
+                    await self._return_http_connection(reader, writer)
+                    pooled = True
 
             except asyncio.TimeoutError:
                 # If timeout occurs, close the connection
@@ -505,6 +623,11 @@ class open(OpenBase, ContextDecorator):
                 future.set_result((future._cmd_id, str(e), callback))
             else:
                 future.set_result((str(e), callback))
+        finally:
+            if writer is not None and not pooled:
+                writer.close()
+                with suppress(Exception):
+                    await writer.wait_closed()
 
     async def _get_tcp_connection(self):
         """Get a TCP connection from the pool or create a new one"""
@@ -545,6 +668,8 @@ class open(OpenBase, ContextDecorator):
 
     async def _cmd_tcp(self, cmd, future, callback):
         """TCP command execution with connection pooling and command tracking"""
+        writer = None
+        pooled = False
         try:
             # Get a connection from the pool
             reader, writer = await self._get_tcp_connection()
@@ -597,6 +722,7 @@ class open(OpenBase, ContextDecorator):
                 # But we'll attempt to keep them alive for reuse
                 if not reader.at_eof():
                     await self._return_tcp_connection(reader, writer)
+                    pooled = True
                 else:
                     # Connection was closed by server, close our end too
                     writer.close()
@@ -626,47 +752,26 @@ class open(OpenBase, ContextDecorator):
                 future.set_result((future._cmd_id, str(e), callback))
             else:
                 future.set_result((str(e), callback))
+        finally:
+            if writer is not None and not pooled:
+                writer.close()
+                with suppress(Exception):
+                    await writer.wait_closed()
 
     def wait(self, task):
-        """Wait until task finish with proper ordering
+        """Wait for awaitables and return completed futures in input order."""
+        tasks = list(task) if isinstance(task, Iterable) else [task]
+        return self._dispatch(self._wait, tasks)
 
-        This method ensures tasks are completed in the correct sequence
-        even when multiple commands are executed concurrently.
-        """
-        _tasks = task
-        if not isinstance(task, Iterable):
-            _tasks = [task]
-
-        # Create a function to wait for all tasks in order
-        async def wait_ordered():
-            # Wait for all tasks to complete
-            done, _ = await asyncio.wait(_tasks)
-
-            # Sort results by command ID if available
-            results = []
-            for future in done:
-                try:
-                    # Extract result and command ID if available
-                    result = future.result()
-                    if isinstance(result, tuple) and len(result) > 1:
-                        # If this is a tuple with cmd_id
-                        cmd_id, data = result[0], result[1]
-                        results.append((cmd_id, data, future))
-                    else:
-                        # No command ID available
-                        results.append((None, result, future))
-                except Exception as e:
-                    # Handle any exceptions during task execution
-                    pass
-
-            # Sort results by command ID if available
-            results.sort(key=lambda x: x[0] if x[0] is not None else float('inf'))
-
-            # Return sorted results
-            return [r[2] for r in results]
-
-        # Run the ordered wait function
-        if self._loop.is_running():
-            return asyncio.ensure_future(wait_ordered())
-        else:
-            return self._loop.run_until_complete(wait_ordered())
+    async def _wait(self, tasks):
+        self._bind_loop()
+        self._ensure_open()
+        futures = []
+        for task in tasks:
+            future = asyncio.ensure_future(task, loop=self._loop)
+            # A canceled wait() caller no longer receives these wrapper tasks.
+            future.add_done_callback(self._consume_task_error)
+            futures.append(future)
+        if futures:
+            await asyncio.wait(futures)
+        return futures

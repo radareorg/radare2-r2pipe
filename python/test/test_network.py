@@ -7,6 +7,7 @@ They are skipped if the server is not available.
 """
 
 import unittest
+import asyncio
 import os
 import sys
 import time
@@ -128,6 +129,42 @@ class TestR2PipeNetwork(unittest.TestCase):
             self.assertTrue("arch" in results[0])
         finally:
             r2.close()
+
+    def _run_in_event_loop(self, coroutine):
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coroutine)
+        finally:
+            loop.close()
+
+    def test_http_await_commands_in_running_loop(self):
+        async def main():
+            callbacks = []
+            async with async_open(f"http://127.0.0.1:{TEST_HTTP_PORT}") as r2:
+                expected = ["http-%d\n" % index for index in range(8)]
+                results = await asyncio.gather(*[
+                    r2.cmd("?e http-%d" % index, callback=callbacks.append)
+                    for index in range(8)
+                ])
+                self.assertEqual(results, expected)
+                self.assertEqual(callbacks, expected)
+                self.assertIn("core", await r2.cmdj("ij"))
+            self.assertEqual(r2._connection_pool, {})
+            self.assertFalse(r2._loop.is_closed())
+        self._run_in_event_loop(main())
+
+    def test_tcp_await_commands_in_running_loop(self):
+        async def main():
+            async with async_open(f"tcp://127.0.0.1:{TEST_TCP_PORT}") as r2:
+                expected = ["tcp-%d\n" % index for index in range(8)]
+                results = await asyncio.gather(*[
+                    r2.cmd("?e tcp-%d" % index) for index in range(8)
+                ])
+                self.assertEqual(results, expected)
+                self.assertIn("core", await r2.cmdj("ij"))
+            self.assertEqual(r2._connection_pool, {})
+            self.assertFalse(r2._loop.is_closed())
+        self._run_in_event_loop(main())
 
     # Error handling tests
     def test_http_connection_errors(self):

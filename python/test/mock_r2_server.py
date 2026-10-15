@@ -110,6 +110,9 @@ class MockR2Handler(http.server.BaseHTTPRequestHandler):
             if isinstance(result, (dict, list)):
                 return json.dumps(result)
             return result
+
+        if cmd.startswith("?e ") and ";" not in cmd and "\n" not in cmd:
+            return cmd[3:] + "\n"
         
         # Check for commands with parameters
         for pattern, response in self.COMMANDS.items():
@@ -201,7 +204,7 @@ class MockR2TCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         """Handle TCP connection"""
         # Reuse the command processor from HTTP handler
-        processor = MockR2Handler
+        processor = MockR2Handler.__new__(MockR2Handler)
         
         try:
             while True:
@@ -215,7 +218,7 @@ class MockR2TCPHandler(socketserver.BaseRequestHandler):
                 print(f"[TCP] Received command: {cmd}")
                 
                 # Process command
-                response = processor.process_command(None, cmd)
+                response = processor.process_command(cmd)
                 
                 # Send response
                 self.request.sendall(response.encode("utf-8"))
