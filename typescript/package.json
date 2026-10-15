@@ -4,13 +4,15 @@
   "description": "TypeScript r2pipe API",
   "type": "commonjs",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.js",
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "engines": {
     "node": ">=20.0"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "npm run build && tsc -p tests/tsconfig.json && node --test tests/*.test.cjs",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
@@ -23,12 +25,8 @@
     "README.md",
     "package.json",
     "package-lock.json",
-    "dist/base.js",
-    "dist/index.js",
-    "dist/http.js",
-    "dist/queue.js",
-    "dist/local.js",
-    "dist/spawn.js"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "keywords": [
     "radare",

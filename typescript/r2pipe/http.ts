@@ -13,7 +13,7 @@ export class R2PipeHttp extends R2PipeBase {
    */
   constructor(baseUrl: string) {
     super();
-    this.baseUrl = baseUrl;
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
   }
 
   /**
@@ -36,18 +36,31 @@ export class R2PipeHttp extends R2PipeBase {
 
   private async httpCmd(uri: string, cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const url = `${uri}/cmd/${encodeURIComponent(cmd)}`;
-      http.get(url, (res: http.IncomingMessage) => {
+      const url = new URL(uri);
+      // Pass path separately so URL normalization cannot remove commands such as '..'.
+      const path = `${url.pathname.replace(/\/+$/, "")}/cmd/${encodeURIComponent(cmd)}${url.search}`;
+      http.get(url, { path }, (res: http.IncomingMessage) => {
+        res.on('error', reject);
+        res.on('aborted', () => reject(new Error('HTTP response was aborted.')));
+        res.on('close', () => {
+          if (!res.complete) {
+            reject(new Error('HTTP response closed before completion.'));
+          }
+        });
         if (res.statusCode !== 200) {
           reject(new Error(`Request Failed. Status Code: ${res.statusCode}`));
           res.resume(); // Consume response data to free up memory
           return;
         }
         res.setEncoding('utf8');
-        let rawData = '';
-        res.on('data', (chunk: string) => { rawData += chunk; });
+        const chunks: string[] = [];
+        res.on('data', (chunk: string) => { chunks.push(chunk); });
         res.on('end', () => {
-          resolve(rawData);
+          if (res.complete) {
+            resolve(chunks.join(''));
+          } else {
+            reject(new Error('HTTP response ended before completion.'));
+          }
         });
       }).on('error', (e: Error) => {
         reject(new Error(`Error making HTTP request: ${e.message}`));

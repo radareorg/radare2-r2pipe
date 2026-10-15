@@ -17,11 +17,29 @@ make -C hello-ts
 
 The basic fundamentals of r2pipe is that you the API provides the most basic communication channel with r2, this is a single function called `cmd` that takes the command to be executed and returns the output of the command as a string.
 
-As long as many commands in r2 return JSON, it is ideal for working with TS/JS, because using `cmdj()` the API will convert the output into an object.
+Many commands in r2 return JSON. `cmdj<T>()` parses that output, with an optional result type. Its default result type is `unknown`; specifying `T` describes the expected result without validating it.
+
+```typescript
+import { open } from "r2pipe-ts";
+
+const r2 = open("/bin/ls");
+const flags = await r2.cmdj<Array<{ name: string; addr: number | bigint }>>("fj");
+await r2.quit();
+```
+
+Integer JSON literals outside JavaScript's safe integer range are returned as `bigint`, preserving 64-bit addresses exactly. Safe integers, fractions, and numbers written with an exponent remain JavaScript numbers. JSON strings, booleans, arrays, and `null` keep their usual meanings. Use `String(value)` to display a bigint; native `JSON.stringify` requires a replacer for bigint values.
+
+To retain native `JSON.parse` behavior, or use another parser, pass `jsonParser` when opening any backend:
+
+```typescript
+const r2 = open("http://localhost:9090", { jsonParser: JSON.parse });
+```
+
+The package also exports `R2PipeCmdInterface`, `R2PipeOptions`, and `JsonParser` types and the default `parseJson` function.
 
 In order to provide compatibility with all kind of backends, the whole api has been made asynchronous, this allows the developer to change the backend by only changing one line.
 
-Note that stderr events are not handled by this API, process stdin/stdout is also not handled by r2pipe, but there are ways to manage it if needed.
+The spawn backend consumes radare2's stderr so diagnostics cannot block command processing.
 
 ## Supported r2pipe methods
 

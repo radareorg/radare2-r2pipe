@@ -1,32 +1,35 @@
 import { R2PipeBase } from "./base.js";
 import { R2PipeQueue } from "./queue.js";
-import * as fs from "fs";
 import * as os from "os";
 import * as net from "net";
 
 export class R2PipeLocal extends R2PipeBase {
-  private stream: R2PipeQueue;
+  private readonly stream: R2PipeQueue;
 
   constructor() {
     super();
     if (os.platform() === 'win32') {
-      const R2PIPE_PATH = process.env.R2PIPE_PATH;
-      const client = net.connect('\\\\.\\pipe\\' + R2PIPE_PATH) as any;
-      // TODO: we just need the read and write methods, but net.Socket doesnt have path or close()
+      const pipePath = process.env.R2PIPE_PATH;
+      if (!pipePath) {
+        throw new Error('R2PIPE_PATH must specify the radare2 named pipe');
+      }
+      const client = net.connect(pipePath);
       this.stream = new R2PipeQueue(client, client);
     } else {
       const envIn = process.env.R2PIPE_IN;
       const envOut = process.env.R2PIPE_OUT;
-      if (!envIn || !envOut) {
+      if (!envIn || !envOut || !/^\d+$/.test(envIn) || !/^\d+$/.test(envOut)) {
         throw new Error('This script must be executed from r2 -c "#!pipe node foo.js"');
       }
-      const IN = parseInt(envIn);
-      const OUT = parseInt(envOut);
-      if (!IN || !OUT) {
+      const IN = Number(envIn);
+      const OUT = Number(envOut);
+      if (!Number.isSafeInteger(IN) || !Number.isSafeInteger(OUT)) {
         throw new Error('This script must be executed from r2 -c "#!pipe node foo.js"');
       }
-      const input = fs.createWriteStream(null, { fd: OUT });
-      const output = fs.createReadStream(null, { fd: IN });
+      // Pipe sockets use cancellable, nonblocking I/O. A ReadStream can leave
+      // a blocking filesystem read alive after quit(), keeping Node running.
+      const input = new net.Socket({ fd: OUT, readable: false, writable: true });
+      const output = new net.Socket({ fd: IN, readable: true, writable: false });
       this.stream = new R2PipeQueue(input, output);
     }
   }
@@ -51,8 +54,6 @@ export class R2PipeLocal extends R2PipeBase {
 
   async quit(): Promise<boolean> {
     this.stream.dispose();
-    this.stream = null;
-    process.kill(process.pid, 'SIGINT');
     return true;
   }
 }

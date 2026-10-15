@@ -1,13 +1,22 @@
+import { JsonParser, parseJson } from "./json.js";
+
+export interface R2PipeOptions {
+  /** Defaults to preserving unsafe integer literals as bigint. */
+  jsonParser?: JsonParser;
+}
+
 export abstract class R2PipeBase implements R2PipeCmdInterface {
+  jsonParser: JsonParser = parseJson;
+
   abstract cmd(command: string): Promise<string>;
   abstract quit(): Promise<boolean>;
 
-  async cmdj(command: string): Promise<object> {
+  async cmdj<T = unknown>(command: string): Promise<T> {
     const output = await this.cmd(command);
     try {
-      return JSON.parse(output);
+      return this.jsonParser(output) as T;
     } catch (e) {
-      throw new Error("Failed to parse JSON output from radare2 command.");
+      throw new Error("Failed to parse JSON output from radare2 command.", { cause: e });
     }
   }
 }
@@ -25,7 +34,7 @@ export interface R2PipeCmdInterface {
    * @param command The radare2 command to execute.
    * @returns A promise that resolves with the parsed JSON output.
    */
-  cmdj(command: string): Promise<object>;
+  cmdj<T = unknown>(command: string): Promise<T>;
 
   /**
    * Quits and destroys the given instance
