@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint \"r2pipe/*.ts\"",
+    "wasm": "node wasm-download.cjs",
     "test": "npm run build && tsc -p tests/tsconfig.json && node --test tests/*.test.cjs",
     "prepack": "npm run build"
   },
@@ -26,6 +27,7 @@
     "README.md",
     "package.json",
     "package-lock.json",
+    "wasm-download.cjs",
     "dist/**/*.js",
     "dist/**/*.d.ts"
   ],

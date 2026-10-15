@@ -67,6 +67,8 @@ nodejs/r2pipe-promise/package-lock.json
 # TypeScript
 typescript/.vscode/
 typescript/dist/
+typescript/*.wasm
+typescript/.r2pipe-wasm-*/
 typescript/r2pipe/*.d.ts
 typescript/r2pipe/*.js
 typescript/test-http.js

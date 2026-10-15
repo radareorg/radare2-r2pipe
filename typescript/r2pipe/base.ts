@@ -3,6 +3,15 @@ import { JsonParser, parseJson } from "./json.js";
 export interface R2PipeOptions {
   /** Defaults to preserving unsafe integer literals as bigint. */
   jsonParser?: JsonParser;
+  /** Opt in to the WASI API backend instead of local, HTTP or spawn. */
+  wasm?: R2PipeWasmOptions;
+}
+
+export interface R2PipeWasmOptions {
+  /** Path to radare2.wasm from a wasi-api release archive. */
+  path: string;
+  /** Guest directory to host directory mappings. No directories are exposed by default. */
+  preopens?: Record<string, string>;
 }
 
 export abstract class R2PipeBase implements R2PipeCmdInterface {
