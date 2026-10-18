@@ -132,17 +132,12 @@ class open(OpenBase):
     def _cmd_process(self, cmd):
         # Acquire lock to ensure commands don't interfere with each other
         with self._cmd_lock:
-            # Ensure pending buffer is cleared before starting a new command to avoid mixing
             old_pending = self.pending
-            self.pending = b""
             cmd = cmd.strip().replace("\n", ";")
-            try:
-                self.process.stdin.write((cmd + "\n").encode("utf8"))
-            except:
-                self.pending = old_pending  # Restore pending on failure
-                return ''
-            r = self.process.stdout
+            self.process.stdin.write((cmd + "\n").encode("utf8"))
             self.process.stdin.flush()
+            self.pending = b""
+            r = self.process.stdout
             out = bytearray()
             foo = None
             # First read any pending data from previous commands if exists
