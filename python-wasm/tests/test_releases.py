@@ -43,9 +43,9 @@ class ReleasesTest(unittest.TestCase):
         manager = DownloadManager()
         selected = release()
         with patch.object(manager, "_json", return_value=selected):
-            with self.assertRaisesRegex(ValueError, "no wasi-api-net"):
+            with self.assertRaisesRegex(ValueError, "no wasi-api-http"):
                 manager.select("6.2.2", network=True)
-        selected["assets"][0]["name"] = "radare2-future-wasi-api-net.zip"
+        selected["assets"][0]["name"] = "radare2-future-wasi-api-http.zip"
         with patch.object(manager, "_json", return_value=selected):
             self.assertEqual(manager.select("future", network=True), selected)
             with self.assertRaisesRegex(ValueError, "no wasi-api build"):

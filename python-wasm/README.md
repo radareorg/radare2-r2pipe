@@ -45,8 +45,7 @@ with r2pipe.open("/samples/program", version="6.1.4",
 ```
 
 By default `open()` downloads/caches the **newest stable release with a
-`wasi-api` asset**. A newer release without that asset is skipped (for example,
-6.2.4 has no API asset, while 6.2.2 does). CLI `wasi` and `wasi-browser` builds
+`wasi-api` asset**. A newer release without that asset is skipped. CLI `wasi` and `wasi-browser` builds
 are not substitutes. Compilation takes place when opening each connection;
 keep the connection open for multiple commands.
 
@@ -116,7 +115,7 @@ print((shared / "hexdump.txt").read_text())
 ```
 
 With the default `network=False`, the WASM guest has **no network capability**:
-WASI socket calls return `ENOTSUP` and optional `r2net` imports return failure.
+WASI socket calls return `ENOTSUP` and optional HTTP imports return failure.
 No WASIX/process-spawning imports are supplied, even with networking enabled.
 Commands such as `!sh` and native debugging cannot use host services.
 The host-side download manager uses HTTPS independently of the guest network setting.
@@ -124,48 +123,51 @@ WASI stdout/stderr remain available; this is a synchronous analysis API, not an
 interactive terminal. Use `quit()`/`close()` or a context manager to release it.
 `cmdj()` raises `JSONDecodeError` for invalid JSON; commands after closing fail.
 
-## Optional networking
+## Optional HTTP networking
 
-Networking requires a **network-enabled radare2 build** with the `r2net` imports:
+Only HTTP(S) GET and POST are exposed, through radare2's existing
+`r_socket_http_get()` and `r_socket_http_post()` C APIs. There are no socket
+handles, listeners, UDP, WebSockets, or shell-curl execution.
 
 ```sh
-# In a clean radare2 checkout containing the host-socket bridge:
-WASI_NETWORK=1 sys/wasi-api.sh
-# Extract radare2.wasm from radare2-<version>-wasi-api-net.zip.
+# In a clean radare2 checkout containing the HTTP bridge:
+WASI_HTTP=1 sys/wasi-api.sh
+# Extract radare2.wasm from radare2-<version>-wasi-api-http.zip.
 ```
 
 ```python
 import r2pipe_wasm
 
 with r2pipe_wasm.open("http://127.0.0.1:8000/sample.bin",
-                     wasm="radare2-net.wasm", network=True) as r2:
+                     wasm="radare2-http.wasm", network=True) as r2:
     print(r2.cmdj("pxj 16"))
+    print(r2.cmd("curl http://127.0.0.1:8000/status"))
+    # JSON POST with headers via the guest's QuickJS binding to the C HTTP API:
+    script = 'console.log(r2.http("POST", "http://127.0.0.1:8000/api", '
+    script += '"Content-Type: application/json", "{}").body)'
+    print(r2.cmd("js " + script))
 ```
 
-The `network` option defaults to **False**, including for a network-enabled
-module. When True, Python supplies TCP, connected UDP, TLS client connections
-(with normal certificate verification), and TCP listeners using its standard
-`socket` and `ssl` modules. TLS listeners, Unix sockets and process execution
-are unsupported. Each instance owns an opaque socket-handle table; `quit()`
-closes all remaining sockets. Host environment variables are still not passed
-to the guest. Socket operations are synchronous and can block; radare2's
-connect/read timeout APIs control their timeouts.
+`network` defaults to **False**, including for an HTTP-enabled module. When
+True, Python supplies HTTP(S) using urllib with normal TLS certificate
+verification, a 30-second socket timeout and a 16 MiB response limit. Headers,
+UTF-8 POST data, HTTP status/error bodies and binary responses are preserved.
+The C caller owns the guest-allocated response buffer. There are no persistent
+socket handles to manage. The host download manager's HTTPS access is independent
+of this guest setting.
 
-Host opt-in never overrides the radare2 sandbox. Socket operations require the
-`socket` grain, and non-loopback operations also require `network`. Existing
-connections are rechecked when used, so removing permission stops further IO;
-closing them is always allowed. For example, after opening a core:
+Host opt-in never overrides the radare2 sandbox. When sandboxing is enabled,
+each request requires **both `socket` and `network` grains**, even for localhost,
+because the host can follow redirects. No `exec` grain is needed. For example:
 
 ```python
 r2.cmd("e cfg.sandbox.grain=none; e cfg.sandbox=true")
-# Subsequent network operations fail, even with network=True on the host.
+# Subsequent HTTP requests fail, even with network=True on the host.
 ```
 
-`network=True` without `wasm=` selects/downloads a `-wasi-api-net.zip` asset
-instead of the ordinary API build. No published release currently has this new
-variant: use a local build until [radare2 PR #27037](https://github.com/radareorg/radare2/pull/27037) is merged/released.
-An old module that compiles networking out is rejected explicitly; overriding
-Preview1 send/receive calls cannot add socket creation to that module.
+`network=True` without `wasm=` selects/downloads a `-wasi-api-http.zip` asset.
+Use a local build until [radare2 PR #27037](https://github.com/radareorg/radare2/pull/27037)
+is merged/released. A module without the HTTP imports is rejected explicitly.
 The release manager also accepts `select(network=True)`,
 `download(version, network=True)` and `api_asset(release, network=True)`.
 
@@ -178,9 +180,9 @@ R2PIPE_WASM=/absolute/path/to/radare2.wasm \
     python -m unittest discover -s python-wasm/tests -v
 ```
 
-Set `R2PIPE_WASM_NETWORK=/absolute/path/to/radare2-net.wasm` to additionally
-exercise real HTTP file IO, host opt-in, localhost sandbox permissions,
-revocation on already-open sockets and cleanup against a local HTTP server.
+Set `R2PIPE_WASM_NETWORK=/absolute/path/to/radare2-http.wasm` to additionally
+exercise the real C GET/POST APIs, headers, UTF-8 and binary bodies, HTTP file IO,
+embedded JavaScript, host opt-in and sandbox denial against a local HTTP server.
 
 The offline runtime tests reuse the repository's small TypeScript WASM API
 fixture. Downloader tests do not require Wasmer or network access.
