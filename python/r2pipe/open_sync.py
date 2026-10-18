@@ -153,32 +153,29 @@ class open(OpenBase):
             while True:
                 if self.process.poll() is not None:
                     raise RuntimeError(f"Process terminated unexpectedly trying to run the command {cmd}\n{self.process}")
-                try:
-                    null_start = False
-                    if len(self.pending) > 0:
-                        foo = self.pending
-                        self.pending = b""
-                    else:
-                        foo = r.read(4096)
-                        if os.name == "nt":
-                            if foo.startswith(b"\x00"):
-                                foo = foo[1:]
-                                null_start = True
-                    if foo:
-                        zro = foo.find(b"\x00")
-                        if zro != -1:
-                            out += foo[0:zro]
-                            if zro + 1 < len(foo):
-                                self.pending = foo[zro + 1:]
-                            break
-                        out += foo
-                    elif null_start:
+                null_start = False
+                if len(self.pending) > 0:
+                    foo = self.pending
+                    self.pending = b""
+                else:
+                    foo = r.read(4096)
+                    if not foo:
+                        raise ConnectionError("r2pipe connection closed before response terminator")
+                    if os.name == "nt":
+                        if foo.startswith(b"\x00"):
+                            foo = foo[1:]
+                            null_start = True
+                if foo:
+                    zro = foo.find(b"\x00")
+                    if zro != -1:
+                        out += foo[0:zro]
+                        if zro + 1 < len(foo):
+                            self.pending = foo[zro + 1:]
                         break
+                    out += foo
+                elif null_start:
+                    break
 
-                except KeyboardInterrupt as e:
-                    raise e
-                except:
-                    pass
             return out.decode("utf-8", errors="ignore")
 
     def _cmd_http(self, cmd):
