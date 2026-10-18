@@ -532,6 +532,32 @@ class TestAsyncRunningLoop(unittest.TestCase):
             self.assertTrue(all(writer.is_closing() for _, writer in connections))
         run_async(main())
 
+    def test_http_body_content_with_length_and_eof_framing(self):
+        async def main():
+            for with_length in (True, False):
+                # Split a UTF-8 character across the 4096-byte body read boundary.
+                for body in (b"", b"\r\n\r\n", b"x" * 4095 + "é\r\n\r\nlast".encode() + b"\xff"):
+                    with self.subTest(with_length=with_length, size=len(body)):
+                        reader = asyncio.StreamReader()
+                        writer = MemoryWriter()
+                        headers = b"HTTP/1.1 200 OK\r\n"
+                        if with_length:
+                            headers += ("Content-Length: %d\r\n" % len(body)).encode()
+                        reader.feed_data(headers + b"\r\n" + body)
+                        reader.feed_eof()
+
+                        async def connect(host, port):
+                            return reader, writer
+
+                        with patch("r2pipe.open_async.asyncio.open_connection", connect):
+                            async with async_open("http://127.0.0.1:9090") as r2:
+                                callbacks = []
+                                expected = body.decode("utf-8", errors="ignore")
+                                self.assertEqual(await r2.cmd("body", callback=callbacks.append), expected)
+                                self.assertEqual(callbacks, [expected])
+                                self.assertTrue(writer.is_closing())
+        run_async(main())
+
 
 class TestAsyncTransportErrors(unittest.TestCase):
     def test_process_eof_never_returns_partial_data_or_calls_callback(self):

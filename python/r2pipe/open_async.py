@@ -527,7 +527,7 @@ class open(OpenBase, ContextDecorator):
             # Read response with timeout to prevent hanging
             try:
                 # Use a timeout to prevent hanging on incomplete responses
-                res = []
+                body = []
 
                 # Read response with proper chunking
                 buffer_size = 4096  # Larger buffer size for efficiency
@@ -537,7 +537,6 @@ class open(OpenBase, ContextDecorator):
                     reader.readuntil(b'\r\n\r\n'),
                     timeout=10.0
                 )
-                res.append(data)
                 header_lines = data[:-4].decode('utf-8', errors='ignore').split('\r\n')
                 content_length = None
                 connection = ""
@@ -561,7 +560,7 @@ class open(OpenBase, ContextDecorator):
                         )
                         if not chunk:
                             raise ConnectionError("Incomplete HTTP response body")
-                        res.append(chunk)
+                        body.append(chunk)
                         remaining -= len(chunk)
                 else:
                     # Responses without a length are delimited by connection close.
@@ -572,7 +571,7 @@ class open(OpenBase, ContextDecorator):
                         )
                         if not chunk:
                             break
-                        res.append(chunk)
+                        body.append(chunk)
 
                 # Reuse only responses whose framing and headers allow persistence.
                 if keep_alive and not reader.at_eof():
@@ -584,24 +583,8 @@ class open(OpenBase, ContextDecorator):
                 writer.close()
                 raise TimeoutError("Timeout while reading HTTP response") from error
 
-            # Process the response
-            res = b"".join(res)
-
-            # Remove HTTP headers
-            start = 0
-            header_end = res.find(b'\r\n\r\n')
-            if header_end != -1:
-                start = header_end + 4
-            else:
-                # Fallback to line-by-line parsing if we can't find the header end
-                for x in res.splitlines():
-                    if not x:
-                        start += 1
-                        break
-                    start += len(x) + 1  # +1 because we must be count '\n'
-
-            # Parse the result
-            return res[start:].decode("utf-8", errors="ignore")
+            body = b"".join(body)
+            return body.decode("utf-8", errors="ignore")
 
         finally:
             if writer is not None and not pooled:
