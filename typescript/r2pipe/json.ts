@@ -44,3 +44,17 @@ export const parseJson: JsonParser = (text) => {
   return JSON.parse(parts.join(""), (_key, value: unknown) =>
     typeof value === "string" && replacements.has(value) ? replacements.get(value) : value);
 };
+
+/** Decode a hexadecimal wire address or a legacy integer as an exact uint64. */
+export function parseAddress(address: number | string | bigint): bigint {
+  if ((typeof address === "number" && !Number.isSafeInteger(address)) ||
+      (typeof address === "string" && !/^0[xX][0-9a-fA-F]+$/.test(address)) ||
+      !["number", "string", "bigint"].includes(typeof address)) {
+    throw new TypeError("Address must be a safe integer, bigint or hexadecimal string");
+  }
+  const value = BigInt(address);
+  if (value < 0n || value > 0xffffffffffffffffn) {
+    throw new RangeError("Address is outside the unsigned 64-bit range");
+  }
+  return value;
+}

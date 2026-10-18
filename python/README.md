@@ -88,3 +88,18 @@ the raw response before JSON parsing, as with blocking calls.
 Async HTTP/TCP connection failures, read errors, and response timeouts raise
 exceptions from the command call (or its awaitable). Success callbacks are
 not called for failed commands; errors are not returned as response strings.
+
+### IO address values
+
+IO request addresses may be hexadecimal strings or legacy JSON integers.
+`r2pipe.parse_address(value)` validates and returns an exact unsigned 64-bit
+Python `int`. It rejects booleans, floats, invalid strings and out-of-range
+values; `cmdj()` otherwise preserves the usual JSON types.
+
+```python
+r2pipe.parse_address("0xffffffffffffffff")  # 18446744073709551615
+r2pipe.parse_address(9007199254740993)       # exact legacy integer
+```
+
+See `examples/io-plugin.py` for a complete memory-backed IO server accepting
+both representations.

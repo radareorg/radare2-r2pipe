@@ -75,9 +75,30 @@ and produces the two maps shown in issue #148. Allocating a JavaScript buffer
 does not tell radare2 its size.
 
 The backend receives **file-relative offsets**: virtual `0x3c000010` becomes
-`address: 16` because this map has a zero physical offset. Its read handler must
+`"address": "0x10"` because this map has a zero physical offset. Its read handler must
 return the actual byte count and that many bytes; its write handler returns the
 number of bytes written. The implementation validates bounds and keeps data only
 in memory until the process exits. Change its `SIZE` and the map-size argument
 together to model a different device. Replace the buffer operations with device
 accesses to adapt the example to hardware.
+
+## Exact 64-bit addresses
+
+Read and write requests now encode the offset as a hexadecimal string, for
+example `{"op":"read","address":"0xffffffffffffffff","count":1}`. Backends
+must also accept legacy numeric addresses. `r2pipe.parseAddress(msg.address)`
+returns a `bigint` in Node/TypeScript; `r2pipe.parse_address(msg["address"])`
+returns an `int` in Python. Both validate the unsigned 64-bit range.
+
+Only convert a JavaScript address to `Number` after checking it fits your buffer
+(or `Number.MAX_SAFE_INTEGER`). Already-unsafe JavaScript numbers are rejected;
+their lost bits cannot be recovered. TypeScript's `parseJson` preserves legacy
+large integer literals as `bigint`, which `parseAddress` also accepts. Other JSON
+strings are left unchanged.
+
+A Python implementation is included at `python/examples/io-plugin.py`. From this
+examples directory, run the same checks with:
+
+```sh
+python3 mapped-io.py --python-backend
+```

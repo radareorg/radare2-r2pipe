@@ -12,7 +12,10 @@ export class R2Pipe {
 	log(string);
 }
 
+export function parseAddress(address: number | string | bigint): bigint;
+
 export default class r2pipe {
+	static parseAddress(address: number | string | bigint): bigint;
 	static open(): R2Pipe;
 }
 // export default r2pipe;
