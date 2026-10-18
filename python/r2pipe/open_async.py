@@ -277,16 +277,16 @@ class open(OpenBase, ContextDecorator):
         else:
             self.asyn = False
 
-    async def _execute_cmd_with_lock(self, cmd, future, callback, started):
+    async def _execute_cmd_with_lock(self, cmd, cmd_id, callback, started):
         """Execute command with proper synchronization"""
         async with self._cmd_lock:
             self._ensure_open()
             started[0] = True
             self._used = True
-            result = await self._cmd_coro(cmd, future, None)
-            if callback is not None and future.done():
+            result = await self._cmd_coro(cmd, cmd_id)
+            if callback is not None:
                 try:
-                    callback(future.result()[1])
+                    callback(result)
                 except Exception as error:
                     self._loop.call_exception_handler({
                         "message": "Exception in r2pipe command callback",
@@ -301,13 +301,11 @@ class open(OpenBase, ContextDecorator):
         self._bind_loop()
         self._ensure_open()
         callback = kwargs.get("callback")
-        future = self._loop.create_future()
         cmd_id = self._next_cmd_id
         self._next_cmd_id += 1
-        future._cmd_id = cmd_id
         started = [False]
         task = self._loop.create_task(
-            self._execute_cmd_with_lock(cmd, future, callback, started)
+            self._execute_cmd_with_lock(cmd, cmd_id, callback, started)
         )
         self._command_tasks.add(task)
         task.add_done_callback(self._command_done)
@@ -371,19 +369,14 @@ class open(OpenBase, ContextDecorator):
             return super().cmd2(cmd, **kwargs)
         return self._r2pipe2(cmd, kwargs)
 
-    async def _cmd_native_async(self, cmd, future, callback):
+    async def _cmd_native_async(self, cmd, _cmd_id):
         if self._native_executor is None:
             self._native_executor = ThreadPoolExecutor(max_workers=1)
-        result = await self._loop.run_in_executor(
+        return await self._loop.run_in_executor(
             self._native_executor, super()._cmd_native, cmd
         )
-        if hasattr(future, "_cmd_id"):
-            future.set_result((future._cmd_id, result, callback))
-        else:
-            future.set_result((result, callback))
-        return result
 
-    async def _cmd_process(self, cmd, future, callback):
+    async def _cmd_process(self, cmd, _cmd_id):
         # Process initialization if needed
         if not hasattr(self, "process"):
             if self.r2home is not None:
@@ -431,14 +424,7 @@ class open(OpenBase, ContextDecorator):
                 # Extract the complete response and update pending
                 response = self._pending_output[:null_pos]
                 self._pending_output = self._pending_output[null_pos+1:]
-                result = response.decode("utf-8")
-
-                # Set result and return
-                if hasattr(future, "_cmd_id"):
-                    future.set_result((future._cmd_id, result, callback))
-                else:
-                    future.set_result((result, callback))
-                return result
+                return response.decode("utf-8")
 
             # Add pending output to our current response
             out.append(self._pending_output)
@@ -466,15 +452,7 @@ class open(OpenBase, ContextDecorator):
                 out.append(data)
 
         # Join the output and convert to string
-        result = b"".join(out).decode("utf-8")
-
-        # Set result with command ID if available
-        if hasattr(future, "_cmd_id"):
-            future.set_result((future._cmd_id, result, callback))
-        else:
-            future.set_result((result, callback))
-
-        return result
+        return b"".join(out).decode("utf-8")
 
     async def _get_http_connection(self):
         """Get a connection from the pool or create a new one"""
@@ -518,7 +496,7 @@ class open(OpenBase, ContextDecorator):
                 writer.close()
                 await writer.wait_closed()
 
-    async def _cmd_http(self, cmd, future, callback):
+    async def _cmd_http(self, cmd, cmd_id):
         """HTTP command execution with connection pooling and request ID tracking"""
         writer = None
         pooled = False
@@ -528,11 +506,6 @@ class open(OpenBase, ContextDecorator):
             # Get a connection from the pool
             reader, writer = await self._get_http_connection()
 
-            # Add request ID as a custom header for tracking
-            cmd_id = None
-            if hasattr(future, '_cmd_id'):
-                cmd_id = future._cmd_id
-
             # Create HTTP request with request ID tracking
             message = "\r\n".join(
                 [
@@ -540,7 +513,7 @@ class open(OpenBase, ContextDecorator):
                     "Host: %s:%s" % (self._host, self._port),
                     "User-Agent: r2pipe/Python Client",
                     "Accept: */*",
-                    "X-R2Pipe-Request-ID: %s" % (cmd_id if cmd_id is not None else "none"),
+                    "X-R2Pipe-Request-ID: %s" % cmd_id,
                     "Connection: keep-alive",  # Keep connection alive for pooling
                     "",
                     "",
@@ -628,14 +601,7 @@ class open(OpenBase, ContextDecorator):
                     start += len(x) + 1  # +1 because we must be count '\n'
 
             # Parse the result
-            result = res[start:].decode("utf-8", errors="ignore")
-
-            # Set result with command ID if available
-            if cmd_id is not None:
-                future.set_result((cmd_id, result, callback))
-            else:
-                future.set_result((result, callback))
-            return result
+            return res[start:].decode("utf-8", errors="ignore")
 
         finally:
             if writer is not None and not pooled:
@@ -680,18 +646,13 @@ class open(OpenBase, ContextDecorator):
                 writer.close()
                 await writer.wait_closed()
 
-    async def _cmd_tcp(self, cmd, future, callback):
-        """TCP command execution with connection pooling and command tracking"""
+    async def _cmd_tcp(self, cmd, _cmd_id):
+        """TCP command execution with connection pooling"""
         writer = None
         pooled = False
         try:
             # Get a connection from the pool
             reader, writer = await self._get_tcp_connection()
-
-            # Get command ID if available
-            cmd_id = None
-            if hasattr(future, '_cmd_id'):
-                cmd_id = future._cmd_id
 
             writer.write(cmd.encode("utf-8"))
 
@@ -749,16 +710,7 @@ class open(OpenBase, ContextDecorator):
             # Process the response
             response_data = b"".join(res)
 
-            # Check if the response contains our tracking ID
-            result = response_data.decode("utf-8", errors="ignore")
-
-            # Set result with command ID if available
-            if cmd_id is not None:
-                future.set_result((cmd_id, result, callback))
-            else:
-                future.set_result((result, callback))
-
-            return result
+            return response_data.decode("utf-8", errors="ignore")
 
         finally:
             if writer is not None and not pooled:
