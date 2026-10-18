@@ -1,7 +1,8 @@
 import threading
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+import r2pipe
 from r2pipe.open_sync import open as sync_open
 
 
@@ -57,6 +58,32 @@ class TestSyncTransportErrors(unittest.TestCase):
             with self.subTest(chunks=chunks):
                 self.r2.process.stdout.read.side_effect = chunks
                 self.assertEqual(self.r2.cmd("ij"), expected)
+
+
+class TestSessionDiscoveryErrors(unittest.TestCase):
+    def test_interrupts_propagate(self):
+        for error in (KeyboardInterrupt(), SystemExit()):
+            with self.subTest(error=type(error).__name__):
+                with patch("r2pipe.open_base.Popen") as popen:
+                    popen.return_value.communicate.side_effect = error
+                    with self.assertRaises(type(error)) as caught:
+                        r2pipe.local_sessions()
+                    self.assertIs(caught.exception, error)
+
+    def test_unavailable_agent_still_returns_empty_list(self):
+        with patch("r2pipe.open_base.Popen", side_effect=OSError("unavailable")):
+            self.assertEqual(r2pipe.local_sessions(), [])
+
+    def test_agent_responses(self):
+        cases = ((0, b'[{"uri": "http://localhost:9090"}]',
+                  [{"uri": "http://localhost:9090"}]),
+                 (1, b"", []), (0, b"invalid JSON", []), (0, b"{}", []))
+        for status, output, expected in cases:
+            with self.subTest(status=status, output=output):
+                with patch("r2pipe.open_base.Popen") as popen:
+                    popen.return_value.returncode = status
+                    popen.return_value.communicate.return_value = (output, b"")
+                    self.assertEqual(r2pipe.local_sessions(), expected)
 
 
 if __name__ == "__main__":
