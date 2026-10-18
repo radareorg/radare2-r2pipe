@@ -30,6 +30,34 @@ class TestSyncTransportErrors(unittest.TestCase):
                     self.r2.process.stdout.read.assert_not_called()
                     method.side_effect = None
 
+    def test_read_errors_propagate_without_retrying(self):
+        for error in (OSError("read failed"), ValueError("closed file"),
+                      KeyboardInterrupt(), SystemExit()):
+            with self.subTest(error=type(error).__name__):
+                read = self.r2.process.stdout.read
+                read.reset_mock()
+                read.side_effect = [error, b"unexpected retry\x00"]
+                with self.assertRaises(type(error)) as caught:
+                    self.r2.cmd("ij")
+                self.assertIs(caught.exception, error)
+                read.assert_called_once()
+
+    def test_eof_before_terminator_raises_without_retrying(self):
+        for chunks in ([b""], [b"partial", b""]):
+            with self.subTest(chunks=chunks):
+                read = self.r2.process.stdout.read
+                read.reset_mock()
+                read.side_effect = chunks + [b"unexpected retry\x00"]
+                with self.assertRaisesRegex(ConnectionError, "closed"):
+                    self.r2.cmd("ij")
+                self.assertEqual(read.call_count, len(chunks))
+
+    def test_terminated_responses_still_succeed(self):
+        for chunks, expected in (([b"\x00"], ""), ([b"hel", b"lo\x00"], "hello")):
+            with self.subTest(chunks=chunks):
+                self.r2.process.stdout.read.side_effect = chunks
+                self.assertEqual(self.r2.cmd("ij"), expected)
+
 
 if __name__ == "__main__":
     unittest.main()
