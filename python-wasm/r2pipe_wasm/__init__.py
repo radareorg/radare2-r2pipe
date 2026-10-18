@@ -13,7 +13,7 @@ class R2Pipe:
     """One isolated WASM instance/core; only explicit preopens share host files."""
 
     def __init__(self, filename=None, *, wasm=None, version="latest", preopens=None,
-                 manager=None):
+                 manager=None, network=False):
         # Keep release management usable without the native Wasmer extension.
         try:
             from wasmer import engine, wasi, Function, ImportObject, Instance, Module, Store
@@ -28,14 +28,22 @@ class R2Pipe:
         self._instance = None
         self._exports = None
         self._wasi = None
-        path = Path(wasm) if wasm is not None else (manager or DownloadManager()).download(version)
+        self._network = None
+        path = Path(wasm) if wasm is not None else (manager or DownloadManager()).download(version, network=network)
         store = Store(engine.Universal(Compiler))
         module = Module(store, path.read_bytes())
-        # No browser HTTP callbacks, WASIX, process execution, or arbitrary host imports.
+        from .network import SocketBridge
+        if network:
+            self._network = SocketBridge(self)
+        # Only the documented r2net ABI is allowed in addition to Preview1.
         for imported in module.imports:
+            if imported.module == "r2net" and imported.name in SocketBridge.NAMES:
+                continue
             if imported.module != "wasi_snapshot_preview1":
                 raise ValueError(f"Unsupported WASM import {imported.module}.{imported.name}; "
                                  "use a wasi-api build")
+        if network and not any(item.module == "r2net" for item in module.imports):
+            raise ValueError("This WASM build has no networking bridge; use a wasi-api-net build")
         required = {"memory", "malloc", "free", "r_core_new", "r_core_free",
                     "r_core_cmd_str", "r_core_file_open", "r_core_bin_load"}
         missing = required - {export.name for export in module.exports}
@@ -60,6 +68,11 @@ class R2Pipe:
                     # Preview1 ENOTSUP. Also covers sock_accept, absent in Wasmer 1.1.
                     functions[imported.name] = Function(store, lambda *_args: 58, imported.type)
             imports.register("wasi_snapshot_preview1", functions)
+            imports.register("r2net", {
+                item.name: Function(store, self._network.bind(item.name) if network
+                                    else lambda *_args: -1, item.type)
+                for item in module.imports if item.module == "r2net"
+            })
         self._instance = Instance(module, imports)
         self._exports = self._instance.exports
         try:
@@ -142,6 +155,9 @@ class R2Pipe:
                 if self._core:
                     self._exports.r_core_free(self._core)
             finally:
+                if self._network is not None:
+                    self._network.close_all()
+                    self._network = None
                 self._core = 0
                 self._exports = None
                 self._instance = None
