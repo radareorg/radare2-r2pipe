@@ -475,14 +475,70 @@ class TestAsyncRunningLoop(unittest.TestCase):
             with patch("r2pipe.open_async.asyncio.open_connection", connect):
                 async with async_open("http://127.0.0.1:9090") as r2:
                     errors = []
-                    self.assertIsNone(await r2.cmd("truncated", callback=errors.append))
-                    self.assertEqual(errors, ["Incomplete HTTP response body"])
+                    with self.assertRaisesRegex(ConnectionError, "Incomplete HTTP response body"):
+                        await r2.cmd("truncated", callback=errors.append)
+                    self.assertEqual(errors, [])
                     self.assertTrue(connections[0][1].is_closing())
                     self.assertEqual(r2._connection_pool["127.0.0.1:9090"], [])
                     self.assertEqual(await r2.cmd("next"), "next\n")
                     self.assertEqual(len(connections), 2)
             self.assertTrue(all(writer.is_closing() for _, writer in connections))
         run_async(main())
+
+
+class TestAsyncTransportErrors(unittest.TestCase):
+    def test_connection_errors_propagate_through_command_wrappers(self):
+        async def main():
+            error = ConnectionRefusedError("connection refused")
+
+            async def connect(host, port):
+                raise error
+
+            with patch("r2pipe.open_async.asyncio.open_connection", connect):
+                for scheme in ("http", "tcp"):
+                    async with async_open(scheme + "://127.0.0.1:9090") as r2:
+                        callbacks = []
+                        for name in ("cmd", "cmdj", "cmdJ", "call", "cmd2", "cmd2j"):
+                            with self.subTest(scheme=scheme, method=name):
+                                with self.assertRaises(ConnectionRefusedError) as caught:
+                                    await getattr(r2, name)("ij", callback=callbacks.append)
+                                self.assertIs(caught.exception, error)
+                        self.assertEqual(callbacks, [])
+        run_async(main())
+
+    def test_read_errors_and_timeouts_close_connections(self):
+        async def main():
+            for scheme in ("http", "tcp"):
+                for error in (OSError("read failed"), asyncio.TimeoutError()):
+                    with self.subTest(scheme=scheme, error=type(error).__name__):
+                        writer = MemoryWriter()
+
+                        async def connect(host, port):
+                            reader = asyncio.StreamReader()
+                            reader.set_exception(error)
+                            return reader, writer
+
+                        with patch("r2pipe.open_async.asyncio.open_connection", connect):
+                            async with async_open(scheme + "://127.0.0.1:9090") as r2:
+                                callbacks = []
+                                expected = TimeoutError if isinstance(error, asyncio.TimeoutError) else OSError
+                                with self.assertRaises(expected):
+                                    await r2.cmd("ij", callback=callbacks.append)
+                                self.assertEqual(callbacks, [])
+                                self.assertTrue(writer.is_closing())
+                                self.assertTrue(all(not pool for pool in r2._connection_pool.values()))
+        run_async(main())
+
+    def test_connection_errors_propagate_without_running_loop(self):
+        async def connect(host, port):
+            raise ConnectionRefusedError("connection refused")
+
+        with patch("r2pipe.open_async.asyncio.open_connection", connect):
+            for scheme in ("http", "tcp"):
+                with self.subTest(scheme=scheme):
+                    with async_open(scheme + "://127.0.0.1:9090") as r2:
+                        with self.assertRaises(ConnectionRefusedError):
+                            r2.cmd("ij")
 
 
 if __name__ == "__main__":

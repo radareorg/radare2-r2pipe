@@ -610,10 +610,10 @@ class open(OpenBase, ContextDecorator):
                     await self._return_http_connection(reader, writer)
                     pooled = True
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as error:
                 # If timeout occurs, close the connection
                 writer.close()
-                raise TimeoutError("Timeout while reading HTTP response")
+                raise TimeoutError("Timeout while reading HTTP response") from error
 
             # Process the response
             res = b"".join(res)
@@ -641,12 +641,6 @@ class open(OpenBase, ContextDecorator):
                 future.set_result((result, callback))
             return result
 
-        except Exception as e:
-            # Set error result with command ID if available
-            if hasattr(future, '_cmd_id'):
-                future.set_result((future._cmd_id, str(e), callback))
-            else:
-                future.set_result((str(e), callback))
         finally:
             if writer is not None and not pooled:
                 writer.close()
@@ -751,10 +745,10 @@ class open(OpenBase, ContextDecorator):
                     # Connection was closed by server, close our end too
                     writer.close()
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as error:
                 # If we timeout on the initial read, something is wrong
                 writer.close()
-                raise TimeoutError("Timeout while reading TCP response")
+                raise TimeoutError("Timeout while reading TCP response") from error
 
             # Process the response
             response_data = b"".join(res)
@@ -770,12 +764,6 @@ class open(OpenBase, ContextDecorator):
 
             return result
 
-        except Exception as e:
-            # Set error result with command ID if available
-            if hasattr(future, '_cmd_id'):
-                future.set_result((future._cmd_id, str(e), callback))
-            else:
-                future.set_result((str(e), callback))
         finally:
             if writer is not None and not pooled:
                 writer.close()

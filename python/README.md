@@ -84,3 +84,7 @@ has already started lets its response finish draining before the next command
 runs; the command may still change radare2 state. Closing waits for these
 started commands and rejects commands still waiting to run. Callbacks receive
 the raw response before JSON parsing, as with blocking calls.
+
+Async HTTP/TCP connection failures, read errors, and response timeouts raise
+exceptions from the command call (or its awaitable). Success callbacks are
+not called for failed commands; errors are not returned as response strings.
