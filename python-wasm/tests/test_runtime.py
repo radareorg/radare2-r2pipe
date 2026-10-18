@@ -1,4 +1,5 @@
 """Exercise the actual Wasmer engine, not a mocked memory/exports interface."""
+from importlib import import_module
 import os
 from pathlib import Path
 import sys
@@ -10,7 +11,7 @@ import r2pipe_wasm
 
 try:
     from wasmer import wat2wasm
-    import wasmer_compiler_cranelift
+    import_module("wasmer_compiler_cranelift")
     HAVE_WASMER = True
 except ImportError:
     HAVE_WASMER = False
