@@ -65,10 +65,14 @@ class HttpServerTest(unittest.TestCase):
         status, length = alloc('    '), alloc('    ')
         result = 0
         try:
-            fn = getattr(e, ('r_socket_http_' if is_real else 'http_') + method)
+            fn = getattr(e, 'r_socket_http_' + method) if is_real else e.http_request
             args = [address, fields if headers else 0]
+            if not is_real:
+                args.insert(0, int(method == 'post'))
             if method == 'post':
                 args.append(alloc('{"prompt":"hello món"}'))
+            elif not is_real:
+                args.append(0)
             result = fn(*args, status, length) & 0xffffffff
             if not result:
                 return None
@@ -89,9 +93,8 @@ class HttpServerTest(unittest.TestCase):
 class HttpImportsTest(HttpServerTest):
     def test_imports_opt_in_get_post_status_and_binary(self):
         wat = '''(module
-          (import "r2" "http_get" (func $get (param i32 i32 i32 i32) (result i32)))
-          (import "r2" "http_post" (func $post (param i32 i32 i32 i32 i32) (result i32)))
-          (export "http_get" (func $get)) (export "http_post" (func $post))
+          (import "r2" "http_request" (func $request (param i32 i32 i32 i32 i32 i32) (result i32)))
+          (export "http_request" (func $request))
           (memory (export "memory") 1)
           (global $heap (mut i32) (i32.const 4096))
           (func (export "malloc") (param $n i32) (result i32)

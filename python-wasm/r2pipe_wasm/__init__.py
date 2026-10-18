@@ -37,12 +37,12 @@ class R2Pipe:
             self._http = HttpBridge(self)
         # Only the existing HTTP ABI is allowed in addition to Preview1.
         for imported in module.imports:
-            if imported.module == "r2" and imported.name in ("http_get", "http_post"):
+            if imported.module == "r2" and imported.name == "http_request":
                 continue
             if imported.module != "wasi_snapshot_preview1":
                 raise ValueError(f"Unsupported WASM import {imported.module}.{imported.name}; "
                                  "use a wasi-api build")
-        if network and not any(item.module == "r2" and item.name == "http_get" for item in module.imports):
+        if network and not any(item.module == "r2" and item.name == "http_request" for item in module.imports):
             raise ValueError("This WASM build has no HTTP bridge; use a wasi-api-http build")
         required = {"memory", "malloc", "free", "r_core_new", "r_core_free",
                     "r_core_cmd_str", "r_core_file_open", "r_core_bin_load"}
