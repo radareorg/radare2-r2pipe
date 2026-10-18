@@ -1,7 +1,13 @@
-import sys
+import argparse
 import r2pipe
 
-r2 = r2pipe.open(sys.argv[1] if len(sys.argv) > 1 else "malloc://2M", flags=[
+parser = argparse.ArgumentParser(description="Verify the mapped virtual IO device")
+parser.add_argument("firmware", nargs="?", default="malloc://2M")
+parser.add_argument("--python-backend", action="store_true")
+args = parser.parse_args()
+backend = ("python3 ../../../python/examples/io-plugin.py" if args.python_backend
+           else "node test-r2io-plugin.js")
+r2 = r2pipe.open(args.firmware, flags=[
     "-N", "-e", "scr.interactive=false", "-a", "arm", "-b", "32", "-e", "cfg.bigendian=true",
 ])
 try:
@@ -14,7 +20,7 @@ try:
 
     # Specify the virtual size explicitly: 4 MiB.
     before = {d["fd"] for d in r2.cmdj("oj")}
-    r2.cmd('on "r2pipe://node test-r2io-plugin.js" 0x3c000000 rw 0x400000')
+    r2.cmd(f'on "r2pipe://{backend}" 0x3c000000 rw 0x400000')
     added = [d["fd"] for d in r2.cmdj("oj") if d["fd"] not in before]
     assert len(added) == 1, added
     fd = added[0]

@@ -1,4 +1,4 @@
-import { open, parseJson, type JsonParser, type R2PipeCmdInterface, type R2PipeOptions, type R2PipeWasmOptions } from "..";
+import { open, parseJson, parseAddress, type JsonParser, type R2PipeCmdInterface, type R2PipeOptions, type R2PipeWasmOptions } from "..";
 
 const parser: JsonParser = JSON.parse;
 const options: R2PipeOptions = { jsonParser: parser };
@@ -15,3 +15,8 @@ const wasmPipe: R2PipeCmdInterface = open("/data/program", { wasm, jsonParser: p
 // @ts-expect-error WASM must name an explicit module file.
 open("", { wasm: {} });
 void [result, unknownResult, objectResult, primitive, parsed, wasmPipe];
+
+const address: bigint = parseAddress("0xffffffffffffffff");
+// @ts-expect-error A boolean is not an address.
+parseAddress(true);
+void address;

@@ -13,8 +13,19 @@ memory.set([1, 2, 3]);
 
 r2pipe.ioplugin((io, msg) => {
   // Addresses are offsets within the backend, not virtual addresses.
-  const offset = msg.address;
-  const valid = Number.isSafeInteger(offset) && offset >= 0 && offset <= SIZE;
+  // Normalize either legacy numbers or hexadecimal uint64 strings.
+  let address;
+  if (msg.op === 'read' || msg.op === 'write') {
+    try {
+      address = r2pipe.parseAddress(msg.address);
+    } catch (error) {
+      io.send({ result: -1, data: [] });
+      return;
+    }
+  }
+  // Convert to a Buffer index only after checking its bounded range.
+  const valid = address !== undefined && address <= BigInt(SIZE);
+  const offset = valid ? Number(address) : 0;
   switch (msg.op) {
     case 'read': {
       if (!valid || !Number.isSafeInteger(msg.count) || msg.count < 0) {

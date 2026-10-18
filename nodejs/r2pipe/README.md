@@ -175,10 +175,17 @@ r2pipe.launch ("/bin/ls", doSomeStuff);
 
 Callback for the libr/io/r2pipe plugin interface to write IO plugins using the r2pipe api.
 
+The callback receives the wire address unchanged: a hexadecimal uint64 string
+from current radare2, or a number from older versions. Use
+`r2pipe.parseAddress(msg.address)` to obtain an exact `bigint`. Safe numbers and
+bigints from a custom lossless JSON parser are also accepted. Invalid values,
+uint64 overflow and unsafe JavaScript numbers are rejected. Convert to `Number`
+only after a range check. See [the complete example](examples/mapped-io.md).
+
 ```js
 var r2pipe = require('r2pipe');
 
-r2pipe.ioplugin(function (err, io, msg) {
+r2pipe.ioplugin(function (io, msg) {
   switch (msg.op) {
     case 'read':
       var obj = {

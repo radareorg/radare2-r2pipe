@@ -111,3 +111,16 @@ WASM tests include a small offline API fixture. To also exercise a released rada
 ## Author
 
 --pancake <@nopcode.org>
+
+## IO address values
+
+IO requests encode unsigned 64-bit addresses as hexadecimal strings. Use
+`parseAddress` for those strings or legacy numbers/bigints; it returns an exact
+`bigint` and rejects invalid syntax, out-of-range values and already-rounded
+JavaScript numbers. `parseJson` continues to preserve JSON strings as strings.
+
+```typescript
+import { parseAddress, parseJson } from "r2pipe-ts";
+const offset = parseAddress("0xffffffffffffffff"); // 18446744073709551615n
+const legacy = parseAddress(parseJson("9007199254740993") as bigint);
+```

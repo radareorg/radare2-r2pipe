@@ -5,7 +5,7 @@ import {R2PipeLocal} from "./local.js";
 import {R2PipeWasm} from "./wasm.js";
 export type { R2PipeCmdInterface, R2PipeOptions, R2PipeWasmOptions } from "./base.js";
 export type { JsonParser } from "./json.js";
-export { parseJson } from "./json.js";
+export { parseJson, parseAddress } from "./json.js";
 
 // Function to create an instance of R2Pipe
 export function open(filePath: string = "", options: R2PipeOptions = {}): R2PipeCmdInterface {

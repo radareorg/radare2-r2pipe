@@ -329,6 +329,7 @@ const r2node = {
   r2bin: 'radare2',
   options: [],
   jsonParse: JSON.parse,
+  parseAddress: util.parseAddress,
   isAvailable: isAvailable,
   syscmd: syscmd,
   syscmdj: syscmdj,

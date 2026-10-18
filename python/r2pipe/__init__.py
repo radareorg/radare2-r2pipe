@@ -23,10 +23,25 @@ Example:
   > print(r.cmdj("aoj")[0]['size']) > r.quit()
 """
 
+import re
+
 from r2pipe.open_sync import open
 from r2pipe.open_base import OpenBase, in_r2, in_rlang, r2lang
 
 VERSION = "2.0.0"
+
+
+def parse_address(address):
+    """Decode a hexadecimal wire address or a legacy integer as an exact uint64."""
+    if isinstance(address, str):
+        if not re.fullmatch(r"0[xX][0-9a-fA-F]+", address):
+            raise ValueError("Address must be a hexadecimal string")
+        address = int(address, 16)
+    elif type(address) is not int:
+        raise TypeError("Address must be an integer or hexadecimal string")
+    if not 0 <= address <= 0xffffffffffffffff:
+        raise ValueError("Address is outside the unsigned 64-bit range")
+    return address
 
 
 def version():
