@@ -22,7 +22,8 @@ class HttpBridge:
     def __init__(self, pipe):
         self.pipe = pipe
 
-    def _request(self, method, url, headers, data, code, length):
+    def http_request(self, post, url, headers, data, code, length):
+        method = "POST" if post else "GET"
         exports = self.pipe._exports
         pointer = 0
         try:
@@ -66,9 +67,3 @@ class HttpBridge:
             if pointer:
                 exports.free(pointer)
             return 0
-
-    def http_get(self, url, headers, code, length):
-        return self._request("GET", url, headers, 0, code, length)
-
-    def http_post(self, url, headers, data, code, length):
-        return self._request("POST", url, headers, data, code, length)

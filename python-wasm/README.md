@@ -128,6 +128,9 @@ interactive terminal. Use `quit()`/`close()` or a context manager to release it.
 Only HTTP(S) GET and POST are exposed, through radare2's existing
 `r_socket_http_get()` and `r_socket_http_post()` C APIs. There are no socket
 handles, listeners, UDP, WebSockets, or shell-curl execution.
+The host ABI is one `r2.http_request(post, url, headers, data, code, length)`
+import, with `post=0` for GET and `post=1` for POST. Update the host and WASM
+module together; this replaces the earlier two-import bridge.
 
 ```sh
 # In a clean radare2 checkout containing the HTTP bridge:
