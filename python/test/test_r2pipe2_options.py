@@ -82,10 +82,9 @@ class TestR2Pipe2Options(unittest.TestCase):
     def test_async_options_callbacks_and_false_overrides(self):
         async def main():
             async with async_open("-", ["-N", "-2"]) as r2:
-                async def transport(command, future, callback):
+                async def transport(command, cmd_id):
                     self.sent.append(command)
                     await asyncio.sleep(0)
-                    future.set_result((future._cmd_id, self.response, callback))
                     return self.response
                 r2._cmd_coro = transport
                 callbacks = Callback()

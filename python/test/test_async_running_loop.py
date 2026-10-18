@@ -137,6 +137,54 @@ class TestAsyncRunningLoop(unittest.TestCase):
                 self.assertEqual(await r2.wait([]), [])
         run_async(main())
 
+    def test_callback_failure_is_reported_once_and_preserves_command_result(self):
+        async def main():
+            async with async_open("-", self.flags) as r2:
+                calls, errors = [], []
+                error = ValueError("callback failed")
+                handler = r2._loop.get_exception_handler()
+                r2._loop.set_exception_handler(lambda loop, context: errors.append(context))
+
+                def callback(result):
+                    calls.append(result)
+                    raise error
+
+                try:
+                    self.assertEqual(await r2.cmd("?e reply", callback=callback), "reply\n")
+                    self.assertEqual(calls, ["reply\n"])
+                    self.assertEqual(len(errors), 1)
+                    self.assertIs(errors[0]["exception"], error)
+                    self.assertEqual(await r2.cmd("?e following"), "following\n")
+                finally:
+                    r2._loop.set_exception_handler(handler)
+        run_async(main())
+
+    def test_http_request_ids_preserve_submission_order(self):
+        async def main():
+            requests = []
+
+            class Writer(MemoryWriter):
+                def write(self, data):
+                    requests.append(data)
+
+            async def connect(host, port):
+                reader = asyncio.StreamReader()
+                reader.feed_data(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n" * 3)
+                return reader, Writer()
+
+            with patch("r2pipe.open_async.asyncio.open_connection", connect):
+                async with async_open("http://127.0.0.1:9090") as r2:
+                    callbacks = []
+                    results = await asyncio.gather(*[
+                        r2.cmd(str(index), callback=callbacks.append) for index in range(3)
+                    ])
+                    self.assertEqual(results, ["", "", ""])
+                    self.assertEqual(callbacks, results)
+                    self.assertEqual(len(requests), 3)
+                    for index, request in enumerate(requests):
+                        self.assertIn(("X-R2Pipe-Request-ID: %d\r\n" % index).encode(), request)
+        run_async(main())
+
     def test_canceled_wait_followed_by_close_retrieves_wrapper_errors(self):
         async def main():
             r2 = async_open("-", self.flags)
@@ -147,10 +195,9 @@ class TestAsyncRunningLoop(unittest.TestCase):
             handler = loop.get_exception_handler()
             loop.set_exception_handler(lambda loop, context: errors.append(context))
 
-            async def blocked_command(cmd, future, callback):
+            async def blocked_command(cmd, cmd_id):
                 entered.set()
                 await asyncio.wait_for(release.wait(), 5)
-                future.set_result((future._cmd_id, cmd, callback))
                 return cmd
 
             r2._cmd_coro = blocked_command
