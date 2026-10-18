@@ -28,22 +28,22 @@ class R2Pipe:
         self._instance = None
         self._exports = None
         self._wasi = None
-        self._network = None
+        self._http = None
         path = Path(wasm) if wasm is not None else (manager or DownloadManager()).download(version, network=network)
         store = Store(engine.Universal(Compiler))
         module = Module(store, path.read_bytes())
-        from .network import SocketBridge
+        from .http import HttpBridge
         if network:
-            self._network = SocketBridge(self)
-        # Only the documented r2net ABI is allowed in addition to Preview1.
+            self._http = HttpBridge(self)
+        # Only the existing HTTP ABI is allowed in addition to Preview1.
         for imported in module.imports:
-            if imported.module == "r2net" and imported.name in SocketBridge.NAMES:
+            if imported.module == "r2" and imported.name in ("http_get", "http_post"):
                 continue
             if imported.module != "wasi_snapshot_preview1":
                 raise ValueError(f"Unsupported WASM import {imported.module}.{imported.name}; "
                                  "use a wasi-api build")
-        if network and not any(item.module == "r2net" for item in module.imports):
-            raise ValueError("This WASM build has no networking bridge; use a wasi-api-net build")
+        if network and not any(item.module == "r2" and item.name == "http_get" for item in module.imports):
+            raise ValueError("This WASM build has no HTTP bridge; use a wasi-api-http build")
         required = {"memory", "malloc", "free", "r_core_new", "r_core_free",
                     "r_core_cmd_str", "r_core_file_open", "r_core_bin_load"}
         missing = required - {export.name for export in module.exports}
@@ -68,10 +68,10 @@ class R2Pipe:
                     # Preview1 ENOTSUP. Also covers sock_accept, absent in Wasmer 1.1.
                     functions[imported.name] = Function(store, lambda *_args: 58, imported.type)
             imports.register("wasi_snapshot_preview1", functions)
-            imports.register("r2net", {
-                item.name: Function(store, self._network.bind(item.name) if network
-                                    else lambda *_args: -1, item.type)
-                for item in module.imports if item.module == "r2net"
+            imports.register("r2", {
+                item.name: Function(store, getattr(self._http, item.name) if network
+                                    else lambda *_args: 0, item.type)
+                for item in module.imports if item.module == "r2"
             })
         self._instance = Instance(module, imports)
         self._exports = self._instance.exports
@@ -155,9 +155,7 @@ class R2Pipe:
                 if self._core:
                     self._exports.r_core_free(self._core)
             finally:
-                if self._network is not None:
-                    self._network.close_all()
-                    self._network = None
+                self._http = None
                 self._core = 0
                 self._exports = None
                 self._instance = None

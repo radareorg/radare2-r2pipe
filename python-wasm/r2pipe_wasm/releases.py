@@ -17,7 +17,7 @@ MAX_MODULE = 256 * 1024 * 1024
 
 def api_asset(release, *, network=False):
     """Return the WASI reactor asset, or None (CLI/browser builds are unsuitable)."""
-    suffix = "-wasi-api-net.zip" if network else "-wasi-api.zip"
+    suffix = "-wasi-api-http.zip" if network else "-wasi-api.zip"
     return next((asset for asset in release.get("assets", [])
                  if asset["name"].startswith("radare2-")
                  and asset["name"].endswith(suffix)), None)
@@ -60,7 +60,7 @@ class DownloadManager:
 
     def select(self, version="latest", *, network=False):
         """Select the newest stable API build, or an exact GitHub tag."""
-        kind = "wasi-api-net" if network else "wasi-api"
+        kind = "wasi-api-http" if network else "wasi-api"
         if version != "latest":
             release = self._json(f"{API}/tags/{quote(version, safe='')}")
             if not api_asset(release, network=network):

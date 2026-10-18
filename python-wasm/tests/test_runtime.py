@@ -66,7 +66,7 @@ class RuntimeTest(unittest.TestCase):
             wasm.write_bytes(wat2wasm('(module)'))
             with self.assertRaisesRegex(ValueError, "Missing WASM exports"):
                 r2pipe_wasm.open(wasm=wasm)
-            wasm.write_bytes(wat2wasm('(module (import "r2" "http_get" (func)))'))
+            wasm.write_bytes(wat2wasm('(module (import "r2" "system" (func)))'))
             with self.assertRaisesRegex(ValueError, "Unsupported WASM import"):
                 r2pipe_wasm.open(wasm=wasm)
 
