@@ -24,27 +24,10 @@ Example:
 """
 
 from r2pipe.open_sync import open
-from r2pipe.open_base import OpenBase
-
-try:
-    import r2lang
-except ImportError:
-    r2lang = None
+from r2pipe.open_base import OpenBase, in_r2, in_rlang, r2lang
 
 VERSION = "2.0.0"
 
-def in_r2():
-    """Return wheter r2pipe is called from radare2 environment or the system shell
-        """
-    try:
-        import os
-        a = int(os.environ["R2PIPE_IN"])
-        b = int(os.environ["R2PIPE_OUT"])
-        return a > 0 and b > 0
-    except (ValueError, KeyError, TypeError):
-        return False
-
-from r2pipe.open_base import in_rlang
 
 def version():
     """Return string with the version of the r2pipe library

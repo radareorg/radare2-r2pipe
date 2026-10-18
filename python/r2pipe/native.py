@@ -2,13 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from ctypes import Structure, addressof, c_char_p, c_void_p, c_int, c_uint, c_float, c_double, c_long, POINTER
+from ctypes import CDLL, Structure, addressof, c_char_p, c_void_p, c_int, c_uint, c_float, c_double, c_long, POINTER
 from ctypes.util import find_library
-
-try:
-    from ctypes import CDLL
-except ImportError:
-    pass
 
 try:
     from ctypes import WinDLL
@@ -55,12 +50,11 @@ def r2lib():
         else:
             lib = CDLL(lib_name)
         return lib
-    except OSError as err:
-        # print(err)
+    except OSError:
         pass
     return None
 
-class AddressHolder(object):
+class AddressHolder:
     def __get__(self, obj, type_):
         if getattr(obj, "_address", None) is None:
             obj._address = addressof(obj)
@@ -69,7 +63,7 @@ class AddressHolder(object):
     def __set__(self, obj, value):
         obj._address = value
 
-class WrappedRMethod(object):
+class WrappedRMethod:
     def __init__(self, cname, args, ret):
         self.cname = cname
         self.args = args
@@ -96,7 +90,7 @@ class WrappedRMethod(object):
             return res.decode()
         return res
 
-class WrappedApiMethod(object):
+class WrappedApiMethod:
     def __init__(self, method, ret2, last):
         self.method = method
         self._o = None
@@ -162,10 +156,3 @@ class RCore(Structure):
         if not self._o:
             raise RuntimeError("RCore is closed")
         return self._r_core_cmd_str[1](self._o, cmd)
-
-### self._o = AddressHolder()
-#  c = r2pipe.native.RCore()
-#  c.cmd_str("o /bin/ls")
-#  print(c)
-#  print(c.cmd_str("s entry0;pd 20"))
-#  c.free();
