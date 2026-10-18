@@ -450,10 +450,7 @@ class open(OpenBase, ContextDecorator):
             data = await self.process.stdout.read(buffer_size)
 
             if not data:
-                # Connection closed or error
-                if out:
-                    break
-                return None
+                raise ConnectionError("r2pipe connection closed before response terminator")
 
             null_pos = data.find(b"\x00")
             if null_pos != -1:
