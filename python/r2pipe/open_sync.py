@@ -11,22 +11,10 @@ import threading
 import urllib
 import os
 from subprocess import Popen, PIPE
+from urllib.error import URLError
+from urllib.request import urlopen
 from r2pipe.open_base import OpenBase, normalize_open_target
 
-def no_urlopen():
-    raise IOError
-try:
-    from urllib.error import URLError
-    from urllib.request import urlopen
-except ImportError:
-    URLError = IOError
-    urlopen = no_urlopen
-
-
-try:
-    import fcntl
-except ImportError:
-    fcntl = None
 
 class open(OpenBase):
     def __enter__(self):
@@ -35,13 +23,11 @@ class open(OpenBase):
         self.quit()
         return False
     def __init__(self, filename="", flags=None, radare2home=None):
-        file_args = []
         filename, file_args = normalize_open_target(filename)
 
-        super(open, self).__init__(filename, flags)
+        super().__init__(filename, flags)
         if flags is None:
             flags = []
-        self.pipe_read_sleep = 0.001
         self.pending = b''
         self._cmd_lock = threading.Lock()
         if filename.startswith("http://"):
@@ -98,36 +84,6 @@ class open(OpenBase):
                             break
                 except (IOError, OSError) as e:
                     raise IOError(f"ERROR: Cannot open {filename}") from e
-
-    @staticmethod
-    def __make_non_blocking(fd):
-        if fcntl is not None:
-            fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-            fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-            return True
-
-        if os.name != "nt":
-            raise NotImplementedError()
-
-        import msvcrt
-        from ctypes import windll, byref
-        from ctypes.wintypes import HANDLE, DWORD, BOOL
-
-        try:
-            from ctypes import POINTER
-        except ImportError:
-            from ctypes.wintypes import POINTER
-
-        LPDWORD = POINTER(DWORD)
-        SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
-        SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
-        SetNamedPipeHandleState.restype = BOOL
-
-        h = msvcrt.get_osfhandle(fd)
-
-        PIPE_NOWAIT = DWORD(0x00000001)
-        res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
-        return res != 0
 
     def _cmd_process(self, cmd):
         # Acquire lock to ensure commands don't interfere with each other

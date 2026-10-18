@@ -28,15 +28,12 @@ except ImportError:
 
 if os.name == "nt":
     from ctypes import byref, c_ulong, create_string_buffer, windll
-    import msvcrt
 
     GENERIC_READ = 0x80000000
     GENERIC_WRITE = 0x40000000
     OPEN_EXISTING = 0x3
     INVALID_HANDLE_VALUE = -1
-    PIPE_READMODE_MESSAGE = 0x2
     ERROR_PIPE_BUSY = 231
-    ERROR_MORE_DATA = 234
     BUFSIZE = 4096
     chBuf = create_string_buffer(BUFSIZE)
     cbRead = c_ulong(0)
@@ -50,7 +47,6 @@ def in_r2():
     """Return wheter r2pipe is called from radare2 environment or the system shell
         """
     try:
-        import os
         a = int(os.environ["R2PIPE_IN"])
         b = int(os.environ["R2PIPE_OUT"])
         return a > 0 and b > 0
@@ -70,15 +66,7 @@ def jo2po(jo):
 
 
 def get_radare_path():
-    try:
-        which = shutil.which
-    except AttributeError:
-        # In python 2 doesn't exist which function
-        from distutils.spawn import find_executable
-
-        which = find_executable
-
-    bin_file = which("radare2")
+    bin_file = shutil.which("radare2")
 
     if bin_file and os.path.isfile(bin_file):
         return bin_file
@@ -123,7 +111,7 @@ def normalize_open_target(filename):
     return filename, file_args
 
 
-class OpenBase(object):
+class OpenBase:
     """Class representing an r2pipe connection with a running radare2 instance
         Class body derived from __init__.py "open" class.
         """
@@ -190,7 +178,7 @@ class OpenBase(object):
             self._cmd = self._cmd_pipe
             self.url = "#!pipe"
             return
-        except (KeyError, ValueError, OSError, NameError) as e:
+        except (KeyError, ValueError, OSError, NameError):
             pass
         if filename.startswith("#!pipe"):
             raise EnvironmentError("ERROR: Cannot use #!pipe without R2PIPE_{IN|OUT} env")
@@ -317,11 +305,6 @@ class OpenBase(object):
                     cmd (str): r2 command
                 Returns:
                     Returns an string with the results of the command
-                
-                res = self._cmd(cmd)
-                if res is not None:
-                    return res.strip()
-                return None
                 """
 
         callback = kwargs.get("callback")
@@ -373,7 +356,7 @@ class OpenBase(object):
                     Returns a string with the output
                 """
         p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE)
-        out, err = p.communicate()
+        out, _ = p.communicate()
         return out
 
     def syscmdj(self, cmd):
@@ -398,7 +381,7 @@ class OpenBase(object):
                 """
         try:
             result = Popen("r2agent -Lj", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            out, err = result.communicate()
+            out, _ = result.communicate()
             if result.returncode != 0:
                 return []
             try:

@@ -46,8 +46,8 @@ class open(OpenBase, ContextDecorator):
     async def _close_all_connections(self):
         """Close all connections in the connection pool"""
         async with self._connection_lock:
-            for pool_key, connections in self._connection_pool.items():
-                for reader, writer in connections:
+            for connections in self._connection_pool.values():
+                for _, writer in connections:
                     writer.close()
                     try:
                         await writer.wait_closed()
@@ -198,10 +198,9 @@ class open(OpenBase, ContextDecorator):
         return asyncio.Lock()
 
     def __init__(self, filename="", flags=None, radare2home=None):
-        file_args = []
         filename, file_args = normalize_open_target(filename)
 
-        super(open, self).__init__(filename, flags)
+        super().__init__(filename, flags)
         if flags is None:
             flags = []
 
@@ -344,7 +343,7 @@ class open(OpenBase, ContextDecorator):
 
     def cmdj(self, cmd, **kwargs):
         if not self.asyn:
-            return super(open, self).cmdj(cmd, **kwargs)
+            return super().cmdj(cmd, **kwargs)
         return self._dispatch(self._json_command, cmd, kwargs, None, True)
 
     async def _object_command(self, cmd, kwargs):
@@ -357,7 +356,7 @@ class open(OpenBase, ContextDecorator):
 
     def cmdJ(self, cmd, **kwargs):
         if not self.asyn:
-            return super(open, self).cmdJ(cmd, **kwargs)
+            return super().cmdJ(cmd, **kwargs)
         return self._dispatch(self._object_command, cmd, kwargs)
 
     def _r2pipe2(self, cmd, kwargs):
@@ -369,14 +368,14 @@ class open(OpenBase, ContextDecorator):
 
     def cmd2(self, cmd, **kwargs):
         if not self.asyn:
-            return super(open, self).cmd2(cmd, **kwargs)
+            return super().cmd2(cmd, **kwargs)
         return self._r2pipe2(cmd, kwargs)
 
     async def _cmd_native_async(self, cmd, future, callback):
         if self._native_executor is None:
             self._native_executor = ThreadPoolExecutor(max_workers=1)
         result = await self._loop.run_in_executor(
-            self._native_executor, super(open, self)._cmd_native, cmd
+            self._native_executor, super()._cmd_native, cmd
         )
         if hasattr(future, "_cmd_id"):
             future.set_result((future._cmd_id, result, callback))
