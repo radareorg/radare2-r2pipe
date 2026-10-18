@@ -4,7 +4,7 @@ import json
 import os
 import unittest
 import warnings
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from r2pipe.open_async import open as async_open
 from r2pipe.open_base import OpenBase
@@ -487,6 +487,29 @@ class TestAsyncRunningLoop(unittest.TestCase):
 
 
 class TestAsyncTransportErrors(unittest.TestCase):
+    def test_process_eof_never_returns_partial_data_or_calls_callback(self):
+        async def main():
+            for response in (b"", b"partial", b"complete\x00", b"\x00"):
+                with self.subTest(response=response):
+                    async with async_open("-") as r2:
+                        reader = asyncio.StreamReader()
+                        reader.feed_data(response)
+                        reader.feed_eof()
+                        r2.process = Mock(stdout=reader, stdin=MemoryWriter())
+                        callbacks = []
+                        try:
+                            if response.endswith(b"\x00"):
+                                expected = response[:-1].decode()
+                                self.assertEqual(await r2.cmd("ij", callback=callbacks.append), expected)
+                                self.assertEqual(callbacks, [expected])
+                            else:
+                                with self.assertRaisesRegex(ConnectionError, "closed"):
+                                    await r2.cmd("ij", callback=callbacks.append)
+                                self.assertEqual(callbacks, [])
+                        finally:
+                            del r2.process
+        run_async(main())
+
     def test_connection_errors_propagate_through_command_wrappers(self):
         async def main():
             error = ConnectionRefusedError("connection refused")
