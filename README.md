@@ -46,6 +46,7 @@ The most popular implementations of r2pipe are:
 
 * NodeJS / TypeScript
 * Python
+* [Python WASM / Wasmer](python-wasm/README.md)
 * Swift
 * .NET / C# (`dotnet/README.md`)
 * C/Nim/Vala/C++

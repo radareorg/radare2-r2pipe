@@ -1,0 +1,38 @@
+name: Python WASM
+on:
+  push:
+    paths:
+      - 'python-wasm/**'
+      - 'typescript/tests/fixtures/wasm-api.wasm'
+      - '.github/workflows/python-wasm.yml'
+  pull_request:
+    paths:
+      - 'python-wasm/**'
+      - 'typescript/tests/fixtures/wasm-api.wasm'
+      - '.github/workflows/python-wasm.yml'
+
+jobs:
+  wasmer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+      - run: python -m pip install ./python-wasm
+      - name: Offline API and downloader tests
+        run: python -m unittest discover -s python-wasm/tests -v
+      - name: Download known working API release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os
+          from r2pipe_wasm import DownloadManager
+          manager = DownloadManager(token=os.environ['GITHUB_TOKEN'])
+          path = manager.download('6.1.4')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'R2PIPE_WASM={path}\n')
+          PY
+      - name: Real radare2 file sharing and isolation
+        run: python -m unittest discover -s python-wasm/tests -v

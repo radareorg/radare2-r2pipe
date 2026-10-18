@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "r2pipe-wasm"
+version = "0.1.0"
+description = "In-process radare2 WASI API bindings using Wasmer"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = ["wasmer==1.1.0", "wasmer_compiler_cranelift==1.1.0"]
+
+[tool.setuptools]
+packages = ["r2pipe_wasm"]
