@@ -542,16 +542,23 @@ const r2node = {
     /* send initial byte to initialize the r2pipe stream */
     /* this thing can change in the future. and should be */
     /* enforced to bring better errors to the user */
-    fdOut.write('\x00\x00');
+    fdOut.write('\x00');
     function send (obj) {
       // console.error ("Send Object To R2",obj);
       fdOut.write(JSON.stringify(obj || {}) + '\x00');
     }
 
+    let pending = '';
+    fdIn.setEncoding('utf8');
     fdIn.on('data', function (data) {
-      const trimmedData = data.slice(0, -1).toString().trim();
-      if (cb) {
-        cb({ 'send': send }, r2node.jsonParse(trimmedData));
+      pending += data;
+      let end;
+      while ((end = pending.search(/[\n\x00]/)) !== -1) {
+        const message = pending.slice(0, end).trim();
+        pending = pending.slice(end + 1);
+        if (message && cb) {
+          cb({ 'send': send }, r2node.jsonParse(message));
+        }
       }
     });
   }

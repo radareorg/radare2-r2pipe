@@ -5,7 +5,8 @@
   "main": "index.js",
   "types": "r2pipe.d.ts",
   "scripts": {
-    "test": "node examples/test-channels.js",
+    "test": "node testsuite/ioplugin.js && node examples/test-channels.js",
+    "test:io": "node testsuite/ioplugin.js",
     "semi": "semistandard",
     "fix": "semistandard --fix"
   },
