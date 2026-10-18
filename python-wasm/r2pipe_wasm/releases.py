@@ -15,11 +15,12 @@ MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_MODULE = 256 * 1024 * 1024
 
 
-def api_asset(release):
+def api_asset(release, *, network=False):
     """Return the WASI reactor asset, or None (CLI/browser builds are unsuitable)."""
+    suffix = "-wasi-api-net.zip" if network else "-wasi-api.zip"
     return next((asset for asset in release.get("assets", [])
                  if asset["name"].startswith("radare2-")
-                 and asset["name"].endswith("-wasi-api.zip")), None)
+                 and asset["name"].endswith(suffix)), None)
 
 
 class DownloadManager:
@@ -57,22 +58,23 @@ class DownloadManager:
                 return
             page += 1
 
-    def select(self, version="latest"):
+    def select(self, version="latest", *, network=False):
         """Select the newest stable API build, or an exact GitHub tag."""
+        kind = "wasi-api-net" if network else "wasi-api"
         if version != "latest":
             release = self._json(f"{API}/tags/{quote(version, safe='')}")
-            if not api_asset(release):
-                raise ValueError(f"Release {version} has no wasi-api build")
+            if not api_asset(release, network=network):
+                raise ValueError(f"Release {version} has no {kind} build")
             return release
         for release in self.releases():
-            if not release["prerelease"] and api_asset(release):
+            if not release["prerelease"] and api_asset(release, network=network):
                 return release
-        raise ValueError("No stable radare2 release has a wasi-api build")
+        raise ValueError(f"No stable radare2 release has a {kind} build; pass a local wasm= path")
 
-    def download(self, version="latest", *, force=False):
+    def download(self, version="latest", *, force=False, network=False):
         """Return a cached Path; resolve the release via GitHub even on cache hits."""
-        release = self.select(version)
-        asset = api_asset(release)
+        release = self.select(version, network=network)
+        asset = api_asset(release, network=network)
         # Asset identity also distinguishes replacement assets and moving tags.
         identity = f"{asset['id']}:{asset.get('updated_at', '')}:{asset.get('digest', '')}"
         directory = self.cache_dir / hashlib.sha256(identity.encode()).hexdigest()
