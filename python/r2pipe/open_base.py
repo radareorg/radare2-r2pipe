@@ -406,5 +406,5 @@ class OpenBase(object):
                 return data if isinstance(data, list) else []
             except (ValueError, KeyError, TypeError):
                 return []
-        except:
+        except OSError:
             return []
