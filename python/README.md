@@ -119,4 +119,10 @@ Use `make PYTHON3=python3.12` to choose the interpreter when creating the enviro
 Run `make twine` to update the release tools. `BUILD` and `TWINE` remain overridable.
 
 For uploads, provide a PyPI API token through Twine's password prompt,
-`TWINE_PASSWORD`, or your existing `.pypirc` configuration.
+`TWINE_PASSWORD`, or the `[pypi]` section in `~/.pypirc`:
+
+```ini
+[pypi]
+username = __token__
+password = <your PyPI API token>
+```

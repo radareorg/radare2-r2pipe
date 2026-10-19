@@ -67,4 +67,4 @@ check: all
 	$(TWINE) check --strict dist/*
 
 pub publish: check
-	$(TWINE) upload -u __token__ --repository-url https://upload.pypi.org/legacy/ --skip-existing --verbose dist/*
+	$(TWINE) upload -u __token__ --repository pypi --skip-existing --verbose dist/*
