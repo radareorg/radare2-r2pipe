@@ -139,6 +139,9 @@ test('queue fails explicitly on unsolicited extra response frames', async (t) =>
 
 function fakeChild(t) {
   const child = new EventEmitter();
+  child.pid = 12345;
+  child.exitCode = null;
+  child.signalCode = null;
   child.writes = [];
   child.stdin = new Writable({ write(data, _encoding, done) {
     child.writes.push(data.toString());
@@ -147,7 +150,14 @@ function fakeChild(t) {
   child.stdout = new PassThrough();
   child.stderr = new PassThrough();
   child.kills = [];
-  child.kill = (signal) => { child.kills.push(signal); return true; };
+  child.kill = (signal) => {
+    child.kills.push(signal);
+    process.nextTick(() => {
+      child.signalCode = signal;
+      child.emit('close', null, signal);
+    });
+    return true;
+  };
   t.mock.method(childProcess, 'spawn', () => child);
   return child;
 }
@@ -169,6 +179,158 @@ test('spawn shares response framing and drains diagnostics', async (t) => {
   await pipe.quit();
   assert.deepEqual(child.kills, ['SIGINT']);
   await assert.rejects(pipe.cmd('later'), /closed/);
+});
+
+test('spawn quit shares pending shutdown and waits for close, not just exit', async (t) => {
+  const child = fakeChild(t);
+  child.kill = signal => { child.kills.push(signal); return true; };
+  const pipe = new R2PipeSpawn('-');
+  t.after(() => child.emit('close', 0, null));
+  const pending = assert.rejects(pipe.cmd('pending'), /closed/);
+  let settled = false;
+  const stopped = pipe.quit();
+  stopped.then(() => { settled = true; });
+  assert.equal(pipe.quit(), stopped);
+  await pending;
+  await assert.rejects(pipe.cmd('later'), /closed/);
+  child.exitCode = 0;
+  child.emit('exit', 0, null);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, false);
+  child.emit('close', 0, null);
+  assert.equal(await stopped, true);
+  assert.equal(await pipe.quit(), true);
+  assert.deepEqual(child.kills, ['SIGINT']);
+  assert.equal(child.listenerCount('close'), 1);
+  assert.equal(child.listenerCount('error'), 1);
+});
+
+for (const failure of ['false', 'throw', 'error']) {
+  test(`spawn quit retains the child after signal failure: ${failure}`, async (t) => {
+    const child = fakeChild(t);
+    const kill = child.kill;
+    const cause = new Error('signal denied');
+    child.kill = () => {
+      if (failure === 'throw') throw cause;
+      if (failure === 'error') child.emit('error', cause);
+      return false;
+    };
+    const pipe = new R2PipeSpawn('-');
+    t.after(() => child.emit('close', 0, null));
+    await assert.rejects(pipe.quit(), failure === 'false' ? /Could not send SIGINT/ : error => error === cause);
+    assert.equal(child.listenerCount('close'), 1);
+    assert.equal(child.listenerCount('error'), 1);
+    child.kill = kill;
+    assert.equal(await pipe.quit(), true);
+    assert.deepEqual(child.kills, ['SIGINT']);
+    await assert.rejects(pipe.cmd('later'));
+  });
+}
+
+test('spawn quit escalates after the grace period and waits for SIGKILL closure', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const child = fakeChild(t);
+  child.kill = signal => { child.kills.push(signal); return true; };
+  const pipe = new R2PipeSpawn('-');
+  t.after(() => child.emit('close', null, 'SIGKILL'));
+  let settled = false;
+  const stopped = pipe.quit(40);
+  stopped.then(() => { settled = true; });
+  t.mock.timers.tick(39);
+  assert.deepEqual(child.kills, ['SIGINT']);
+  t.mock.timers.tick(1);
+  assert.deepEqual(child.kills, ['SIGINT', 'SIGKILL']);
+  await Promise.resolve();
+  assert.equal(settled, false);
+  child.signalCode = 'SIGKILL';
+  child.emit('close', null, 'SIGKILL');
+  assert.equal(await stopped, true);
+  t.mock.timers.tick(5000);
+  assert.deepEqual(child.kills, ['SIGINT', 'SIGKILL']);
+});
+
+for (const failure of ['signal', 'deadline']) {
+  test(`spawn quit can retry after forced shutdown ${failure} failure`, async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const child = fakeChild(t);
+    const kill = child.kill;
+    child.kill = signal => {
+      child.kills.push(signal);
+      return !(failure === 'signal' && signal === 'SIGKILL');
+    };
+    const pipe = new R2PipeSpawn('-');
+    t.after(() => child.emit('close', 0, null));
+    const stopped = assert.rejects(pipe.quit(10), failure === 'signal' ? /Could not send SIGKILL/ : /after SIGKILL/);
+    t.mock.timers.tick(10);
+    if (failure === 'deadline') t.mock.timers.tick(5000);
+    await stopped;
+    assert.equal(child.listenerCount('close'), 1);
+    assert.equal(child.listenerCount('error'), 1);
+    child.kill = kill;
+    assert.equal(await pipe.quit(), true);
+    assert.deepEqual(child.kills, ['SIGINT', 'SIGKILL', 'SIGINT']);
+  });
+}
+
+test('spawn quit does not signal an exited child while waiting for stdio', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const child = fakeChild(t);
+  const pipe = new R2PipeSpawn('-');
+  child.exitCode = 0;
+  child.emit('exit', 0, null);
+  const stopped = assert.rejects(pipe.quit(10), /stdio did not close/);
+  t.mock.timers.tick(10);
+  await stopped;
+  assert.deepEqual(child.kills, []);
+  child.emit('close', 0, null);
+  assert.equal(await pipe.quit(), true);
+  assert.deepEqual(child.kills, []);
+});
+
+test('spawn quit validates timeout before closing the command queue', async (t) => {
+  const child = fakeChild(t);
+  const pipe = new R2PipeSpawn('-');
+  t.after(() => pipe.quit());
+  for (const value of [-1, 0.5, NaN, Infinity, 0x80000000]) {
+    await assert.rejects(pipe.quit(value), RangeError);
+  }
+  const reply = pipe.cmd('still open');
+  child.stdout.write(Buffer.from('\0yes\0'));
+  assert.equal(await reply, 'yes');
+});
+
+test('spawn quit immediately after an unsuccessful spawn waits for stream closure', { timeout: 5000 }, async () => {
+  const pipe = new R2PipeSpawn('-', path.join(os.tmpdir(), 'r2pipe-missing-executable-' + process.pid));
+  assert.equal(await pipe.quit(), true);
+});
+
+test('spawn quit force-stops a real child that ignores SIGINT and stdin EOF', {
+  skip: os.platform() === 'win32', timeout: 10000
+}, async (t) => {
+  const spawn = childProcess.spawn;
+  let child;
+  t.mock.method(childProcess, 'spawn', () => {
+    child = spawn(process.execPath, ['-e', `
+      process.on('SIGINT', () => {});
+      process.stdin.on('data', () => process.stdout.write('ready\\0'));
+      process.stdin.on('end', () => {});
+      process.stdout.write('\\0');
+      setInterval(() => {}, 1000);
+    `]);
+    return child;
+  });
+  const pipe = new R2PipeSpawn('-');
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      const closed = new Promise(resolve => child.once('close', resolve));
+      child.kill('SIGKILL');
+      await closed;
+    }
+  });
+  assert.equal(await pipe.cmd('ready'), 'ready');
+  assert.equal(await pipe.quit(25), true);
+  assert.equal(child.signalCode, 'SIGKILL');
+  assert.equal(await pipe.quit(), true);
 });
 
 for (const event of ['error', 'close']) {
