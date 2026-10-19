@@ -18,7 +18,7 @@ export abstract class R2PipeBase implements R2PipeCmdInterface {
   jsonParser: JsonParser = parseJson;
 
   abstract cmd(command: string): Promise<string>;
-  abstract quit(): Promise<boolean>;
+  abstract quit(timeoutMs?: number): Promise<boolean>;
 
   async cmdj<T = unknown>(command: string): Promise<T> {
     const output = await this.cmd(command);
@@ -46,9 +46,11 @@ export interface R2PipeCmdInterface {
   cmdj<T = unknown>(command: string): Promise<T>;
 
   /**
-   * Quits and destroys the given instance
-   * @returns async nothing
+   * Quits and destroys the given instance.
+   * @param timeoutMs Spawn grace period before SIGKILL in milliseconds (default 5000).
+   * Other backends do not use this timeout.
+   * @returns True after closure; rejects if spawned-process shutdown fails.
    */
-  quit(): Promise<boolean>;
+  quit(timeoutMs?: number): Promise<boolean>;
 }
 

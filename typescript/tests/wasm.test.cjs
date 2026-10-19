@@ -32,10 +32,19 @@ test('other backends load and run without WebAssembly or WASI', () => {
     const { EventEmitter } = require('node:events');
     const { PassThrough } = require('node:stream');
     const child = new EventEmitter();
+    child.pid = 12345;
+    child.exitCode = null;
+    child.signalCode = null;
     child.stdin = new PassThrough();
     child.stdout = new PassThrough();
     child.stderr = new PassThrough();
-    child.kill = () => true;
+    child.kill = signal => {
+      process.nextTick(() => {
+        child.signalCode = signal;
+        child.emit('close', null, signal);
+      });
+      return true;
+    };
     require('node:child_process').spawn = () => child;
     const { open } = require('./dist/index.js');
     (async () => {

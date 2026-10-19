@@ -40,6 +40,16 @@ The package also exports `R2PipeCmdInterface`, `R2PipeOptions`, `R2PipeWasmOptio
 In order to provide compatibility with all kind of backends, the whole api has been made asynchronous, this allows the developer to change the backend by only changing one line.
 
 The spawn backend consumes radare2's stderr so diagnostics cannot block command processing.
+Its `quit(timeoutMs = 5000)` rejects pending commands, sends SIGINT and waits for
+the child process and its stdio to close before resolving `true`. If the child
+is still running after that grace period, it sends SIGKILL and waits up to five
+more seconds for closure. A signaling failure or failure to confirm closure
+rejects the promise; the same instance retains the child so `quit()` can be
+retried. Commands remain closed after shutdown starts. Concurrent calls share
+the first pending shutdown attempt and its grace period. A later call
+after closure resolves immediately. The optional timeout is a nonnegative integer
+in milliseconds, at most 2147483647; other backends do not use it. This shuts down
+the directly spawned child, without claiming to terminate detached descendants.
 
 ## Supported r2pipe methods
 
