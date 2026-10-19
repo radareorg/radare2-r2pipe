@@ -103,3 +103,20 @@ r2pipe.parse_address(9007199254740993)       # exact legacy integer
 
 See `examples/io-plugin.py` for a complete memory-backed IO server accepting
 both representations.
+
+## Releasing
+
+Update the version in `pyproject.toml`, then run:
+
+```sh
+make check  # build the source archive and wheel, then validate their metadata
+make pub    # build, validate, and upload to PyPI
+```
+
+The first build creates `.venv-release` and installs the build and upload tools
+there. This requires Python 3.9 or newer with `venv` support and access to PyPI.
+Use `make PYTHON3=python3.12` to choose the interpreter when creating the environment.
+Run `make twine` to update the release tools. `BUILD` and `TWINE` remain overridable.
+
+For uploads, provide a PyPI API token through Twine's password prompt,
+`TWINE_PASSWORD`, or your existing `.pypirc` configuration.

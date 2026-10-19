@@ -5,13 +5,22 @@ PYTHON_PKGDIR=$(shell ${PYTHON} ../../mp.py)
 PYTHON_INSTALL_DIR=${DESTDIR}/${PYTHON_PKGDIR}/r2pipe
 
 PYTHON2=python
-PYTHON3=python3
+PYTHON3?=python3
 
-BUILD?=python3 -m build
-TWINE?=twine
+RELEASE_VENV?=.venv-release
+RELEASE_PYTHON=$(RELEASE_VENV)/bin/python
+BUILD?=$(RELEASE_PYTHON) -m build
+TWINE?=$(RELEASE_PYTHON) -m twine
 
-all:
+all: release-tools
 	$(BUILD) --sdist --wheel
+
+release-tools: $(RELEASE_VENV)/.ready
+
+$(RELEASE_VENV)/.ready: requirements-release.txt
+	$(PYTHON3) -m venv "$(RELEASE_VENV)"
+	"$(RELEASE_PYTHON)" -m pip install --upgrade -r requirements-release.txt
+	touch "$@"
 
 install: uninstall
 	$(PYTHON) setup.py install
@@ -23,8 +32,8 @@ clean:
 symstall: uninstall
 	ln -fs $(PWD)/r2pipe "$(PYTHON_INSTALL_DIR)"
 
-twine:
-	sudo pip install -U twine
+twine: release-tools
+	"$(RELEASE_PYTHON)" -m pip install --upgrade -r requirements-release.txt
 
 test: testpy2 test-examples
 
@@ -52,7 +61,10 @@ testpy3:
 uninstall:
 	rm -rf "$(PYTHON_INSTALL_DIR)"
 
-.PHONY: twine
+.PHONY: all release-tools twine check pub publish
 
-pub publish: all
+check: all
+	$(TWINE) check --strict dist/*
+
+pub publish: check
 	$(TWINE) upload -u __token__ --repository-url https://upload.pypi.org/legacy/ --skip-existing --verbose dist/*
