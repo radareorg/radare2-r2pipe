@@ -28,7 +28,7 @@ import re
 from r2pipe.open_sync import open
 from r2pipe.open_base import OpenBase, in_r2, in_rlang, r2lang
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 
 def parse_address(address):
