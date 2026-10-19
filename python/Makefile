@@ -7,8 +7,11 @@ PYTHON_INSTALL_DIR=${DESTDIR}/${PYTHON_PKGDIR}/r2pipe
 PYTHON2=python
 PYTHON3=python3
 
+BUILD?=python3 -m build
+TWINE?=twine
+
 all:
-	$(PYTHON) setup.py build sdist
+	$(BUILD) --sdist --wheel
 
 install: uninstall
 	$(PYTHON) setup.py install
@@ -52,4 +55,4 @@ uninstall:
 .PHONY: twine
 
 pub publish: all
-	twine upload -u __token__ --repository-url https://upload.pypi.org/legacy/ --verbose dist/*
+	$(TWINE) upload -u __token__ --repository-url https://upload.pypi.org/legacy/ --skip-existing --verbose dist/*
