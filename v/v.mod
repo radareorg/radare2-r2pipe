@@ -1,5 +1,6 @@
 Module {
-	name: 'test',
-	description: 'hello world using v api',
-	dependencies: ['radare.r2']
+	name: 'r2pipe'
+	description: 'V bindings for radare2 over subprocess, HTTP, and the native API'
+	version: '0.1.0'
+	dependencies: []
 }

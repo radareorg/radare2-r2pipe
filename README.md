@@ -78,7 +78,7 @@ But there is r2pipe for:
 	Tcl         X     X     -    -    -   -    -    -   -   -
 	PosixShell  X     X     -    X    -   -    X    -   -   -
 	Vala        X     X     X    -    -   -    -    -   -   -
-	V           X     X     -    -    -   -    -    X   -   -
+	V           X     X     -    X    -   -    X    X   X   -
 	Clojure     X     X     -    -    -   -    -    -   -   -
 
 --pancake

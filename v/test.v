@@ -1,9 +1,12 @@
 module main
 
-import radare.r2
+import os
+import r2pipe
 
 fn main() {
-  c := r2.new()
-  print(c.cmd('?E Hello'))
-  c.free() // this is automatic with -autofree segfaults if not commented
+	target := if os.args.len > 1 { os.args[1] } else { '-' }
+	mut pipe := r2pipe.open(target) or { panic(err) }
+	defer { pipe.close() }
+	print(pipe.cmd('?e Hello from V') or { panic(err) })
+	println(pipe.cmdj('ij') or { panic(err) })
 }
